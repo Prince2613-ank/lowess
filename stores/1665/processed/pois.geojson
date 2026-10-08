@@ -1,0 +1,672 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71607925143662,
+          41.814298950793656
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "MILLWORK DESK",
+        "profile": "STORE SERVICES",
+        "icon_id": "millwork_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.7155837075493,
+          41.81381434716554
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "EntryExit",
+        "poi_name": "MAIN EXIT",
+        "profile": "BASIC INFO",
+        "icon_id": "entrance_exit",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71639670923945,
+          41.81378030476191
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "EntryExit",
+        "poi_name": "PRO ENTRANCE",
+        "profile": "BASIC INFO",
+        "icon_id": "entrance_exit",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71639670923945,
+          41.81381935340137
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "EntryExit",
+        "poi_name": "PRO EXIT",
+        "profile": "BASIC INFO",
+        "icon_id": "entrance_exit",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71443647183101,
+          41.81369620000001
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "EntryExit",
+        "poi_name": "GARDEN CENTER ENTRANCE",
+        "profile": "BASIC INFO",
+        "icon_id": "entrance_exit",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71443647183101,
+          41.81376528605443
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "EntryExit",
+        "poi_name": "GARDEN CENTER EXIT",
+        "profile": "BASIC INFO",
+        "icon_id": "entrance_exit",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71573340309858,
+          41.81377529852609
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Restrooms",
+        "poi_name": "MEN/WOMEN’S RESTROOMS",
+        "profile": "BASIC INFO",
+        "icon_id": "restrooms",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.7157721174648,
+          41.81377229478459
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Restrooms",
+        "poi_name": "UNISEX",
+        "profile": "BASIC INFO",
+        "icon_id": "restrooms",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71646381414085,
+          41.813872419501145
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "PRO SERVICE DESK",
+        "profile": "BASIC INFO",
+        "icon_id": "pro_service_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71551273121128,
+          41.81427792460318
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "FLOORING DESK",
+        "profile": "STORE SERVICES",
+        "icon_id": "flooring_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71566371723945,
+          41.8143209782313
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "HOME DECOR DESK",
+        "profile": "STORE SERVICES",
+        "icon_id": "home_décor_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71495395385917,
+          41.81445814909298
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "KITCHEN DESIGN DESK",
+        "profile": "STORE SERVICES",
+        "icon_id": "kitchen_design_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71639670923945,
+          41.813860404535156
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Checkouts",
+        "poi_name": "PRO CHECKOUT",
+        "profile": "BASIC INFO",
+        "icon_id": "checkouts",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71443647183101,
+          41.81383837709752
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Checkouts",
+        "poi_name": "GARDEN CENTER CHECKOUT",
+        "profile": "BASIC INFO",
+        "icon_id": "checkouts",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71537981188733,
+          41.81401559784582
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "CHAIN AND ROPE CUTTING",
+        "profile": "STORE SERVICES",
+        "icon_id": "chain_rope_cutting",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71539529763382,
+          41.813927488095246
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "KEY CUTTING",
+        "profile": "STORE SERVICES",
+        "icon_id": "key_copying",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71644832839436,
+          41.814523230158734
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "WOOD CUTTING",
+        "profile": "STORE SERVICES",
+        "icon_id": "wood_cutting",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71561984095776,
+          41.81436703560091
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "BLIND CUTTING",
+        "profile": "STORE SERVICES",
+        "icon_id": "blind_cutting",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71596568929577,
+          41.814187812358284
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "WIRE CUTTING",
+        "profile": "STORE SERVICES",
+        "icon_id": "wire_cutting",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71513591138029,
+          41.81433699818595
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "APPLIANCE DESK",
+        "profile": "STORE SERVICES",
+        "icon_id": "appliance_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71536432614086,
+          41.81455527006803
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "CARPET CUTTING",
+        "profile": "STORE SERVICES",
+        "icon_id": "carpet_cutting",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71523785921127,
+          41.81378030476191
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "EntryExit",
+        "poi_name": "MAIN ENTRANCE",
+        "profile": "BASIC INFO",
+        "icon_id": "entrance_exit",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.7152894783662,
+          41.813851393310664
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "CUSTOMER SERVICE",
+        "profile": "BASIC INFO",
+        "icon_id": "customer_service_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71553466935212,
+          41.81388944070296
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Checkouts",
+        "poi_name": "MAIN CHECKOUT",
+        "profile": "BASIC INFO",
+        "icon_id": "checkouts",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71529076884507,
+          41.813861405782326
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "RETURNS",
+        "profile": "BASIC INFO",
+        "icon_id": "returns",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71541465481691,
+          41.81380833968255
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "PRODUCT PICK-UP",
+        "profile": "BASIC INFO",
+        "icon_id": "store_pick_up",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71536819757748,
+          41.81380833968255
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Services",
+        "poi_name": "PICKUP LOCKER",
+        "profile": "BASIC INFO",
+        "icon_id": "pickup_lockers",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.71558886946481,
+          41.813892444444456
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "Checkouts",
+        "poi_name": "MAIN SELF-CHECKOUT",
+        "profile": "BASIC INFO",
+        "icon_id": "checkouts",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -72.7152894783662,
+          41.81384438458051
+        ]
+      },
+      "properties": {
+        "type": "P",
+        "sub_category": "ServiceDesks",
+        "poi_name": "CUSTOMER SERVICE",
+        "profile": "BASIC INFO",
+        "icon_id": "customer_service_desk",
+        "orientation": 0,
+        "store_id": "1665",
+        "source": "https://www.lowes.com/omniselling/store/1665/map-view",
+        "feature_type": "poi",
+        "original_geometry_type": "Point"
+      }
+    }
+  ],
+  "metadata": {
+    "store_id": "1665",
+    "source_url": "https://www.lowes.com/omniselling/store/1665/map-view",
+    "coordinate_transform": {
+      "method": "axis-aligned-affine-bbox-fit",
+      "source_crs": "EPSG:4326 as returned by Lowe's map-view payload",
+      "target_crs": "EPSG:4326",
+      "source_bounds": [
+        -76.987125,
+        39.826361,
+        -76.98535,
+        39.827243
+      ],
+      "target_bounds": [
+        -72.7165335,
+        41.8136962,
+        -72.7142429,
+        41.8145793
+      ],
+      "a": 1.2904788732298988,
+      "b": 0.0,
+      "c": 26.633724823209377,
+      "d": 0.0,
+      "e": 1.0012471655232802,
+      "f": 1.9376651356431012,
+      "applies_to": "store outline, departments, aisles, racks, POIs, and labels"
+    },
+    "feature_type": "poi"
+  }
+}

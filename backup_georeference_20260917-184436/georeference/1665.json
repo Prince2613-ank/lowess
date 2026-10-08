@@ -1,0 +1,26 @@
+{
+  "store_id": "1665",
+  "source": "manual",
+  "control_points": [
+    {
+      "name": "northwest",
+      "floor": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "geo": {
+        "latitude": 41.81412253300443,
+        "longitude": -72.71516823333819
+      }
+    }
+  ],
+  "svg": null,
+  "transform": null,
+  "svg_opacity": 1.0,
+  "corners": {
+    "top_left": null,
+    "top_right": null,
+    "bottom_right": null,
+    "bottom_left": null
+  }
+}

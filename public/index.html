@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lowe's Interactive Store Map</title>
+
+    <link
+        rel="stylesheet"
+        href="vendor/leaflet/leaflet.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div id="topbar">
+        <div class="brand">Lowe's Store Maps</div>
+        <span>United States store directory</span>
+    </div>
+
+    <aside id="directory" aria-label="Store directory">
+        <h1>Find a store</h1>
+        <label for="store-search">Search name, ID, city or ZIP</label>
+        <input id="store-search" type="search" placeholder="Search stores…" />
+        <label for="state-filter">State</label><select id="state-filter"><option value="">All states</option></select>
+        <label for="city-filter">City</label><select id="city-filter"><option value="">All cities</option></select>
+        <p id="catalog-status" role="status"></p>
+        <p id="result-count"></p>
+        <div id="store-list"></div>
+        <button id="more-stores" hidden>Show more stores</button>
+    </aside>
+
+    <section id="selection-info" aria-live="polite">
+        <strong id="selected-name">Select a store</strong>
+        <div id="selected-address"></div>
+        <div id="map-status"></div>
+        <button id="view-location" hidden>Store location</button>
+        <button id="view-indoor" hidden>Indoor map</button>
+    </section>
+
+    <div id="map"></div>
+
+    <div id="layer-panel">
+        <h3>Layers</h3>
+        <label class="layer-row"><input type="checkbox" id="layer-satellite" checked /> Satellite basemap</label>
+        <label class="layer-row"><input type="checkbox" id="layer-aisle" checked /> Lowes_aisle</label>
+        <label class="layer-row"><input type="checkbox" id="layer-rack" checked /> Lowes_rack</label>
+        <label class="layer-row"><input type="checkbox" id="layer-department" checked /> Lowes_depertment</label>
+    </div>
+
+    <div id="debug-panel" hidden>
+        <h3>Debug georeference</h3>
+        <label class="debug-toggle"><input type="checkbox" id="debug-mode" /> Debug Mode</label>
+        <div id="debug-controls" hidden>
+            <div class="debug-store">Store: <strong id="debug-store-id">-</strong></div>
+            <label>Step size <select id="debug-step"><option value="1">Small</option><option value="5" selected>Medium</option><option value="20">Large</option></select></label>
+            <div class="debug-grid"><button data-debug-action="north">Move North</button><button data-debug-action="south">Move South</button><button data-debug-action="west">Move West</button><button data-debug-action="east">Move East</button></div>
+            <div class="debug-grid"><button data-debug-action="scale-up">Scale Up</button><button data-debug-action="scale-down">Scale Down</button><button data-debug-action="rotate-left">Rotate Left</button><button data-debug-action="rotate-right">Rotate Right</button></div>
+            <div class="debug-values">Offset X: <span id="debug-offset-x">0</span><br />Offset Y: <span id="debug-offset-y">0</span><br />Scale: <span id="debug-scale">1.000</span><br />Rotation: <span id="debug-rotation">0.0</span>°</div>
+            <div class="debug-actions"><button id="debug-reset">Reset</button><button id="debug-save">Save</button></div>
+            <label class="debug-toggle"><input type="checkbox" id="corner-mode" /> Corner Adjustment</label>
+            <div id="corner-controls" hidden>
+                <div class="corner-values">NW X <span id="corner-nw-x">0</span> / Y <span id="corner-nw-y">0</span><br />NE X <span id="corner-ne-x">0</span> / Y <span id="corner-ne-y">0</span><br />SW X <span id="corner-sw-x">0</span> / Y <span id="corner-sw-y">0</span><br />SE X <span id="corner-se-x">0</span> / Y <span id="corner-se-y">0</span></div>
+                <div class="debug-actions"><button id="reset-corners">Reset Corners</button><button id="corner-save">Save Adjustments</button></div>
+                <p id="adjustment-save-status" role="status" aria-live="polite"></p>
+            </div>
+        </div>
+    </div>
+
+    <script
+        src="vendor/leaflet/leaflet.js"
+    ></script>
+    <script src="app.js?v=debug-georef-5"></script>
+    <script src="directory.js?v=debug-georef-8"></script>
+</body>
+</html>

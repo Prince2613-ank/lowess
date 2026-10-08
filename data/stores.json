@@ -1,0 +1,25 @@
+[
+  {
+    "store_id": "1665",
+    "name": "Lowe's Bloomfield",
+    "address": "325 Cottage Grove Road, Bloomfield, CT 06002",
+    "latitude": 41.8140843218019,
+    "longitude": -72.71526758866406,
+    "layout_id": "1665",
+    "building_id": "1665",
+    "georeference": {
+      "method": "affine",
+      "source_crs": "local",
+      "target_crs": "EPSG:4326",
+      "anchor": {
+        "latitude": 41.81428534168398,
+        "longitude": -72.71513231492122
+      },
+      "rotation_degrees": 179.66573577476515,
+      "scale_x": 0.38075182910156247,
+      "scale_y": 0.36576000000000003,
+      "offset_x": 82.70251568477988,
+      "offset_y": 46.814548348451396
+    }
+  }
+]

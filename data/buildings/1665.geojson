@@ -1,0 +1,141 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "store_id": "1665",
+    "source": "OpenStreetMap",
+    "source_type": "way",
+    "source_id": "way/146204404",
+    "source_url": "https://www.openstreetmap.org/way/146204404",
+    "retrieved_via": "OSM API 0.6 (api.openstreetmap.org/api/0.6/way/146204404/full.json)",
+    "retrieved_date": "2026-09-08",
+    "license": "ODbL 1.0 (OpenStreetMap contributors, https://www.openstreetmap.org/copyright)",
+    "osm_tags": {
+      "addr:city": "Bloomfield",
+      "addr:housenumber": "325",
+      "addr:postcode": "06002",
+      "addr:state": "CT",
+      "addr:street": "Cottage Grove Road",
+      "brand": "Lowe's",
+      "brand:wikidata": "Q1373493",
+      "building": "yes",
+      "name": "Lowe's",
+      "opening_hours": "Mo-Sa 06:00-22:00; Su 07:00-20:00",
+      "phone": "+1 860-502-1068",
+      "ref": "1665",
+      "shop": "doityourself",
+      "start_date": "2004-11-21",
+      "website": "https://www.lowes.com/store/ct-bloomfield/1665"
+    },
+    "note": "Real building footprint for Lowe's #1665, 325 Cottage Grove Road, Bloomfield, CT. Matched by OSM tag ref=1665 / brand=Lowe's on the building way, not by proximity alone."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "store_id": "1665",
+        "type": "store_building",
+        "source": "OpenStreetMap",
+        "osm_way_id": 146204404
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -72.7165335,
+              41.8138109
+            ],
+            [
+              -72.7160807,
+              41.8138092
+            ],
+            [
+              -72.716081,
+              41.8137589
+            ],
+            [
+              -72.7160814,
+              41.8137042
+            ],
+            [
+              -72.7142487,
+              41.8136962
+            ],
+            [
+              -72.7142429,
+              41.8144146
+            ],
+            [
+              -72.7142782,
+              41.8144148
+            ],
+            [
+              -72.7142773,
+              41.8145117
+            ],
+            [
+              -72.7142761,
+              41.8145768
+            ],
+            [
+              -72.714609,
+              41.8145793
+            ],
+            [
+              -72.7146088,
+              41.81449
+            ],
+            [
+              -72.7147852,
+              41.8144866
+            ],
+            [
+              -72.7157339,
+              41.8144938
+            ],
+            [
+              -72.7157341,
+              41.8144616
+            ],
+            [
+              -72.7157343,
+              41.8144225
+            ],
+            [
+              -72.7159112,
+              41.8144231
+            ],
+            [
+              -72.7159144,
+              41.8142053
+            ],
+            [
+              -72.7159136,
+              41.8141855
+            ],
+            [
+              -72.7159127,
+              41.8141661
+            ],
+            [
+              -72.7163573,
+              41.8141676
+            ],
+            [
+              -72.7163582,
+              41.814015
+            ],
+            [
+              -72.7165321,
+              41.8140156
+            ],
+            [
+              -72.7165335,
+              41.8138109
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+#map {
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Top bar: store selector                                                */
+/* ---------------------------------------------------------------------- */
+
+#topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #004987; /* Lowe's blue */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+#topbar .brand {
+    font-weight: 700;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Department polygons                                                    */
+/* ---------------------------------------------------------------------- */
+
+.dept-label {
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    color: #000;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    white-space: nowrap;
+    border: 1px solid rgba(0,0,0,0.08);
+    pointer-events: none;
+}
+
+.aisle-label {
+    background: rgba(255,255,255,0.92);
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    color: #333;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.rack-label {
+    background: rgba(255,255,255,0.95);
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    color: #444;
+    font-size: 9px;
+    font-weight: 500;
+    padding: 1px 4px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Marker icons                                                           */
+/* ---------------------------------------------------------------------- */
+
+.marker-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    border: 2px solid #fff;
+}
+
+.marker-icon.basic_information { background: #2b6cb0; color: #fff; }
+.marker-icon.store_service { background: #d9822b; color: #fff; }
+.marker-icon.store-pin {
+    background: #e02424;
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+    border-width: 3px;
+}
+
+.leaflet-popup-content { font-size: 13px; }
+.leaflet-popup-content b { display: block; margin-bottom: 4px; }
+
+/* Leaflet zoom control tweak (keep default +/- but style them a bit) */
+.leaflet-control-zoom a {
+    font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Layer panel                                                            */
+/* ---------------------------------------------------------------------- */
+
+#layer-panel {
+    position: absolute;
+    top: 66px;
+    left: 12px;
+    width: 190px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    padding: 12px 14px;
+    z-index: 1000;
+    font-size: 13px;
+}
+
+#layer-panel h3 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+}
+
+.layer-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+.building-label {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #ff0000;
+    border-radius: 4px;
+    color: #b30000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+#map { left: 310px; }
+#directory { position: absolute; top: 56px; left: 0; bottom: 0; width: 310px; box-sizing: border-box; padding: 22px 18px; overflow-y: auto; background: #f7f9fc; border-right: 1px solid #d8e0ec; }
+#directory h1 { font-size: 23px; color: #063b71; margin: 0 0 20px; }
+#directory label { display: block; font-size: 12px; font-weight: 600; margin: 12px 0 6px; }
+#directory input, #directory select { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #becbda; border-radius: 5px; background: white; }
+#catalog-status { font-size: 12px; color: #9b3d17; overflow-wrap: anywhere; }
+#result-count { font-size: 13px; color: #51647b; }
+.store-result { display: block; width: 100%; text-align: left; padding: 14px 12px; background: white; border: 1px solid #dce3ed; border-radius: 7px; margin-bottom: 8px; cursor: pointer; }
+.store-result strong, .store-result span, .store-result small { display: block; margin: 3px 0; }
+.store-result strong { color: #064a87; }
+.store-result span, .store-result small { color: #52677f; }
+.store-result[aria-pressed=true] { border: 2px solid #0878c9; background: #edf7ff; padding: 13px 11px; }
+#selection-info { position: absolute; left: 365px; top: 70px; right: 250px; z-index: 900; padding: 14px; border-radius: 7px; background: white; box-shadow: 0 2px 8px #0002; max-width: 600px; }
+#selected-address, #map-status { font-size: 13px; margin-top: 5px; }
+#map-status { color: #52677f; }
+#layer-panel { left: auto; right: 12px; }
+#debug-panel { position: absolute; right: 12px; top: 250px; width: 220px; padding: 12px 14px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.3); z-index: 1000; font-size: 12px; }
+#debug-panel h3 { margin: 0 0 8px; font-size: 13px; }
+#debug-panel label { display: block; margin: 7px 0; }
+#debug-panel select { margin-left: 5px; padding: 3px; }
+.debug-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 7px 0; }
+.debug-grid button, .debug-actions button { padding: 5px 4px; border: 1px solid #becbda; border-radius: 4px; background: #fff; color: #064a87; cursor: pointer; }
+.debug-values { line-height: 1.6; margin: 8px 0; font-variant-numeric: tabular-nums; }
+.debug-actions { display: flex; gap: 6px; }
+.debug-corner-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #ff7a00;
+    color: #fff;
+    box-shadow: 0 2px 7px rgba(0,0,0,.35);
+    cursor: grab;
+}
+.debug-corner-marker span {
+    position: absolute;
+    left: 12px;
+    top: -10px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    background: rgba(255,255,255,.92);
+    color: #111;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+.debug-corner-marker:active { cursor: grabbing; }
+#selection-info button, #more-stores { padding: 6px 10px; margin-top: 8px; border: 1px solid #becbda; border-radius: 4px; cursor: pointer; background: white; color: #064a87; }
+@media(max-width: 800px) {
+  #directory { width: 230px; padding: 14px 10px; }
+  #map { left: 230px; }
+  #selection-info { left: 280px; right: 12px; }
+  #layer-panel { top: auto; bottom: 12px; }
+  #topbar span { display: none; }
+}
+@media(max-width: 520px) {
+  #directory { bottom: auto; height: 240px; width: 100%; }
+  #map { top: 296px; left: 0; }
+  #selection-info { top: 308px; left: 56px; }
+  #layer-panel { width: 155px; font-size: 11px; }
+}

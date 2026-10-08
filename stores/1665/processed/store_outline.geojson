@@ -1,0 +1,34 @@
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "metadata": {
+    "store_id": "1665",
+    "source_url": "https://www.lowes.com/omniselling/store/1665/map-view",
+    "coordinate_transform": {
+      "method": "axis-aligned-affine-bbox-fit",
+      "source_crs": "EPSG:4326 as returned by Lowe's map-view payload",
+      "target_crs": "EPSG:4326",
+      "source_bounds": [
+        -76.987125,
+        39.826361,
+        -76.98535,
+        39.827243
+      ],
+      "target_bounds": [
+        -72.7165335,
+        41.8136962,
+        -72.7142429,
+        41.8145793
+      ],
+      "a": 1.2904788732298988,
+      "b": 0.0,
+      "c": 26.633724823209377,
+      "d": 0.0,
+      "e": 1.0012471655232802,
+      "f": 1.9376651356431012,
+      "applies_to": "store outline, departments, aisles, racks, POIs, and labels"
+    },
+    "feature_type": "store_outline",
+    "note": "No store outline collection was present in the exact Lowe's map-view response; no geometry was fabricated."
+  }
+}

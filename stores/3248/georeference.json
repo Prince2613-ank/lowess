@@ -1,0 +1,9 @@
+{
+  "store_id": "3248",
+  "source_url": "https://www.lowes.com/omniselling/store/3248/map-view",
+  "status": "source_coordinates",
+  "transform": {
+    "method": "store-specific-source-coordinates",
+    "store_id": "3248"
+  }
+}

@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+.venv-local/
+.pytest_cache/
+.pytest-tmp*/
+*.log
+work/
+data/catalog.sqlite*
+data/stores/
+data/stores-index.json
+data/states.json
+data/cities.json
+data/pipeline-report.json

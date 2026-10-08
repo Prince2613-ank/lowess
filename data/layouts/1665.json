@@ -1,0 +1,1078 @@
+{
+  "store_id": "1665",
+  "coordinate_system": "local",
+  "anchor": {
+    "latitude": 41.81428534168398,
+    "longitude": -72.71513231492122
+  },
+  "transform": {
+    "scale": 0.3048,
+    "scale_x": 0.38075182910156247,
+    "scale_y": 0.36576000000000003,
+    "rotation_degrees": 179.66573577476515,
+    "offset_x": 82.70251568477988,
+    "offset_y": 46.814548348451396
+  },
+  "departments": [
+    {
+      "id": "dept-lumber",
+      "name": "Lumber",
+      "category": "building_materials",
+      "label": "Lumber",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              100,
+              0
+            ],
+            [
+              100,
+              80
+            ],
+            [
+              0,
+              80
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-building-materials",
+      "name": "Building Materials",
+      "category": "building_materials",
+      "label": "Building Materials",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              100,
+              0
+            ],
+            [
+              200,
+              0
+            ],
+            [
+              200,
+              80
+            ],
+            [
+              100,
+              80
+            ],
+            [
+              100,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-garden-center",
+      "name": "Garden Center",
+      "category": "outdoor",
+      "label": "Garden Center",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              200,
+              0
+            ],
+            [
+              300,
+              0
+            ],
+            [
+              300,
+              80
+            ],
+            [
+              200,
+              80
+            ],
+            [
+              200,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-appliances",
+      "name": "Appliances",
+      "category": "appliances",
+      "label": "Appliances",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              300,
+              0
+            ],
+            [
+              400,
+              0
+            ],
+            [
+              400,
+              80
+            ],
+            [
+              300,
+              80
+            ],
+            [
+              300,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-tools",
+      "name": "Tools",
+      "category": "hardware",
+      "label": "Tools",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              80
+            ],
+            [
+              90,
+              80
+            ],
+            [
+              90,
+              160
+            ],
+            [
+              0,
+              160
+            ],
+            [
+              0,
+              80
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-hardware",
+      "name": "Hardware",
+      "category": "hardware",
+      "label": "Hardware",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              90,
+              80
+            ],
+            [
+              180,
+              80
+            ],
+            [
+              180,
+              160
+            ],
+            [
+              90,
+              160
+            ],
+            [
+              90,
+              80
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-electrical",
+      "name": "Electrical",
+      "category": "hardware",
+      "label": "Electrical",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              180,
+              80
+            ],
+            [
+              270,
+              80
+            ],
+            [
+              270,
+              160
+            ],
+            [
+              180,
+              160
+            ],
+            [
+              180,
+              80
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-plumbing",
+      "name": "Plumbing",
+      "category": "hardware",
+      "label": "Plumbing",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              270,
+              80
+            ],
+            [
+              360,
+              80
+            ],
+            [
+              360,
+              160
+            ],
+            [
+              270,
+              160
+            ],
+            [
+              270,
+              80
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-paint",
+      "name": "Paint",
+      "category": "paint",
+      "label": "Paint",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              160
+            ],
+            [
+              90,
+              160
+            ],
+            [
+              90,
+              250
+            ],
+            [
+              0,
+              250
+            ],
+            [
+              0,
+              160
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-flooring",
+      "name": "Flooring",
+      "category": "flooring",
+      "label": "Flooring",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              90,
+              160
+            ],
+            [
+              180,
+              160
+            ],
+            [
+              180,
+              250
+            ],
+            [
+              90,
+              250
+            ],
+            [
+              90,
+              160
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-home-decor",
+      "name": "Home Decor",
+      "category": "decor",
+      "label": "Home Decor",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              180,
+              160
+            ],
+            [
+              270,
+              160
+            ],
+            [
+              270,
+              250
+            ],
+            [
+              180,
+              250
+            ],
+            [
+              180,
+              160
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dept-front-end",
+      "name": "Front End / Checkouts",
+      "category": "checkout",
+      "label": "Front End",
+      "color": "#9BCBEB",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              270,
+              160
+            ],
+            [
+              400,
+              160
+            ],
+            [
+              400,
+              250
+            ],
+            [
+              270,
+              250
+            ],
+            [
+              270,
+              160
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "aisles": [
+    {
+      "id": "aisle-12",
+      "name": "Aisle 12 - Hand Tools",
+      "department_id": "dept-hardware",
+      "label": "Aisle 12",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100,
+            90
+          ],
+          [
+            170,
+            90
+          ]
+        ]
+      }
+    },
+    {
+      "id": "aisle-13",
+      "name": "Aisle 13 - Fasteners",
+      "department_id": "dept-hardware",
+      "label": "Aisle 13",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100,
+            110
+          ],
+          [
+            170,
+            110
+          ]
+        ]
+      }
+    },
+    {
+      "id": "aisle-20",
+      "name": "Aisle 20 - Wiring",
+      "department_id": "dept-electrical",
+      "label": "Aisle 20",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            190,
+            90
+          ],
+          [
+            260,
+            90
+          ]
+        ]
+      }
+    },
+    {
+      "id": "aisle-21",
+      "name": "Aisle 21 - Lighting",
+      "department_id": "dept-electrical",
+      "label": "Aisle 21",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            190,
+            110
+          ],
+          [
+            260,
+            110
+          ]
+        ]
+      }
+    },
+    {
+      "id": "aisle-30",
+      "name": "Aisle 30 - Pipe & Fittings",
+      "department_id": "dept-plumbing",
+      "label": "Aisle 30",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            280,
+            90
+          ],
+          [
+            350,
+            90
+          ]
+        ]
+      }
+    },
+    {
+      "id": "aisle-40",
+      "name": "Aisle 40 - Interior Paint",
+      "department_id": "dept-paint",
+      "label": "Aisle 40",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10,
+            200
+          ],
+          [
+            80,
+            200
+          ]
+        ]
+      }
+    },
+    {
+      "id": "aisle-50",
+      "name": "Aisle 50 - Tile & Flooring",
+      "department_id": "dept-flooring",
+      "label": "Aisle 50",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100,
+            200
+          ],
+          [
+            170,
+            200
+          ]
+        ]
+      }
+    }
+  ],
+  "racks": [
+    {
+      "id": "rack-12-a",
+      "name": "Rack 12-A",
+      "aisle_id": "aisle-12",
+      "info": "Hammers, Wrenches, Pliers",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              100,
+              86
+            ],
+            [
+              115,
+              86
+            ],
+            [
+              115,
+              94
+            ],
+            [
+              100,
+              94
+            ],
+            [
+              100,
+              86
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "rack-12-b",
+      "name": "Rack 12-B",
+      "aisle_id": "aisle-12",
+      "info": "Screwdrivers, Sockets",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              120,
+              86
+            ],
+            [
+              135,
+              86
+            ],
+            [
+              135,
+              94
+            ],
+            [
+              120,
+              94
+            ],
+            [
+              120,
+              86
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "rack-13-a",
+      "name": "Rack 13-A",
+      "aisle_id": "aisle-13",
+      "info": "Screws & Bolts",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              100,
+              106
+            ],
+            [
+              115,
+              106
+            ],
+            [
+              115,
+              114
+            ],
+            [
+              100,
+              114
+            ],
+            [
+              100,
+              106
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "rack-20-a",
+      "name": "Rack 20-A",
+      "aisle_id": "aisle-20",
+      "info": "Wire & Conduit",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              190,
+              86
+            ],
+            [
+              205,
+              86
+            ],
+            [
+              205,
+              94
+            ],
+            [
+              190,
+              94
+            ],
+            [
+              190,
+              86
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "rack-30-a",
+      "name": "Rack 30-A",
+      "aisle_id": "aisle-30",
+      "info": "PVC & Copper Pipe",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              280,
+              86
+            ],
+            [
+              295,
+              86
+            ],
+            [
+              295,
+              94
+            ],
+            [
+              280,
+              94
+            ],
+            [
+              280,
+              86
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "rack-50-a",
+      "name": "Rack 50-A",
+      "aisle_id": "aisle-50",
+      "info": "Tile Samples",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              100,
+              196
+            ],
+            [
+              115,
+              196
+            ],
+            [
+              115,
+              204
+            ],
+            [
+              100,
+              204
+            ],
+            [
+              100,
+              196
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "markers": [
+    {
+      "id": "marker-entrance",
+      "category": "basic_information",
+      "marker_type": "entrance_exit",
+      "label": "Main Entrance",
+      "icon": "entrance",
+      "min_zoom": 18,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          340,
+          250
+        ]
+      }
+    },
+    {
+      "id": "marker-exit",
+      "category": "basic_information",
+      "marker_type": "entrance_exit",
+      "label": "Exit",
+      "icon": "exit",
+      "min_zoom": 18,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          370,
+          250
+        ]
+      }
+    },
+    {
+      "id": "marker-checkout-1",
+      "category": "basic_information",
+      "marker_type": "checkouts",
+      "label": "Checkouts",
+      "icon": "checkout",
+      "min_zoom": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          300,
+          230
+        ]
+      }
+    },
+    {
+      "id": "marker-returns",
+      "category": "basic_information",
+      "marker_type": "returns",
+      "label": "Returns",
+      "icon": "returns",
+      "min_zoom": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          310,
+          210
+        ]
+      }
+    },
+    {
+      "id": "marker-restrooms",
+      "category": "basic_information",
+      "marker_type": "restrooms",
+      "label": "Restrooms",
+      "icon": "restrooms",
+      "min_zoom": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          390,
+          170
+        ]
+      }
+    },
+    {
+      "id": "marker-customer-service",
+      "category": "basic_information",
+      "marker_type": "customer_service_desk",
+      "label": "Customer Service Desk",
+      "icon": "customer_service",
+      "min_zoom": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          330,
+          200
+        ]
+      }
+    },
+    {
+      "id": "marker-pro-desk",
+      "category": "basic_information",
+      "marker_type": "pro_service_desk",
+      "label": "Pro Service Desk",
+      "icon": "pro_desk",
+      "min_zoom": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          350,
+          200
+        ]
+      }
+    },
+    {
+      "id": "marker-store-pickup",
+      "category": "basic_information",
+      "marker_type": "store_pickup",
+      "label": "Store Pickup",
+      "icon": "pickup",
+      "min_zoom": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          360,
+          230
+        ]
+      }
+    },
+    {
+      "id": "marker-pickup-lockers",
+      "category": "basic_information",
+      "marker_type": "pickup_lockers",
+      "label": "Pickup Lockers",
+      "icon": "lockers",
+      "min_zoom": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          380,
+          230
+        ]
+      }
+    },
+    {
+      "id": "marker-key-copying",
+      "category": "store_service",
+      "marker_type": "key_copying",
+      "label": "Key Copying",
+      "icon": "key_copying",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140,
+          90
+        ]
+      }
+    },
+    {
+      "id": "marker-millwork-desk",
+      "category": "store_service",
+      "marker_type": "millwork_desk",
+      "label": "Millwork Desk",
+      "icon": "millwork_desk",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          40,
+          40
+        ]
+      }
+    },
+    {
+      "id": "marker-wood-cutting",
+      "category": "store_service",
+      "marker_type": "wood_cutting",
+      "label": "Wood Cutting",
+      "icon": "wood_cutting",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          20,
+          40
+        ]
+      }
+    },
+    {
+      "id": "marker-wire-cutting",
+      "category": "store_service",
+      "marker_type": "wire_cutting",
+      "label": "Wire Cutting",
+      "icon": "wire_cutting",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          220,
+          90
+        ]
+      }
+    },
+    {
+      "id": "marker-flooring-desk",
+      "category": "store_service",
+      "marker_type": "flooring_desk",
+      "label": "Flooring Desk",
+      "icon": "flooring_desk",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130,
+          210
+        ]
+      }
+    },
+    {
+      "id": "marker-blind-cutting",
+      "category": "store_service",
+      "marker_type": "blind_cutting",
+      "label": "Blind Cutting",
+      "icon": "blind_cutting",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          200,
+          210
+        ]
+      }
+    },
+    {
+      "id": "marker-glass-cutting",
+      "category": "store_service",
+      "marker_type": "glass_cutting",
+      "label": "Glass Cutting",
+      "icon": "glass_cutting",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150,
+          100
+        ]
+      }
+    },
+    {
+      "id": "marker-carpet-cutting",
+      "category": "store_service",
+      "marker_type": "carpet_cutting",
+      "label": "Carpet Cutting",
+      "icon": "carpet_cutting",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150,
+          220
+        ]
+      }
+    },
+    {
+      "id": "marker-appliance-desk",
+      "category": "store_service",
+      "marker_type": "appliance_desk",
+      "label": "Appliance Desk",
+      "icon": "appliance_desk",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          350,
+          40
+        ]
+      }
+    },
+    {
+      "id": "marker-home-decor-desk",
+      "category": "store_service",
+      "marker_type": "home_decor_desk",
+      "label": "Home Decor Desk",
+      "icon": "home_decor_desk",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          225,
+          210
+        ]
+      }
+    },
+    {
+      "id": "marker-chain-rope-cutting",
+      "category": "store_service",
+      "marker_type": "chain_rope_cutting",
+      "label": "Chain/Rope Cutting",
+      "icon": "chain_rope_cutting",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160,
+          90
+        ]
+      }
+    },
+    {
+      "id": "marker-kitchen-design-desk",
+      "category": "store_service",
+      "marker_type": "kitchen_design_desk",
+      "label": "Kitchen Design Desk",
+      "icon": "kitchen_design_desk",
+      "min_zoom": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          235,
+          220
+        ]
+      }
+    }
+  ]
+}

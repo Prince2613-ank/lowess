@@ -1,0 +1,34 @@
+{
+  "store_id": "2263",
+  "source_url": "https://www.lowes.com/omniselling/store/2263/map-view",
+  "status": "source_coordinates",
+  "transform": {
+    "method": "store-specific-source-coordinates",
+    "store_id": "2263"
+  },
+  "debug": {
+    "offset_x": 45.0,
+    "offset_y": 20.0,
+    "scale": 0.95,
+    "rotation": -85.0,
+    "corners": {
+      "nw": {
+        "x": 32.414532055147134,
+        "y": 5.001164959100564
+      },
+      "ne": {
+        "x": 32.57285399612444,
+        "y": -1.5437436511340934
+      },
+      "sw": {
+        "x": -6.592211313063505,
+        "y": 1.023617588146763
+      },
+      "se": {
+        "x": -8.899676145934505,
+        "y": -6.533677156627348
+      }
+    },
+    "store_id": "2263"
+  }
+}

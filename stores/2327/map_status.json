@@ -1,0 +1,13 @@
+{
+  "store_id": "2327",
+  "status": "available",
+  "response": {
+    "status": 200,
+    "url": "https://www.lowes.com/omniselling/store/2327/map-view"
+  },
+  "layers": [
+    "aisle",
+    "department",
+    "rack"
+  ]
+}

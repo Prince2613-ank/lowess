@@ -1,0 +1,15 @@
+.venv/
+.pytest_cache/
+.pytest-tmp*/
+__pycache__/
+*.pyc
+tests/
+scripts/
+data/backup_geojson/
+backup_georeference_*/
+stores/*/raw/
+stores/*/raw_map.json
+debug_browser.py
+test_output.txt
+*.qmd
+uvicorn.log

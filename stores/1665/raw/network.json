@@ -1,0 +1,12 @@
+{
+  "source_url": "https://www.lowes.com/omniselling/store/1665/map-view",
+  "responses": [
+    {
+      "url": "https://www.lowes.com/omniselling/store/1665/map-view",
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "length": 729029,
+      "capture": "authenticated browser session exact page response"
+    }
+  ]
+}

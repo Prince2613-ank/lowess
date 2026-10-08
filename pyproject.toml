@@ -1,0 +1,15 @@
+[project]
+name = "lowes-map-system"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.110,<1.0",
+    "pydantic>=2.5,<3.0",
+    "shapely>=2.0,<3.0",
+    "pyproj>=3.6,<4.0",
+    "numpy>=1.26,<3.0",
+    "beautifulsoup4>=4.12,<5.0",
+]
+
+[tool.vercel]
+entrypoint = "backend.main:app"
