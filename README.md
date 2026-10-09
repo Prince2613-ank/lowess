@@ -496,3 +496,26 @@ they're requested.
   and nothing in it is ever executed as code.
 - The `/calibrate` endpoint re-validates the full merged layout document
   with the same Pydantic models before writing it back to disk.
+
+## Rack & inventory demo (simulated data)
+
+The map includes a Rack & Inventory Management sidebar. **All inventory is
+simulated demo data**; nothing connects to a real Lowe's inventory system.
+
+* `frontend/data/inventory/<store_id>.json` - one record for every shelf bay
+  in the store (about 1,700-2,100 per store; slivers under 0.05 m2 skipped),
+  built by `python scripts/generate_demo_inventory.py [--stores 1665,2544]`.
+  Each rack points at an existing bay in the store's `Lowes_rack`
+  MultiPolygon (`geometry_ref`: feature + part index, plus the bay's source
+  centroid, which the browser re-checks before linking). Map GeoJSON is never
+  modified.
+* Departments come from the most specific labelled department polygon
+  containing the bay; aisles from the numbered label in the walkway the bay
+  faces. Where either is not clear-cut the record says `"Unassigned"` /
+  `aisle_id: null` (shown as "—") rather than guessing.
+* `frontend/inventory-data.js` holds the model (occupancy bands, stats,
+  search, edits); `frontend/inventory.js` draws the overlay and sidebar.
+  Edits are stored per store in browser `localStorage` and can be reset per
+  rack or with **Reset all demo data**.
+* Occupancy colours: green > 70%, yellow 30-70%, red < 30%, grey vacant.
+  Physical occupancy (slots) is tracked separately from stock (units).

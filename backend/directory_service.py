@@ -12,7 +12,7 @@ from urllib.request import Request, urlopen
 
 from bs4 import BeautifulSoup
 
-from backend.config import DATA_DIR, STORES_DIR, STORES_FILE
+from backend.config import DATA_DIR, LAYOUTS_DIR, STORES_DIR, STORES_FILE
 
 logger = logging.getLogger("lowes_directory")
 BASE_URL = "https://www.lowes.com"
@@ -118,15 +118,16 @@ def load_directory_stores() -> list[dict[str, Any]]:
                 continue
             store_dir = store_file.parent
             status = _read(store_dir / "map_status.json", {})
-            has_map = all((store_dir / name).is_file() for name in ("aisle.geojson", "department.geojson", "rack.geojson"))
+            has_geojson_map = all((store_dir / name).is_file() for name in ("aisle.geojson", "department.geojson", "rack.geojson"))
+            has_layout = (LAYOUTS_DIR / f"{store['store_id']}.json").is_file()
             restored.append({
                 **store,
                 "state": "Connecticut" if store.get("state_code") == "CT" and store.get("state") == "CT" else store.get("state", ""),
                 "state_code": store.get("state_code") or store.get("state"),
                 "indoor_map_url": store.get("map_url") or f"{BASE_URL}/omniselling/store/{store['store_id']}/map-view",
                 "map_file": f"stores/{store['store_id']}/raw_map.json" if (store_dir / "raw_map.json").is_file() else None,
-                "map_status": status.get("status", "available" if has_map else "unavailable"),
-                "indoor_map_status": "success" if has_map else "no_indoor_map",
+                "map_status": status.get("status", "available" if has_layout or has_geojson_map else "unavailable"),
+                "indoor_map_status": "success" if has_layout or has_geojson_map else "no_indoor_map",
             })
     if restored:
         return restored
@@ -144,9 +145,14 @@ def load_directory_stores() -> list[dict[str, Any]]:
     return _legacy_fallback()[1]
 
 
+def listed_stores() -> list[dict[str, Any]]:
+    """Stores shown in the directory: those whose indoor map is known to be missing are left out."""
+    return [item for item in load_directory_stores() if item.get("indoor_map_status") != "no_indoor_map"]
+
+
 def cities_for(state_code: str) -> list[str]:
     normalized = state_code.upper()
-    restored = sorted({item.get("city") for item in load_directory_stores() if item.get("state_code", "").upper() == normalized and item.get("city")}, key=str.casefold)
+    restored = sorted({item.get("city") for item in listed_stores() if item.get("state_code", "").upper() == normalized and item.get("city")}, key=str.casefold)
     if restored:
         return restored
     if normalized == "CT":
@@ -159,11 +165,11 @@ def cities_for(state_code: str) -> list[str]:
     cities = [item.get("name") for item in cached if item.get("state", "").upper() == normalized]
     if cities:
         return sorted(set(cities), key=str.casefold)
-    return sorted({item.get("city") for item in load_directory_stores() if item.get("state_code", "").upper() == normalized and item.get("city")}, key=str.casefold)
+    return sorted({item.get("city") for item in listed_stores() if item.get("state_code", "").upper() == normalized and item.get("city")}, key=str.casefold)
 
 
 def stores_for(state_code: Optional[str] = None, city: Optional[str] = None) -> list[dict[str, Any]]:
-    stores = load_directory_stores()
+    stores = listed_stores()
     if state_code:
         stores = [item for item in stores if item.get("state_code", "").upper() == state_code.upper()]
     if city:

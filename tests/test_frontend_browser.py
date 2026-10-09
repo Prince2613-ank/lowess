@@ -61,14 +61,14 @@ def test_frontend_switch_search_filters_layers_race_and_missing_maps():
 
     async def verify():
         async with async_playwright() as p:
-            browser = await p.chromium.launch(channel='chrome',headless=True)
+            browser = await p.chromium.launch(channel='chrome',headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])  # WebGL for MapLibre
             page = await browser.new_page(viewport={'width':1440,'height':900})
             errors=[]
             page.on('pageerror',lambda e: errors.append(str(e)))
             await page.route('https://**/*',lambda route: route.abort())  # local assets; no tile/network dependency
             await page.goto(f'http://127.0.0.1:{server.server_port}/')
             await page.wait_for_function("document.querySelector('#map-status').textContent === 'Indoor map ready'")
-            assert await page.evaluate("state.layers.departments.getLayers().length") > 0
+            assert await page.evaluate("state.layers.data.departments.features.length") > 0
             assert '/api/catalog/stores/99001/map' not in requests  # lazy loading
             await page.locator('#store-search').fill('99001')
             assert await page.locator('.store-result').count() == 1
@@ -77,48 +77,48 @@ def test_frontend_switch_search_filters_layers_race_and_missing_maps():
             assert abs(await page.evaluate('state.map.getCenter().lng') + 86.7995) < .01
             assert await page.locator('.dept-label img').count() == 0  # escaped remote labels
             await page.locator('#layer-department').uncheck()
-            assert not await page.evaluate('state.map.hasLayer(state.layers.departments)')
+            assert not await page.evaluate("isLayerVisible('departments')")
             await page.locator('#layer-department').check()
-            assert await page.evaluate('state.map.hasLayer(state.layers.departments)')
+            assert await page.evaluate("isLayerVisible('departments')")
             await page.locator('#layer-satellite').uncheck()
-            assert await page.evaluate('state.map.hasLayer(state.layers.osmTile)')
+            assert await page.evaluate("state.map.getLayoutProperty('osm', 'visibility') === 'visible'")
             await page.locator('#store-search').fill('')
             await page.locator('#state-filter').select_option('AL')
             assert await page.locator('.store-result').count() == 3
             await page.locator('#city-filter').select_option('Test City')
             await page.locator('[data-store-id="99002"]').click()
             assert await page.locator('#map-status').inner_text() == 'Indoor map unavailable'
-            assert await page.evaluate('state.layers.departments.getLayers().length') == 0
+            assert await page.evaluate('state.layers.data.departments.features.length') == 0
             # Late map response must not replace a newer selection.
             await page.evaluate("directory.cache.delete('99001'); loadStore('99001'); loadStore('99002');")
             await page.wait_for_timeout(650)
             assert await page.evaluate('state.currentStoreId') == '99002'
-            assert await page.evaluate('state.layers.departments.getLayers().length') == 0
+            assert await page.evaluate('state.layers.data.departments.features.length') == 0
             await page.locator('[data-store-id="99003"]').click()
             await page.wait_for_function("document.querySelector('#map-status').textContent === 'Indoor map failed'")
             await page.locator('#state-filter').select_option('CT')
             await page.locator('[data-store-id="1665"]').click()
             await page.wait_for_function("document.querySelector('#map-status').textContent === 'Indoor map ready'")
-            assert await page.evaluate('state.layers.departmentLines.getLayers().length') >= 0
+            assert await page.evaluate('state.layers.data.departmentLines.features.length') >= 0
             assert await page.evaluate('state.layers.markerGroup.getLayers().length') > 0
             await page.evaluate("""() => {
-                state.map.setView([41.82, -72.71], 19);
+                state.map.jumpTo({ center: [-72.71, 41.82], zoom: 18 });
                 adjustDebug('east'); adjustDebug('north');
                 adjustDebug('scale-up'); adjustDebug('rotate-right');
                 document.querySelector('#debug-panel').hidden = false;
                 document.querySelector('#debug-mode').checked = true;
                 document.querySelector('#corner-mode').checked = true;
                 renderDebugCorners();
-                const marker = directory.cornerLayer.getLayers().find(layer => layer instanceof L.Marker);
-                const point = marker.getLatLng();
-                marker.setLatLng([point.lat + 0.0001, point.lng + 0.0001]);
+                const marker = directory.cornerLayer.markers[0];
+                const point = marker.getLngLat();
+                marker.setLngLat([point.lng + 0.0001, point.lat + 0.0001]);
                 marker.fire('dragend');
             }""")
-            assert await page.evaluate('state.map.getZoom()') == 19
+            assert await page.evaluate('state.map.getZoom()') == 18
             assert await page.evaluate("Math.abs(state.map.getCenter().lat - 41.82) < 0.000001")
             assert await page.evaluate("Math.abs(state.map.getCenter().lng + 72.71) < 0.000001")
             expected = await page.evaluate('JSON.parse(JSON.stringify(state.currentStore.debugGeoreference))')
-            bounds = await page.evaluate('directory.bounds.toBBoxString()')
+            bounds = await page.evaluate('JSON.stringify(directory.bounds.toArray())')
             await page.evaluate("document.querySelector('#debug-controls').hidden = false; document.querySelector('#corner-controls').hidden = false;")
             await page.locator('#corner-save').click()
             await page.wait_for_function("document.querySelector('#adjustment-save-status').textContent === 'Saved. No expiry.'")
@@ -126,12 +126,12 @@ def test_frontend_switch_search_filters_layers_race_and_missing_maps():
             await page.reload()
             await page.wait_for_function("document.querySelector('#map-status').textContent === 'Indoor map ready'")
             assert await page.evaluate('state.currentStore.debugGeoreference') == expected
-            assert await page.evaluate('directory.bounds.toBBoxString()') == bounds
+            assert await page.evaluate('JSON.stringify(directory.bounds.toArray())') == bounds
             other = await browser.new_page()
             await other.route('https://**/*', lambda route: route.abort())
             await other.goto(f'http://127.0.0.1:{server.server_port}/')
             await other.wait_for_function("document.querySelector('#map-status').textContent === 'Indoor map ready'")
-            assert await other.evaluate('directory.bounds.toBBoxString()') == bounds
+            assert await other.evaluate('JSON.stringify(directory.bounds.toArray())') == bounds
             assert not errors
             await browser.close()
     try: asyncio.run(verify())
