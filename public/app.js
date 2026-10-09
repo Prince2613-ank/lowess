@@ -2,20 +2,26 @@
  * Lowe's Interactive Store Map - frontend application logic.
  *
  * Talks to the FastAPI backend for the store directory and renders the raw
- * Lowes_*.geojson floor plan on a Leaflet map over OpenStreetMap tiles.
+ * Lowes_*.geojson floor plan on a MapLibre map over Esri satellite imagery
+ * (or OpenStreetMap tiles).
  * ========================================================================== */
 
-const DEFAULT_CENTER = [39.5, -98.35];
-const DEFAULT_ZOOM = 18;
+const DEFAULT_CENTER = [-98.35, 39.5]; // [lng, lat]
+
+// MapLibre measures zoom with 512px tiles where Leaflet used 256px ones, so
+// the same on-screen scale is one zoom level lower here. Every level below is
+// the old Leaflet level minus one, which keeps views and thresholds identical.
+const DEFAULT_ZOOM = 17;
+const OVERVIEW_ZOOM = 3;
 
 // Zoom thresholds driving progressive level-of-detail (see spec).
 const ZOOM = {
-    STORE_LEVEL: 18,
-    DEPT_LABELS: 18,
-    DEPT_LABELS_ALL: 20,
-    AISLE_LABELS: 18,
-    RACK_DETAIL: 22,
-    MAX_DETAIL: 23,
+    STORE_LEVEL: 17,
+    DEPT_LABELS: 17,
+    DEPT_LABELS_ALL: 19,
+    AISLE_LABELS: 17,
+    RACK_DETAIL: 21,
+    MAX_DETAIL: 22,
 };
 
 const BASIC_INFO_ICONS = {
@@ -49,6 +55,23 @@ const FLOORPLAN_LAYER_KEYS = [
     "aisleLines", "aislePoints", "racks", "rackLines",
 ];
 
+// Vector floor-plan layers, bottom to top. Polygon groups get a fill plus an
+// outline; line groups only a line. Colours match the former Leaflet styles
+// and per-feature `fill`, `stroke`, `stroke-width` and `opacity` still win.
+const FLOORPLAN_STYLES = {
+    departments: { color: "#96A3BD", weight: 1, fillColor: "#D9E2F6", fillOpacity: 0.75 },
+    aisles: { color: "#BBBBBB", weight: 1, fillColor: "#DCDEE2", fillOpacity: 0.7 },
+    racks: { color: "#9ca3af", weight: 1, fillColor: "#DCDEE2", fillOpacity: 0.8 },
+    departmentLines: { color: "#6b7280", weight: 1.5, opacity: 0.95 },
+    aisleLines: { color: "#8b949e", weight: 1, opacity: 0.9 },
+    rackLines: { color: "#4b5563", weight: 0.8, opacity: 0.85 },
+};
+
+// Leaflet's default path style, used for features outside the known layers.
+const EXTRA_COLOR = "#3388ff";
+
+const emptyCollection = () => ({ type: "FeatureCollection", features: [] });
+
 function iconFor(category, markerType) {
     if (category === "basic_information") return BASIC_INFO_ICONS[markerType] || "ℹ";
     if (category === "store_service") return STORE_SERVICE_ICONS[markerType] || "🔧";
@@ -58,6 +81,116 @@ function iconFor(category, markerType) {
 function humanize(s) {
     if (!s) return "";
     return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/* ---------------------------------------------------------------------- */
+/* HTML markers                                                           */
+/* ---------------------------------------------------------------------- */
+
+// A set of maplibregl.Markers shown and hidden together, like a Leaflet
+// layerGroup. Markers are only attached to the map while visible.
+class MarkerGroup {
+    constructor() {
+        this.markers = [];
+    }
+
+    addLayer(marker) {
+        this.markers.push(marker);
+        return this;
+    }
+
+    getLayers() {
+        return [...this.markers];
+    }
+
+    clearLayers() {
+        this.markers.forEach((marker) => marker.remove());
+        this.markers = [];
+    }
+
+    setVisible(visible, filter = () => true) {
+        for (const marker of this.markers) {
+            const show = visible && filter(marker);
+            if (show && !marker._shown) marker.addTo(state.map);
+            if (!show && marker._shown) marker.remove();
+            marker._shown = show;
+        }
+    }
+}
+
+function popupContent(title, detail = "") {
+    const content = document.createElement("div");
+    const heading = document.createElement("b");
+    heading.textContent = title;
+    content.append(heading);
+    if (detail) content.append(document.createTextNode(detail));
+    return content;
+}
+
+function labelMarker(lngLat, className, text) {
+    const element = document.createElement("div");
+    element.className = className;
+    element.textContent = text;
+    return new maplibregl.Marker({ element, anchor: "top-left" }).setLngLat(lngLat);
+}
+
+function iconMarker(lngLat, category, emoji) {
+    const element = document.createElement("div");
+    const icon = document.createElement("div");
+    icon.className = `marker-icon ${category}`;
+    icon.textContent = emoji;
+    element.append(icon);
+    return new maplibregl.Marker({ element, anchor: "center" }).setLngLat(lngLat);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Geometry helpers                                                       */
+/* ---------------------------------------------------------------------- */
+
+function forEachPosition(coordinates, callback) {
+    if (!Array.isArray(coordinates)) return;
+    if (coordinates.length >= 2 && typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
+        callback(coordinates);
+        return;
+    }
+    coordinates.forEach((child) => forEachPosition(child, callback));
+}
+
+function geometryBounds(geometry, bounds = new maplibregl.LngLatBounds()) {
+    if (!geometry) return bounds;
+    if (geometry.type === "GeometryCollection") {
+        (geometry.geometries || []).forEach((child) => geometryBounds(child, bounds));
+        return bounds;
+    }
+    forEachPosition(geometry.coordinates, (position) => bounds.extend([position[0], position[1]]));
+    return bounds;
+}
+
+function featuresBounds(features, bounds = new maplibregl.LngLatBounds()) {
+    for (const feature of features || []) geometryBounds(feature.geometry, bounds);
+    return bounds;
+}
+
+function boundsAreValid(bounds) {
+    return Boolean(bounds && bounds.getSouthWest && !bounds.isEmpty());
+}
+
+// Leaflet's LatLngBounds.pad(): grow every side by `ratio` of the span.
+function padBounds(bounds, ratio) {
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const dx = (ne.lng - sw.lng) * ratio;
+    const dy = (ne.lat - sw.lat) * ratio;
+    return new maplibregl.LngLatBounds([sw.lng - dx, sw.lat - dy], [ne.lng + dx, ne.lat + dy]);
+}
+
+// Fit like Leaflet did: whole zoom levels only, so satellite tiles stay sharp.
+function fitMapBounds(bounds, maxZoom, animate = false) {
+    const camera = state.map.cameraForBounds(bounds, { padding: 0, maxZoom });
+    if (!camera) return;
+    const view = { center: camera.center, zoom: Math.floor(camera.zoom), bearing: 0 };
+    if (animate) state.map.easeTo(view);
+    else state.map.jumpTo(view);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -71,158 +204,239 @@ const state = {
     currentStore: null,
 
     layers: {
-        departments: null,
-        deptLabels: null,
-        aisles: null,
-        aisleLabels: null,
-        racks: null,
-        departmentLines: null,
-        aisleLines: null,
-        rackLines: null,
-        rackLabels: null,
-        markers: null,   // array of {layer, minZoom}
+        data: Object.fromEntries(FLOORPLAN_LAYER_KEYS.map((key) => [key, emptyCollection()])),
+        deptLabels: new MarkerGroup(),
+        aisleLabels: new MarkerGroup(),
+        rackLabels: new MarkerGroup(),
+        markers: [],   // array of {layer, minZoom}
+        markerGroup: new MarkerGroup(),
         storePin: null,
-        osmTile: null,
-        satelliteTile: null,
     },
 };
+
+function applyPanelCollapseState(panelId, collapsed) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.classList.toggle('collapsed', collapsed);
+    const button = panel.querySelector('.panel-toggle');
+    if (button) {
+        button.textContent = collapsed ? '+' : '−';
+        button.setAttribute('aria-label', collapsed ? `Expand ${panelId} panel` : `Collapse ${panelId} panel`);
+        button.setAttribute('aria-expanded', String(!collapsed));
+    }
+    try {
+        sessionStorage.setItem(`map-panel:${panelId}:collapsed`, String(collapsed));
+    } catch (error) {
+        console.warn('Could not save panel collapse state:', error);
+    }
+}
+
+function wireCollapsiblePanels() {
+    document.querySelectorAll('.panel-toggle').forEach((button) => {
+        const panelId = button.dataset.panel;
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+
+        let collapsed = false;
+        try {
+            collapsed = sessionStorage.getItem(`map-panel:${panelId}:collapsed`) === 'true';
+        } catch (error) {
+            console.warn('Could not read panel collapse state:', error);
+        }
+        applyPanelCollapseState(panelId, collapsed);
+
+        button.addEventListener('click', () => {
+            const nextCollapsed = !panel.classList.contains('collapsed');
+            applyPanelCollapseState(panelId, nextCollapsed);
+            if (state.map) {
+                window.setTimeout(() => state.map.resize(), 50);
+            }
+        });
+    });
+}
 
 /* ---------------------------------------------------------------------- */
 /* Map bootstrap                                                          */
 /* ---------------------------------------------------------------------- */
 
-function initMap() {
-    const map = L.map("map", { zoomControl: true }).setView(DEFAULT_CENTER, 4);
+function colorValue(property, fallback) {
+    return ["to-color", ["coalesce", ["get", property], fallback], fallback];
+}
 
-    // Base layers - OpenStreetMap and Esri World Imagery satellite, both
-    // public tile services requiring no API key. Only one is shown at a
-    // time; toggled via the "Satellite basemap" checkbox in the layer panel,
-    // which is checked by default, so satellite is the initial basemap.
-    state.layers.osmTile = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 23,
-        maxNativeZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    });
+function strokeWidthValue(fallback) {
+    const width = ["to-number", ["get", "stroke-width"], 0];
+    return ["case", [">", width, 0], width, fallback];
+}
 
-    state.layers.satelliteTile = L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        {
-            maxZoom: 23,
-            maxNativeZoom: 19,
-            attribution: "Tiles &copy; Esri",
+function fillOpacityValue(fallback) {
+    return ["case", ["==", ["get", "opacity"], null], fallback, ["to-number", ["get", "opacity"], fallback]];
+}
+
+function floorplanLayers() {
+    const layers = [];
+    for (const [key, style] of Object.entries(FLOORPLAN_STYLES)) {
+        if (style.fillColor) {
+            layers.push({
+                id: `${key}-fill`,
+                type: "fill",
+                source: key,
+                paint: {
+                    "fill-color": colorValue("fill", style.fillColor),
+                    "fill-opacity": fillOpacityValue(style.fillOpacity),
+                },
+            });
         }
-    ).addTo(map);
+        layers.push({
+            id: `${key}-line`,
+            type: "line",
+            source: key,
+            layout: { "line-join": "round", "line-cap": "round" },
+            paint: {
+                "line-color": colorValue("stroke", style.color),
+                "line-width": strokeWidthValue(style.weight),
+                "line-opacity": style.opacity != null ? style.opacity : 1,
+            },
+        });
+    }
+    return layers;
+}
 
-    state.layers.departments = L.geoJSON(null, { style: departmentStyle, onEachFeature: onEachDepartment }).addTo(map);
-    state.layers.deptLabels = L.layerGroup().addTo(map);
-    state.layers.aisles = L.geoJSON(null, { style: aisleStyle, onEachFeature: onEachAisle }).addTo(map);
-    state.layers.aisleLabels = L.layerGroup().addTo(map);
-    state.layers.racks = L.geoJSON(null, { style: rackStyle, onEachFeature: onEachRack }).addTo(map);
-    state.layers.departmentLines = L.geoJSON(null, { style: departmentLineStyle }).addTo(map);
-    state.layers.aisleLines = L.geoJSON(null, { style: aisleLineStyle }).addTo(map);
-    state.layers.rackLines = L.geoJSON(null, { style: rackLineStyle }).addTo(map);
-    state.layers.rackLabels = L.layerGroup().addTo(map);
-    state.layers.markers = [];
-    state.layers.markerGroup = L.layerGroup().addTo(map);
+function initMap() {
+    const sources = {
+        // Base layers - OpenStreetMap and Esri World Imagery satellite, both
+        // public tile services requiring no API key. Only one is shown at a
+        // time; toggled via the "Satellite basemap" checkbox in the layer
+        // panel, which is checked by default, so satellite is the initial
+        // basemap. Tiles exist up to Leaflet zoom 19 and are overzoomed past it.
+        osm: {
+            type: "raster",
+            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        },
+        satellite: {
+            type: "raster",
+            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: "Tiles &copy; Esri",
+        },
+        extras: { type: "geojson", data: emptyCollection() },
+    };
+    for (const key of Object.keys(FLOORPLAN_STYLES)) sources[key] = { type: "geojson", data: emptyCollection() };
+
+    const map = new maplibregl.Map({
+        container: "map",
+        style: {
+            version: 8,
+            sources,
+            layers: [
+                { id: "background", type: "background", paint: { "background-color": "#dddddd" } },
+                { id: "osm", type: "raster", source: "osm", layout: { visibility: "none" } },
+                { id: "satellite", type: "raster", source: "satellite" },
+                ...floorplanLayers(),
+                {
+                    id: "extras-fill", type: "fill", source: "extras",
+                    paint: { "fill-color": EXTRA_COLOR, "fill-opacity": 0.2 },
+                },
+                {
+                    id: "extras-line", type: "line", source: "extras",
+                    layout: { "line-join": "round", "line-cap": "round" },
+                    paint: { "line-color": EXTRA_COLOR, "line-width": 3 },
+                },
+                {
+                    id: "extras-circle", type: "circle", source: "extras",
+                    paint: {
+                        "circle-radius": 10, "circle-color": EXTRA_COLOR, "circle-opacity": 0.2,
+                        "circle-stroke-color": EXTRA_COLOR, "circle-stroke-width": 3,
+                    },
+                },
+            ],
+        },
+        center: DEFAULT_CENTER,
+        zoom: OVERVIEW_ZOOM,
+        maxZoom: ZOOM.MAX_DETAIL,
+        // Leaflet maps are always north-up and flat.
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+    });
+    map.touchZoomRotate.disableRotation();
+    map.keyboard.disableRotation();
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
 
     map.on("zoomend", updateZoomVisibility);
+    map.on("click", showFeaturePopup);
+    map.on("mousemove", (event) => {
+        map.getCanvas().style.cursor = interactiveFeatureAt(event.point) ? "pointer" : "";
+    });
+    map.on("error", (event) => console.warn("Map error:", event.error || event));
     state.map = map;
+
+    // Sources and layers are usable once the style has loaded; the "load"
+    // event would also wait for every satellite tile to arrive.
+    return new Promise((resolve) => {
+        if (map.isStyleLoaded()) resolve();
+        else map.once("style.load", resolve);
+    });
 }
 
 /* ---------------------------------------------------------------------- */
-/* Feature styling                                                        */
+/* Popups                                                                 */
 /* ---------------------------------------------------------------------- */
 
-function departmentStyle(feature) {
-    return geoJsonStyle({ color: "#96A3BD", weight: 1, fillColor: "#D9E2F6", fillOpacity: 0.75 }, feature);
+// inventory-rack-fill (inventory.js) is listed so the cursor and hit order account for it;
+// that module opens its own rack details.
+const POPUP_LAYERS = ["departments-fill", "aisles-fill", "racks-fill", "extras-fill", "extras-line", "extras-circle", "inventory-rack-fill"];
+
+function interactiveFeatureAt(point) {
+    const layers = POPUP_LAYERS.filter((id) => state.map.getLayer(id));
+    return state.map.queryRenderedFeatures(point, { layers })[0] || null;
 }
 
-function aisleStyle(feature) {
-    return geoJsonStyle({ color: "#BBBBBB", weight: 1, fillColor: "#DCDEE2", fillOpacity: 0.7 }, feature);
+function featurePopupContent(feature) {
+    const props = feature.properties || {};
+    switch (feature.layer.id) {
+        case "departments-fill":
+            return popupContent(props.label || props.name || props.poi_name || "Department", props.category ? humanize(props.category) : "");
+        case "aisles-fill":
+            return popupContent(props.label || props.name || "Aisle");
+        case "racks-fill":
+            return popupContent(props.label || props.name || "Rack", props.info || "");
+        default: {
+            const text = document.createElement("span");
+            text.textContent = props.name || props.label || props.poi_name || "Map feature";
+            return text;
+        }
+    }
 }
 
-function rackStyle(feature) {
-    return geoJsonStyle({ color: "#9ca3af", weight: 1, fillColor: "#DCDEE2", fillOpacity: 0.8 }, feature);
+function showFeaturePopup(event) {
+    const feature = interactiveFeatureAt(event.point);
+    if (!feature || feature.layer.id === "inventory-rack-fill") return;
+    new maplibregl.Popup().setLngLat(event.lngLat).setDOMContent(featurePopupContent(feature)).addTo(state.map);
 }
 
-function departmentLineStyle(feature) {
-    return geoJsonStyle({ color: "#6b7280", weight: 1.5, opacity: 0.95 }, feature);
-}
+/* ---------------------------------------------------------------------- */
+/* Labels and point markers                                               */
+/* ---------------------------------------------------------------------- */
 
-function aisleLineStyle(feature) {
-    return geoJsonStyle({ color: "#8b949e", weight: 1, opacity: 0.9 }, feature);
-}
-
-function rackLineStyle(feature) {
-    return geoJsonStyle({ color: "#4b5563", weight: 0.8, opacity: 0.85 }, feature);
-}
-
-function geoJsonStyle(defaults, feature = null) {
-    const props = feature?.properties || {};
-    const fillOpacity = props.opacity != null ? Number(props.opacity) : defaults.fillOpacity;
-    return {
-        color: props.stroke || defaults.color,
-        weight: Number(props["stroke-width"]) || defaults.weight,
-        opacity: defaults.opacity != null ? defaults.opacity : 1,
-        fillColor: props.fill || defaults.fillColor,
-        fillOpacity: Number.isFinite(fillOpacity) ? fillOpacity : defaults.fillOpacity,
-    };
-}
-
-function onEachDepartment(feature, layer) {
-    const name = feature.properties.label || feature.properties.name || feature.properties.poi_name || "Department";
-    layer.bindPopup(`<b>${name}</b>${feature.properties.category ? humanize(feature.properties.category) : ""}`);
-    if (!layer.getBounds().isValid()) return;
-    const center = layer.getBounds().getCenter();
-    const label = L.marker(center, {
-        interactive: false,
-        icon: L.divIcon({ className: "dept-label", html: name, iconSize: null }),
-    });
-    label._minZoom = ZOOM.DEPT_LABELS;
-    state.layers.deptLabels.addLayer(label);
-}
-
-function onEachAisle(feature, layer) {
-    const name = feature.properties.label || feature.properties.name || "Aisle";
-    layer.bindPopup(`<b>${name}</b>`);
-    if (!layer.getBounds().isValid()) return;
-    const center = layer.getBounds().getCenter();
-    const label = L.marker(center, {
-        interactive: false,
-        icon: L.divIcon({ className: "aisle-label", html: name, iconSize: null }),
-    });
-    label._minZoom = ZOOM.AISLE_LABELS;
-    state.layers.aisleLabels.addLayer(label);
-}
-
-function onEachRack(feature, layer) {
-    const name = feature.properties.label || feature.properties.name || "Rack";
-    const info = feature.properties.info || "";
-    layer.bindPopup(`<b>${name}</b>${info}`);
-    if (!layer.getBounds().isValid()) return;
-    const center = layer.getBounds().getCenter();
-    const label = L.marker(center, {
-        interactive: false,
-        icon: L.divIcon({ className: "rack-label", html: info || name, iconSize: null }),
-    });
-    label._minZoom = ZOOM.RACK_DETAIL;
-    state.layers.rackLabels.addLayer(label);
+function addPolygonLabels(features, group, className, labelFor) {
+    for (const feature of features || []) {
+        const bounds = geometryBounds(feature.geometry);
+        if (!boundsAreValid(bounds)) continue;
+        group.addLayer(labelMarker(bounds.getCenter(), className, labelFor(feature.properties || {})));
+    }
 }
 
 function buildMarkerLayer(feature) {
     const [lon, lat] = feature.geometry.coordinates;
     const props = feature.properties;
-    const emoji = iconFor(props.category, props.marker_type);
-    const marker = L.marker([lat, lon], {
-        icon: L.divIcon({
-            className: "",
-            html: `<div class="marker-icon ${props.category}">${emoji}</div>`,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13],
-        }),
-    });
-    marker.bindPopup(`<b>${props.label || humanize(props.marker_type)}</b>${humanize(props.category)}`);
-    return { layer: marker, minZoom: props.min_zoom || ZOOM.STORE_LEVEL };
+    const marker = iconMarker([lon, lat], props.category, iconFor(props.category, props.marker_type));
+    marker.setPopup(new maplibregl.Popup().setDOMContent(popupContent(props.label || humanize(props.marker_type), humanize(props.category))));
+    // Data min_zoom values are Leaflet zoom levels.
+    return { layer: marker, minZoom: props.min_zoom != null ? props.min_zoom - 1 : ZOOM.STORE_LEVEL };
 }
 
 function buildGeoJsonPointLayer(feature) {
@@ -232,24 +446,14 @@ function buildGeoJsonPointLayer(feature) {
     if (props.icon_id || props.poi_name) {
         const category = props.profile === "STORE SERVICES" ? "store_service" : "basic_information";
         const markerType = normalizeIconId(props.icon_id || props.sub_category);
-        const emoji = iconFor(category, markerType);
-        const marker = L.marker([lat, lon], {
-            icon: L.divIcon({
-                className: "",
-                html: `<div class="marker-icon ${category}">${emoji}</div>`,
-                iconSize: [26, 26],
-                iconAnchor: [13, 13],
-            }),
-        });
-        marker.bindPopup(`<b>${label || humanize(markerType)}</b>${props.profile ? humanize(props.profile.toLowerCase()) : ""}`);
+        const marker = iconMarker([lon, lat], category, iconFor(category, markerType));
+        marker.setPopup(new maplibregl.Popup().setDOMContent(
+            popupContent(label || humanize(markerType), props.profile ? humanize(props.profile.toLowerCase()) : "")));
         return { layer: marker, minZoom: ZOOM.STORE_LEVEL };
     }
 
     return {
-        layer: L.marker([lat, lon], {
-            interactive: false,
-            icon: L.divIcon({ className: "aisle-label", html: label, iconSize: null }),
-        }),
+        layer: labelMarker([lon, lat], "aisle-label", label),
         minZoom: ZOOM.DEPT_LABELS,
     };
 }
@@ -258,7 +462,7 @@ function normalizeIconId(value) {
     return String(value || "")
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[̀-ͯ]/g, "")
         .replace(/pick_up/g, "pickup")
         .replace(/[^a-z0-9]+/g, "_")
         .replace(/^_+|_+$/g, "");
@@ -271,39 +475,37 @@ function normalizeIconId(value) {
 function updateZoomVisibility() {
     if (!state.map) return;
     const zoom = state.map.getZoom();
-    const map = state.map;
     const deptVisible = document.getElementById("layer-department").checked;
     const aisleVisible = document.getElementById("layer-aisle").checked;
     const rackVisible = document.getElementById("layer-rack").checked;
 
-    setLayerGroupVisible(state.layers.deptLabels, map, deptVisible && zoom >= ZOOM.DEPT_LABELS);
-    setLayerGroupVisible(state.layers.aisleLabels, map, aisleVisible && zoom >= ZOOM.AISLE_LABELS);
-    setLayerGroupVisible(state.layers.rackLabels, map, rackVisible && zoom >= ZOOM.RACK_DETAIL);
+    state.layers.deptLabels.setVisible(deptVisible && zoom >= ZOOM.DEPT_LABELS);
+    state.layers.aisleLabels.setVisible(aisleVisible && zoom >= ZOOM.AISLE_LABELS);
+    state.layers.rackLabels.setVisible(rackVisible && zoom >= ZOOM.RACK_DETAIL);
 
     // Aisle geometry itself becomes visible a level before its labels do,
     // and rack geometry a level before rack labels/info.
-    setLayerVisible(state.layers.departments, map, deptVisible);
-    setLayerVisible(state.layers.departmentLines, map, deptVisible);
-    setLayerVisible(state.layers.aisles, map, aisleVisible && zoom >= ZOOM.DEPT_LABELS_ALL);
-    setLayerVisible(state.layers.aisleLines, map, aisleVisible && zoom >= ZOOM.DEPT_LABELS_ALL);
-    setLayerVisible(state.layers.racks, map, rackVisible && zoom >= ZOOM.AISLE_LABELS);
-    setLayerVisible(state.layers.rackLines, map, rackVisible && zoom >= ZOOM.AISLE_LABELS);
+    setLayerVisible("departments", deptVisible);
+    setLayerVisible("departmentLines", deptVisible);
+    setLayerVisible("aisles", aisleVisible && zoom >= ZOOM.DEPT_LABELS_ALL);
+    setLayerVisible("aisleLines", aisleVisible && zoom >= ZOOM.DEPT_LABELS_ALL);
+    setLayerVisible("racks", rackVisible && zoom >= ZOOM.AISLE_LABELS);
+    setLayerVisible("rackLines", rackVisible && zoom >= ZOOM.AISLE_LABELS);
 
-    setLayerGroupVisible(state.layers.markerGroup, map, deptVisible);
-    for (const { layer, minZoom } of state.layers.markers) {
-        setLayerVisible(layer, map, deptVisible && zoom >= minZoom);
+    state.layers.markerGroup.setVisible(deptVisible, (marker) => zoom >= marker.minZoom);
+
+    if (typeof updateExtrasVisibility === "function") updateExtrasVisibility();
+}
+
+function setLayerVisible(key, visible) {
+    for (const id of [`${key}-fill`, `${key}-line`, key]) {
+        if (state.map.getLayer(id)) state.map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
     }
 }
 
-function setLayerGroupVisible(group, map, visible) {
-    if (visible && !map.hasLayer(group)) map.addLayer(group);
-    if (!visible && map.hasLayer(group)) map.removeLayer(group);
-}
-
-function setLayerVisible(layer, map, visible) {
-    if (!layer) return;
-    if (visible && !map.hasLayer(layer)) map.addLayer(layer);
-    if (!visible && map.hasLayer(layer)) map.removeLayer(layer);
+function isLayerVisible(key) {
+    const id = state.map.getLayer(`${key}-fill`) ? `${key}-fill` : state.map.getLayer(`${key}-line`) ? `${key}-line` : key;
+    return state.map.getLayoutProperty(id, "visibility") !== "none";
 }
 
 /* ---------------------------------------------------------------------- */
@@ -319,53 +521,48 @@ async function fetchJSON(url, options) {
     return res.json();
 }
 
+function setFloorplanData(data) {
+    state.layers.data = Object.fromEntries(FLOORPLAN_LAYER_KEYS.map((key) => [key, data[key] || emptyCollection()]));
+    for (const key of Object.keys(FLOORPLAN_STYLES)) {
+        state.map.getSource(key)?.setData(state.layers.data[key]);
+    }
+}
+
 function clearFeatureLayers() {
-    state.layers.departments.clearLayers();
+    setFloorplanData({});
     state.layers.deptLabels.clearLayers();
-    state.layers.aisles.clearLayers();
     state.layers.aisleLabels.clearLayers();
-    state.layers.racks.clearLayers();
-    state.layers.departmentLines.clearLayers();
-    state.layers.aisleLines.clearLayers();
-    state.layers.rackLines.clearLayers();
     state.layers.rackLabels.clearLayers();
     state.layers.markerGroup.clearLayers();
     state.layers.markers = [];
+    if (typeof clearInventoryLayer === "function") clearInventoryLayer();
+    if (typeof clearPickingLayers === "function") clearPickingLayers();
 }
 
 function renderGeoJsonFloorplanData(data) {
-    state.layers.departments.clearLayers();
-    state.layers.departmentLines.clearLayers();
-    state.layers.aisles.clearLayers();
-    state.layers.aisleLines.clearLayers();
-    state.layers.racks.clearLayers();
-    state.layers.rackLines.clearLayers();
-    state.layers.deptLabels.clearLayers();
-    state.layers.aisleLabels.clearLayers();
-    state.layers.markerGroup.clearLayers();
-    state.layers.markers = [];
+    clearFeatureLayers();
+    setFloorplanData(data);
 
-    state.layers.departments.addData(data.departments);
-    state.layers.departmentLines.addData(data.departmentLines);
-    state.layers.aisles.addData(data.aisles);
-    state.layers.aisleLines.addData(data.aisleLines);
-    state.layers.racks.addData(data.racks);
-    state.layers.rackLines.addData(data.rackLines);
+    addPolygonLabels(data.departments.features, state.layers.deptLabels, "dept-label",
+        (props) => props.label || props.name || props.poi_name || "Department");
+    addPolygonLabels(data.aisles.features, state.layers.aisleLabels, "aisle-label",
+        (props) => props.label || props.name || "Aisle");
+    addPolygonLabels(data.racks.features, state.layers.rackLabels, "rack-label",
+        (props) => props.info || props.label || props.name || "Rack");
 
     for (const feature of data.departmentPoints.features || []) {
         const point = buildGeoJsonPointLayer(feature);
         if (feature.properties?.poi_name || feature.properties?.icon_id) {
+            point.layer.minZoom = point.minZoom;
             state.layers.markers.push(point);
             state.layers.markerGroup.addLayer(point.layer);
         } else {
-            point.layer._minZoom = ZOOM.DEPT_LABELS;
             state.layers.deptLabels.addLayer(point.layer);
         }
     }
 
     for (const feature of data.aislePoints.features || []) {
         const point = buildGeoJsonPointLayer(feature);
-        point.layer._minZoom = ZOOM.AISLE_LABELS;
         state.layers.aisleLabels.addLayer(point.layer);
     }
 }
@@ -376,8 +573,8 @@ function renderGeoJsonFloorplanData(data) {
 
 function wireLayerControls() {
     document.getElementById("layer-satellite").addEventListener("change", (e) => {
-        setLayerVisible(state.layers.osmTile, state.map, !e.target.checked);
-        setLayerVisible(state.layers.satelliteTile, state.map, e.target.checked);
+        state.map.setLayoutProperty("osm", "visibility", e.target.checked ? "none" : "visible");
+        state.map.setLayoutProperty("satellite", "visibility", e.target.checked ? "visible" : "none");
     });
 
     for (const id of ["layer-department", "layer-aisle", "layer-rack"]) {
@@ -390,7 +587,13 @@ function wireLayerControls() {
 /* ---------------------------------------------------------------------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
-    initMap();
+    wireCollapsiblePanels();
+    try {
+        await initMap();
+    } catch (err) {
+        console.error("Failed to start the map:", err);
+        return;
+    }
     wireLayerControls();
     try {
         await loadStores();

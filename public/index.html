@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lowe's Interactive Store Map</title>
+    <title>Lowe's Store Maps · Connecticut</title>
 
     <link
         rel="stylesheet"
-        href="vendor/leaflet/leaflet.css"
+        href="vendor/maplibre-gl/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=inventory-12" />
 </head>
 <body>
     <div id="topbar">
-        <div class="brand">Lowe's Store Maps</div>
-        <span>United States store directory</span>
+        <div class="brand">Lowe's Store Maps <span class="brand-region">Connecticut</span></div>
+        <span>Store directory</span>
     </div>
 
     <aside id="directory" aria-label="Store directory">
@@ -29,47 +29,185 @@
         <button id="more-stores" hidden>Show more stores</button>
     </aside>
 
-    <section id="selection-info" aria-live="polite">
-        <strong id="selected-name">Select a store</strong>
-        <div id="selected-address"></div>
-        <div id="map-status"></div>
-        <button id="view-location" hidden>Store location</button>
-        <button id="view-indoor" hidden>Indoor map</button>
+    <aside id="inventory-panel" aria-labelledby="inventory-title">
+        <header class="inventory-header">
+            <div>
+                <h2 id="inventory-title">Inventory Management</h2>
+                <div id="inventory-store" class="inventory-store">No store selected</div>
+            </div>
+            <button id="inventory-collapse" type="button" class="inventory-icon-button" aria-controls="inventory-panel" aria-label="Collapse inventory panel">&rsaquo;</button>
+        </header>
+        <div class="ops-tabs" role="tablist" aria-label="Store operations">
+            <button type="button" role="tab" id="ops-tab-inventory" aria-controls="inventory-tab" aria-selected="true">Rack Inventory</button>
+            <button type="button" role="tab" id="ops-tab-picking" aria-controls="picking-tab" aria-selected="false">Order Picking</button>
+        </div>
+        <div id="inventory-tab" role="tabpanel" aria-labelledby="ops-tab-inventory">
+        <p id="inventory-message" class="inventory-message" role="status"></p>
+        <div id="inventory-content" hidden>
+            <section aria-label="Dashboard summary">
+                <div id="inventory-stats" class="inventory-stats"></div>
+            </section>
+            <section class="inventory-section">
+                <label for="inventory-search" class="inventory-label">Find a rack</label>
+                <div class="inventory-search-wrap">
+                    <input id="inventory-search" type="search" placeholder="Rack ID, aisle, department, product or SKU" autocomplete="off" aria-controls="inventory-search-results" />
+                    <ul id="inventory-search-results" class="inventory-search-results" hidden></ul>
+                </div>
+            </section>
+            <section class="inventory-section" aria-label="Rack filters">
+                <div class="inventory-filters">
+                    <select id="inventory-filter-department" aria-label="Department"><option value="">All departments</option></select>
+                    <select id="inventory-filter-category" aria-label="Product category"><option value="">All categories</option></select>
+                    <select id="inventory-filter-band" aria-label="Occupancy status">
+                        <option value="">All occupancy</option>
+                        <option value="high">Occupied (&gt; 70%)</option>
+                        <option value="partial">Partial (30&ndash;70%)</option>
+                        <option value="low">Low (&lt; 30%)</option>
+                        <option value="vacant">Vacant</option>
+                    </select>
+                    <select id="inventory-filter-aisle" aria-label="Aisle"><option value="">All aisles</option></select>
+                </div>
+                <button id="inventory-clear-filters" type="button" class="inventory-link-button">Clear filters</button>
+            </section>
+            <section id="inventory-details" class="inventory-details" aria-labelledby="inventory-details-title" hidden></section>
+            <section class="inventory-section">
+                <div class="inventory-list-head">
+                    <h3>All racks</h3>
+                    <span id="inventory-list-count"></span>
+                </div>
+                <div class="inventory-table-wrap">
+                    <table id="inventory-table" class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th aria-sort="none"><button type="button" data-sort="rack_id">Rack ID <span class="sort-indicator"></span></button></th>
+                                <th>Aisle</th>
+                                <th>Department</th>
+                                <th>Category</th>
+                                <th aria-sort="none"><button type="button" data-sort="occupancy">Occupancy <span class="sort-indicator"></span></button></th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body"></tbody>
+                    </table>
+                </div>
+                <button id="inventory-more" type="button" class="inventory-more" hidden>Show more racks</button>
+            </section>
+            <footer class="inventory-footer">
+                <button id="inventory-reset-all" type="button">Reset inventory</button>
+                <p id="inventory-storage-note" hidden>This browser is blocking local storage, so edits will be lost on refresh.</p>
+            </footer>
+        </div>
+        </div>
+        <div id="picking-tab" role="tabpanel" aria-labelledby="ops-tab-picking" hidden>
+            <div class="picking-toolbar">
+                <div class="picking-toolbar-actions">
+                    <button id="picking-generate" type="button">Create Order</button>
+                    <button id="picking-reset" type="button" class="picking-reset">Reset Orders</button>
+                </div>
+            </div>
+            <p id="picking-message" class="inventory-message" role="status" hidden></p>
+            <div id="picking-content" hidden>
+                <section aria-label="Order summary">
+                    <div id="picking-stats" class="inventory-stats picking-stats"></div>
+                </section>
+                <section class="inventory-section" aria-labelledby="picking-carts-title">
+                    <div class="inventory-list-head">
+                        <h3 id="picking-carts-title">Picking carts</h3>
+                        <label class="picking-toggle"><input type="checkbox" id="picking-show-all" /> Show all cart routes</label>
+                    </div>
+                    <div id="picking-carts" class="picking-carts"></div>
+                </section>
+                <section id="picking-cart-detail" class="picking-cart-detail" aria-label="Selected cart"></section>
+                <section class="inventory-section" aria-labelledby="picking-queue-title">
+                    <div class="inventory-list-head">
+                        <h3 id="picking-queue-title">Order queue</h3>
+                        <span id="picking-order-count"></span>
+                    </div>
+                    <input id="picking-search" class="picking-input" type="search" placeholder="Search order, customer, product or SKU" autocomplete="off" aria-label="Search orders" />
+                    <div class="inventory-filters picking-filters">
+                        <select id="picking-filter-status" aria-label="Order status">
+                            <option value="">All statuses</option>
+                            <option>Pending</option>
+                            <option>Assigned</option>
+                            <option>Picking</option>
+                            <option>Ready</option>
+                            <option>Completed</option>
+                        </select>
+                        <select id="picking-filter-priority" aria-label="Priority">
+                            <option value="">All priorities</option>
+                            <option>High</option>
+                            <option>Normal</option>
+                            <option>Low</option>
+                        </select>
+                    </div>
+                    <div class="picking-assign">
+                        <span id="picking-selected-count">0 selected</span>
+                        <select id="picking-assign-cart" aria-label="Cart to assign"></select>
+                        <button id="picking-assign" type="button" disabled>Assign to Cart</button>
+                    </div>
+                    <div class="inventory-table-wrap">
+                        <table class="inventory-table picking-table">
+                            <thead>
+                                <tr>
+                                    <th class="picking-check"><input type="checkbox" id="picking-select-all" aria-label="Select all listed orders" /></th>
+                                    <th>Order ID</th>
+                                    <th>Items</th>
+                                    <th>Priority</th>
+                                    <th>Cart</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="picking-order-body"></tbody>
+                        </table>
+                    </div>
+                    <section id="picking-order-details" class="inventory-details picking-order-details" aria-labelledby="picking-details-title" hidden></section>
+                </section>
+                <p id="picking-storage-note" class="picking-warning" hidden>This browser is blocking local storage, so order progress will be lost on refresh.</p>
+            </div>
+        </div>
+    </aside>
+    <button id="inventory-open-tab" type="button" aria-controls="inventory-panel" hidden>Inventory</button>
+
+    <section id="selection-info" class="collapsible-panel" aria-live="polite" hidden>
+        <div class="panel-header">
+            <div class="panel-title">Selected Store</div>
+            <button type="button" class="panel-toggle" data-panel="selection-info" aria-label="Toggle selected store panel">−</button>
+        </div>
+        <div class="panel-body">
+            <strong id="selected-name">Select a store</strong>
+            <div id="selected-address"></div>
+            <div id="map-status"></div>
+            <button id="view-location" hidden>Store location</button>
+            <button id="view-indoor" hidden>Indoor map</button>
+        </div>
     </section>
 
     <div id="map"></div>
 
-    <div id="layer-panel">
-        <h3>Layers</h3>
-        <label class="layer-row"><input type="checkbox" id="layer-satellite" checked /> Satellite basemap</label>
-        <label class="layer-row"><input type="checkbox" id="layer-aisle" checked /> Lowes_aisle</label>
-        <label class="layer-row"><input type="checkbox" id="layer-rack" checked /> Lowes_rack</label>
-        <label class="layer-row"><input type="checkbox" id="layer-department" checked /> Lowes_depertment</label>
-    </div>
-
-    <div id="debug-panel" hidden>
-        <h3>Debug georeference</h3>
-        <label class="debug-toggle"><input type="checkbox" id="debug-mode" /> Debug Mode</label>
-        <div id="debug-controls" hidden>
-            <div class="debug-store">Store: <strong id="debug-store-id">-</strong></div>
-            <label>Step size <select id="debug-step"><option value="1">Small</option><option value="5" selected>Medium</option><option value="20">Large</option></select></label>
-            <div class="debug-grid"><button data-debug-action="north">Move North</button><button data-debug-action="south">Move South</button><button data-debug-action="west">Move West</button><button data-debug-action="east">Move East</button></div>
-            <div class="debug-grid"><button data-debug-action="scale-up">Scale Up</button><button data-debug-action="scale-down">Scale Down</button><button data-debug-action="rotate-left">Rotate Left</button><button data-debug-action="rotate-right">Rotate Right</button></div>
-            <div class="debug-values">Offset X: <span id="debug-offset-x">0</span><br />Offset Y: <span id="debug-offset-y">0</span><br />Scale: <span id="debug-scale">1.000</span><br />Rotation: <span id="debug-rotation">0.0</span>°</div>
-            <div class="debug-actions"><button id="debug-reset">Reset</button><button id="debug-save">Save</button></div>
-            <label class="debug-toggle"><input type="checkbox" id="corner-mode" /> Corner Adjustment</label>
-            <div id="corner-controls" hidden>
-                <div class="corner-values">NW X <span id="corner-nw-x">0</span> / Y <span id="corner-nw-y">0</span><br />NE X <span id="corner-ne-x">0</span> / Y <span id="corner-ne-y">0</span><br />SW X <span id="corner-sw-x">0</span> / Y <span id="corner-sw-y">0</span><br />SE X <span id="corner-se-x">0</span> / Y <span id="corner-se-y">0</span></div>
-                <div class="debug-actions"><button id="reset-corners">Reset Corners</button><button id="corner-save">Save Adjustments</button></div>
-                <p id="adjustment-save-status" role="status" aria-live="polite"></p>
-            </div>
+    <div id="layer-panel" class="collapsible-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">Layers</h3>
+            <button type="button" class="panel-toggle" data-panel="layer-panel" aria-label="Toggle layers panel">−</button>
+        </div>
+        <div class="panel-body">
+            <label class="layer-row"><input type="checkbox" id="layer-satellite" checked /> Satellite basemap</label>
+            <label class="layer-row"><input type="checkbox" id="layer-aisle" checked /> Lowes_aisle</label>
+            <label class="layer-row"><input type="checkbox" id="layer-rack" checked /> Lowes_rack</label>
+            <label class="layer-row"><input type="checkbox" id="layer-department" checked /> Lowes_depertment</label>
+            <label class="layer-row layer-row-divider"><input type="checkbox" id="layer-inventory" checked /> Inventory visualization</label>
         </div>
     </div>
 
     <script
-        src="vendor/leaflet/leaflet.js"
+        src="vendor/maplibre-gl/maplibre-gl.js"
     ></script>
-    <script src="app.js?v=debug-georef-5"></script>
-    <script src="directory.js?v=debug-georef-8"></script>
+    <script src="app.js?v=maplibre-10"></script>
+    <script src="directory.js?v=maplibre-10"></script>
+    <script src="inventory-data.js?v=inventory-10"></script>
+    <script src="inventory.js?v=inventory-11"></script>
+    <script src="indoor-routing.js?v=picking-2"></script>
+    <script src="order-management.js?v=picking-2"></script>
+    <script src="picking-workflow.js?v=picking-2"></script>
 </body>
 </html>

@@ -549,3 +549,11 @@ Lowe's order system.
   `picking-target`) and the Order Picking tab.
 
 Browser checks: `tests/test_order_picking_browser.py`.
+
+## Hosted site (Vercel)
+
+Vercel serves `public/` from its CDN ahead of the FastAPI app, so
+`public/index.html` is the page visitors see; the API and `frontend/data/`
+are served by the app. After changing any HTML, JS or CSS in `frontend/`, run
+`python scripts/sync_public.py` and commit `public/` with it
+(`tests/test_public_sync.py` fails when the copies drift apart).
