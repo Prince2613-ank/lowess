@@ -8,8 +8,6 @@ const directory = {
     extrasVisible: true,
     location: null,
     sourceData: null,
-    debugReady: false,
-    cornerLayer: null,
 };
 const el = id => document.getElementById(id);
 const defaultDebug = () => ({
@@ -233,14 +231,6 @@ function clearExtras() {
     if (directory.control) { state.map.removeControl(directory.control); directory.control = null; }
 }
 
-function clearDebugCorners() {
-    if (directory.cornerLayer) {
-        directory.cornerLayer.markers.forEach(marker => marker.remove());
-        state.map.getSource('debug-corners')?.setData(emptyCollection());
-        directory.cornerLayer = null;
-    }
-}
-
 function options(id, values, selected = '') {
     const select = el(id);
     const first = select.options[0].text;
@@ -281,179 +271,6 @@ async function loadDebugGeoreference(store) {
     return store.debugGeoreference;
 }
 
-function updateDebugPanel() {
-    if (!directory.debugReady || !state.currentStore) return;
-    const debug = normalizedDebug(state.currentStore.debugGeoreference);
-    state.currentStore.debugGeoreference = debug;
-    el('debug-store-id').textContent = state.currentStore.store_id;
-    el('debug-offset-x').textContent = Number(debug.offset_x || 0).toFixed(1);
-    el('debug-offset-y').textContent = Number(debug.offset_y || 0).toFixed(1);
-    el('debug-scale').textContent = Number(debug.scale || 1).toFixed(3);
-    el('debug-rotation').textContent = Number(debug.rotation || 0).toFixed(1);
-    for (const key of ['nw', 'ne', 'sw', 'se']) {
-        el(`corner-${key}-x`).textContent = Number(debug.corners?.[key]?.x || 0).toFixed(1);
-        el(`corner-${key}-y`).textContent = Number(debug.corners?.[key]?.y || 0).toFixed(1);
-    }
-}
-
-// Saved corner keys follow the source drawing's y-down convention, so "nw"
-// is the geographic south-west corner. Keys stay as saved; only the labels
-// shown to people use compass directions.
-const CORNER_LABELS = { nw: 'SW', ne: 'SE', sw: 'NW', se: 'NE' };
-
-function renderDebugCorners() {
-    clearDebugCorners();
-    if (!directory.debugReady || !directory.sourceData || !state.currentStore) return;
-    if (el('debug-panel')?.hidden || !el('debug-mode')?.checked || !el('corner-mode')?.checked) return;
-    const context = debugContext(directory.sourceData, state.currentStore);
-    if (!context) return;
-    const cornerKeys = ['nw', 'ne', 'se', 'sw'];
-    const lngLats = {};
-    for (const key of cornerKeys) {
-        const [lon, lat] = context.bounds.corners[key];
-        lngLats[key] = projectSourcePoint(lon, lat, context);
-    }
-    const drawOutline = () => {
-        const ring = cornerKeys.map(key => lngLats[key]);
-        state.map.getSource('debug-corners').setData({
-            type: 'Feature',
-            properties: {},
-            geometry: { type: 'LineString', coordinates: [...ring, ring[0]] },
-        });
-    };
-    drawOutline();
-    const layer = { markers: [], dragging: null };
-    for (const key of cornerKeys) {
-        const element = document.createElement('div');
-        element.className = 'debug-corner-marker';
-        element.title = `${CORNER_LABELS[key]} corner - drag to adjust`;
-        element.style.zIndex = '1000';
-        const tag = document.createElement('span');
-        tag.textContent = CORNER_LABELS[key];
-        element.append(tag);
-        const marker = new maplibregl.Marker({ element, anchor: 'center', draggable: true }).setLngLat(lngLats[key]).addTo(state.map);
-        layer.markers.push(marker);
-        marker.on('dragstart', () => { layer.dragging = marker; });
-        marker.on('drag', () => {
-            const { lng, lat } = marker.getLngLat();
-            lngLats[key] = [lng, lat];
-            drawOutline();
-        });
-        marker.on('dragend', () => {
-            layer.dragging = null;
-            const [sourceLon, sourceLat] = context.bounds.corners[key];
-            const [baseLng, baseLat] = projectSourcePoint(sourceLon, sourceLat, context, false);
-            const latLng = marker.getLngLat();
-            const debug = normalizedDebug(state.currentStore.debugGeoreference);
-            debug.corners[key] = {
-                x: (latLng.lng - baseLng) * context.metersPerLon,
-                y: (latLng.lat - baseLat) * context.metersPerLat,
-            };
-            state.currentStore.debugGeoreference = debug;
-            updateDebugPanel();
-            renderAlignedMap(state.currentStore, directory.sourceData, false);
-        });
-    }
-    directory.cornerLayer = layer;
-}
-
-function adjustDebug(action) {
-    if (!state.currentStore) return;
-    const debug = normalizedDebug(state.currentStore.debugGeoreference);
-    state.currentStore.debugGeoreference = debug;
-    const step = Number(el('debug-step').value) || 5;
-    const cornerMode = el('corner-mode')?.checked;
-    const move = (target, dx, dy) => { target.x = Number(target.x || 0) + dx; target.y = Number(target.y || 0) + dy; };
-    const moveAllCorners = (dx, dy) => Object.values(debug.corners).forEach(corner => move(corner, dx, dy));
-    if (action === 'north') cornerMode ? moveAllCorners(0, step) : debug.offset_y = Number(debug.offset_y || 0) + step;
-    if (action === 'south') cornerMode ? moveAllCorners(0, -step) : debug.offset_y = Number(debug.offset_y || 0) - step;
-    if (action === 'east') cornerMode ? moveAllCorners(step, 0) : debug.offset_x = Number(debug.offset_x || 0) + step;
-    if (action === 'west') cornerMode ? moveAllCorners(-step, 0) : debug.offset_x = Number(debug.offset_x || 0) - step;
-    if (action === 'scale-up') debug.scale = Number(debug.scale || 1) + 0.05;
-    if (action === 'scale-down') debug.scale = Math.max(0.05, Number(debug.scale || 1) - 0.05);
-    if (action === 'rotate-left') debug.rotation = Number(debug.rotation || 0) - step;
-    if (action === 'rotate-right') debug.rotation = Number(debug.rotation || 0) + step;
-    updateDebugPanel();
-    if (directory.sourceData) renderAlignedMap(state.currentStore, directory.sourceData, false);
-}
-
-async function saveDebugGeoreference() {
-    if (!state.currentStore?.debugGeoreference || !directory.sourceData || directory.saving) return;
-    directory.saving = true;
-    const buttons = [el('debug-save'), el('corner-save')];
-    buttons.forEach(button => { button.disabled = true; button.textContent = 'Saving...'; });
-    el('adjustment-save-status').textContent = 'Saving...';
-    const storeId = state.currentStore.store_id;
-    const payload = { ...state.currentStore.debugGeoreference };
-    delete payload.store_id;
-    try {
-        await fetchJSON(`/api/store/${encodeURIComponent(storeId)}/debug-georeference`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        });
-        if (state.currentStoreId === storeId) {
-            el('map-status').textContent = 'Alignment saved for everyone';
-            el('adjustment-save-status').textContent = 'Saved. No expiry.';
-        }
-    } catch (error) {
-        if (state.currentStoreId === storeId) {
-            el('map-status').textContent = 'Save failed. Your adjustments are still here; try Save again.';
-            el('adjustment-save-status').textContent = 'Save failed. Please retry.';
-        }
-        console.error('Alignment save failed:', error);
-    } finally {
-        directory.saving = false;
-        buttons.forEach(button => { button.disabled = false; });
-        el('debug-save').textContent = 'Save';
-        el('corner-save').textContent = 'Save Adjustments';
-    }
-}
-
-function setupDebugPanel() {
-    const panel = el('debug-panel');
-    if (!panel || directory.debugReady) return;
-    directory.debugReady = true;
-    const params = new URLSearchParams(location.search);
-    panel.hidden = !(params.has('maptest') || params.has('debug'));
-    // Layers panel switch: opens the panel straight into corner adjustment.
-    const toggle = el('layer-debug');
-    if (toggle) {
-        toggle.checked = !panel.hidden;
-        toggle.addEventListener('change', () => {
-            const on = toggle.checked;
-            panel.hidden = !on;
-            el('debug-mode').checked = on;
-            el('debug-controls').hidden = !on;
-            el('corner-mode').checked = on;
-            el('corner-controls').hidden = !on;
-            renderDebugCorners();
-        });
-    }
-    el('debug-mode').addEventListener('change', event => { el('debug-controls').hidden = !event.target.checked; renderDebugCorners(); });
-    el('corner-mode')?.addEventListener('change', event => { el('corner-controls').hidden = !event.target.checked; renderDebugCorners(); });
-    document.querySelectorAll('[data-debug-action]').forEach(button => button.addEventListener('click', () => adjustDebug(button.dataset.debugAction)));
-    // MapLibre ends a marker drag on the map's mouseup. Releasing over a panel
-    // never reaches the map, which would leave the corner stuck to the pointer.
-    window.addEventListener('pointerup', event => {
-        if (directory.cornerLayer?.dragging && !state.map.getCanvasContainer().contains(event.target)) state.map.fire('mouseup');
-    }, true);
-    el('debug-reset').addEventListener('click', () => {
-        if (!state.currentStore) return;
-        state.currentStore.debugGeoreference = defaultDebug();
-        updateDebugPanel();
-        if (directory.sourceData) renderAlignedMap(state.currentStore, directory.sourceData, false);
-    });
-    el('reset-corners')?.addEventListener('click', () => {
-        if (!state.currentStore) return;
-        state.currentStore.debugGeoreference.corners = defaultDebug().corners;
-        updateDebugPanel();
-        if (directory.sourceData) renderAlignedMap(state.currentStore, directory.sourceData, false);
-    });
-    el('debug-save').addEventListener('click', saveDebugGeoreference);
-    el('corner-save').addEventListener('click', saveDebugGeoreference);
-}
-
 function renderAlignedMap(store, sourceData, fitViewport = true) {
     clearFeatureLayers(); clearExtras();
     const data = alignSourceMap(sourceData, store);
@@ -492,13 +309,10 @@ function renderAlignedMap(store, sourceData, fitViewport = true) {
     el('map-status').textContent = mismatch ? 'Indoor data uses different source coordinates. Select Indoor map to view it separately.' :
         store.map_status === 'failed' ? 'Saved map shown; latest refresh failed.' : 'Indoor map ready';
     updateZoomVisibility();
-    updateDebugPanel();
-    renderDebugCorners();
     if (typeof onInventoryMapRendered === 'function') onInventoryMapRendered(store, data, sourceData);
 }
 
 async function loadStores() {
-    setupDebugPanel();
     let states = null;
     try { states = await fetchJSON('/api/states'); } catch (error) { console.warn('Directory states unavailable:', error); }
     let response;
@@ -564,11 +378,10 @@ async function loadStore(storeId) {
     const store = state.stores.find(s => s.store_id === storeId);
     if (!store) return;
     state.currentStoreId = storeId; state.currentStore = store;
-    clearFeatureLayers(); clearExtras(); clearDebugCorners();
+    clearFeatureLayers(); clearExtras();
     if (state.layers.storePin) { state.layers.storePin.remove(); state.layers.storePin = null; }
     directory.bounds = null; directory.location = null;
     directory.sourceData = null;
-    el('adjustment-save-status').textContent = '';
     el('view-indoor').hidden = true; el('view-location').hidden = true;
     el('selected-name').textContent = `${store.name} · #${store.store_id}`;
     el('selected-address').textContent = store.address || 'Address unavailable';
@@ -603,7 +416,6 @@ async function loadStore(storeId) {
         return;
     }
     if (generation !== directory.generation) return;
-    updateDebugPanel();
     if (Number.isFinite(store.latitude) && Number.isFinite(store.longitude)) {
         showStorePin(store);
         el('view-location').hidden = false;

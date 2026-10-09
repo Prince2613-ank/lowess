@@ -323,7 +323,6 @@ function initMap() {
             attribution: "Tiles &copy; Esri",
         },
         extras: { type: "geojson", data: emptyCollection() },
-        "debug-corners": { type: "geojson", data: emptyCollection() },
     };
     for (const key of Object.keys(FLOORPLAN_STYLES)) sources[key] = { type: "geojson", data: emptyCollection() };
 
@@ -352,10 +351,6 @@ function initMap() {
                         "circle-radius": 10, "circle-color": EXTRA_COLOR, "circle-opacity": 0.2,
                         "circle-stroke-color": EXTRA_COLOR, "circle-stroke-width": 3,
                     },
-                },
-                {
-                    id: "debug-corners-line", type: "line", source: "debug-corners",
-                    paint: { "line-color": "#ff7a00", "line-width": 2, "line-dasharray": [3, 2] },
                 },
             ],
         },
@@ -541,6 +536,7 @@ function clearFeatureLayers() {
     state.layers.markerGroup.clearLayers();
     state.layers.markers = [];
     if (typeof clearInventoryLayer === "function") clearInventoryLayer();
+    if (typeof clearPickingLayers === "function") clearPickingLayers();
 }
 
 function renderGeoJsonFloorplanData(data) {

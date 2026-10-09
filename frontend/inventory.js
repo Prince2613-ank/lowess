@@ -1,5 +1,5 @@
 /* ==========================================================================
- * Rack & Inventory Management dashboard (SIMULATED DEMO DATA).
+ * Rack & Inventory Management dashboard (simulated stock).
  *
  * Links InventoryModel records to existing Lowes_rack bays, draws occupancy
  * colours as an overlay above the untouched rack layers and drives the
@@ -49,7 +49,7 @@ function h(tag, attrs = {}, ...children) {
         if (value == null || value === false) continue;
         if (key === "className") node.className = value;
         else if (key === "dataset") Object.assign(node.dataset, value);
-        else if (key === "style") Object.assign(node.style, value);
+        else if (key === "style") for (const [prop, v] of Object.entries(value)) prop.startsWith("--") ? node.style.setProperty(prop, v) : (node.style[prop] = v);
         else if (key.startsWith("on")) node.addEventListener(key.slice(2).toLowerCase(), value);
         else node.setAttribute(key, value === true ? "" : value);
     }
@@ -71,7 +71,7 @@ const formatTime = (iso) => {
 /* Geometry link                                                           */
 /* ---------------------------------------------------------------------- */
 
-// Same formula as scripts/generate_demo_inventory.py ring_centroid().
+// Same formula as scripts/generate_inventory.py ring_centroid().
 function ringCentroid(rings) {
     const ring = rings[0];
     const [ox, oy] = ring[0];
@@ -140,7 +140,7 @@ function ensureInventoryLayers() {
     if (inventory.layersReady || !state.map) return;
     const map = state.map;
     map.addSource(INVENTORY_SOURCE, { type: "geojson", data: emptyCollection() });
-    // Above the original rack layers, below extras and the debug overlay.
+    // Above the store's rack layers, below the extras layers.
     const before = map.getLayer("extras-fill") ? "extras-fill" : undefined;
     const visible = ["==", ["get", "visible"], true];
     map.addLayer({
@@ -344,11 +344,12 @@ async function onInventoryMapRendered(store, alignedData, sourceData) {
         inventory.racks.clear();
         renderInventoryMap();
         renderInventoryPanel();
-        return;
+    } else {
+        linkRacks(inventory.model.list(), alignedData, sourceData);
+        renderInventoryMap();
+        renderInventoryPanel();
     }
-    linkRacks(inventory.model.list(), alignedData, sourceData);
-    renderInventoryMap();
-    renderInventoryPanel();
+    if (typeof onPickingInventoryReady === "function") onPickingInventoryReady(store, alignedData, sourceData);
 }
 
 function clearInventoryLayer() {
@@ -603,17 +604,12 @@ function setInventoryPanelOpen(open) {
     inv$("inventory-panel").hidden = !open;
     inv$("inventory-open-tab").hidden = open;
     inv$("inventory-collapse").setAttribute("aria-expanded", String(open));
-    try { sessionStorage.setItem("map-panel:inventory-panel:open", String(open)); } catch (error) { /* per-tab preference only */ }
     if (state.map) window.setTimeout(() => { state.map.resize(); updateRackLabels(); }, 50);
 }
 
 function wireInventoryPanel() {
-    let open = window.innerWidth > 1100;
-    try {
-        const saved = sessionStorage.getItem("map-panel:inventory-panel:open");
-        if (saved != null) open = saved === "true";
-    } catch (error) { /* default */ }
-    setInventoryPanelOpen(open);
+    // The panel always starts open; collapsing only lasts until the next page load.
+    setInventoryPanelOpen(true);
     inv$("inventory-collapse").addEventListener("click", () => setInventoryPanelOpen(false));
     inv$("inventory-open-tab").addEventListener("click", () => setInventoryPanelOpen(true));
 
@@ -663,7 +659,7 @@ function wireInventoryPanel() {
 
     inv$("inventory-reset-all").addEventListener("click", () => {
         if (!inventory.model) return;
-        if (!window.confirm("Restore all racks in this store to their original inventory? Your changes will be discarded.")) return;
+        if (!window.confirm("Reset all racks in this store to their default stock levels? Your changes will be discarded.")) return;
         inventory.model.resetAll();
         refreshAfterEdit();
     });

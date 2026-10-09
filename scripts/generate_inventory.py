@@ -1,4 +1,4 @@
-"""Generate SIMULATED rack inventory for the store maps (demo data only).
+"""Generate SIMULATED rack inventory for the store maps (not live data).
 
 For every store under ``stores/<id>/`` this gives every shelf bay in the
 ``Lowes_rack`` MultiPolygon a simulated inventory record and writes
@@ -18,7 +18,7 @@ the department is "Unassigned" and/or the aisle is null:
   aisle is the one numbered label standing in that walkway with an unblocked
   line of sight along it. Zero or several candidates leave the aisle empty.
 
-Usage:  python scripts/generate_demo_inventory.py [--stores 1665,2544]
+Usage:  python scripts/generate_inventory.py [--stores 1665,2544]
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ MIN_RACK_AREA = 0.05  # m2
 UNASSIGNED = "Unassigned"
 AISLE_LABEL = re.compile(r"^(\d+|GC\d+)$")
 
-# Department label -> demo product category.
+# Department label -> product category.
 DEPARTMENT_CATEGORIES = {
     "TOOLS": ("Power Tools", "Hand Tools"),
     "PAINT": ("Paint & Supplies",),
@@ -313,7 +313,7 @@ def generate(store_dir: Path) -> dict | None:
     if not (store_dir / "rack.geojson").is_file():
         return None
     geometry = StoreGeometry(store_dir)
-    rng = random.Random(f"lowes-demo-inventory-{store_id}")
+    rng = random.Random(f"lowes-inventory-{store_id}")
     racks = []
     for rack in geometry.racks:
         if rack["poly"].area < MIN_RACK_AREA:
@@ -329,7 +329,7 @@ def generate(store_dir: Path) -> dict | None:
     store = json.loads((store_dir / "store.json").read_text(encoding="utf-8")) if (store_dir / "store.json").is_file() else {}
     return {
         "simulated": True,
-        "notice": "SIMULATED DEMO DATA - not connected to any real Lowe's inventory system.",
+        "notice": "Simulated stock - not connected to any live Lowe's inventory system.",
         "store_id": store_id,
         "store_name": store.get("name"),
         "generated_at": now.isoformat().replace("+00:00", "Z"),

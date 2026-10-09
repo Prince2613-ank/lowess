@@ -1,13 +1,13 @@
 /* ==========================================================================
- * Simulated rack inventory model (DEMO DATA ONLY - not connected to any real
- * Lowe's inventory system).
+ * Rack inventory model (simulated stock - not connected to any live Lowe's
+ * inventory system).
  *
  * Loads frontend/data/inventory/<store>.json, applies the visitor's local
  * edits from localStorage and answers queries. No DOM or map code here.
  * ========================================================================== */
 
 const InventoryModel = (() => {
-    const STORAGE_PREFIX = "lowes-demo-inventory:v1:";
+    const STORAGE_PREFIX = "lowes-inventory:v1:";
 
     // Occupancy bands: green > 70%, yellow 30-70%, red < 30%, grey = vacant.
     const BANDS = {
@@ -57,7 +57,20 @@ const InventoryModel = (() => {
             this.storageAvailable = true;
             this.overrides = this.readOverrides();
             this.records = new Map();
+            this.listeners = new Set();
             for (const id of this.base.keys()) this.rebuild(id);
+        }
+
+        // Other modules (order picking) are told about stock edits and resets.
+        subscribe(listener) {
+            this.listeners.add(listener);
+            return () => this.listeners.delete(listener);
+        }
+
+        emit(event) {
+            for (const listener of this.listeners) {
+                try { listener(event); } catch (error) { console.error("Inventory listener failed:", error); }
+            }
         }
 
         /* -- persistence ------------------------------------------------- */
@@ -110,6 +123,7 @@ const InventoryModel = (() => {
             };
             this.writeOverrides();
             this.rebuild(id);
+            this.emit({ type: "edit", rackId: id });
             return this.records.get(id);
         }
 
@@ -241,14 +255,16 @@ const InventoryModel = (() => {
             delete this.overrides[id];
             this.writeOverrides();
             this.rebuild(id);
-            return { ok: true, record: this.records.get(id), message: `${id} restored to its original inventory.` };
+            this.emit({ type: "reset", rackId: id });
+            return { ok: true, record: this.records.get(id), message: `${id} reset to its default stock levels.` };
         }
 
         resetAll() {
             this.overrides = {};
             this.writeOverrides();
             for (const id of this.base.keys()) this.rebuild(id);
-            return { ok: true, message: "All racks restored to their original inventory." };
+            this.emit({ type: "reset", rackId: null });
+            return { ok: true, message: "All racks reset to their default stock levels." };
         }
     }
 

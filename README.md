@@ -497,14 +497,14 @@ they're requested.
 - The `/calibrate` endpoint re-validates the full merged layout document
   with the same Pydantic models before writing it back to disk.
 
-## Rack & inventory demo (simulated data)
+## Rack & inventory management (simulated stock)
 
 The map includes a Rack & Inventory Management sidebar. **All inventory is
-simulated demo data**; nothing connects to a real Lowe's inventory system.
+simulated**; nothing connects to a real Lowe's inventory system.
 
 * `frontend/data/inventory/<store_id>.json` - one record for every shelf bay
   in the store (about 1,700-2,100 per store; slivers under 0.05 m2 skipped),
-  built by `python scripts/generate_demo_inventory.py [--stores 1665,2544]`.
+  built by `python scripts/generate_inventory.py [--stores 1665,2544]`.
   Each rack points at an existing bay in the store's `Lowes_rack`
   MultiPolygon (`geometry_ref`: feature + part index, plus the bay's source
   centroid, which the browser re-checks before linking). Map GeoJSON is never
@@ -516,6 +516,36 @@ simulated demo data**; nothing connects to a real Lowe's inventory system.
 * `frontend/inventory-data.js` holds the model (occupancy bands, stats,
   search, edits); `frontend/inventory.js` draws the overlay and sidebar.
   Edits are stored per store in browser `localStorage` and can be reset per
-  rack or with **Reset all demo data**.
+  rack or with **Reset inventory**.
 * Occupancy colours: green > 70%, yellow 30-70%, red < 30%, grey vacant.
   Physical occupancy (slots) is tracked separately from stock (units).
+
+## Online order picking & multi-cart routes (sample data)
+
+The inventory sidebar has an **Order Picking** tab next to **Rack Inventory**.
+Orders are sample data generated for each store; nothing connects to a real
+Lowe's order system.
+
+* `python scripts/build_routing_network.py` - walking network per store in
+  `frontend/data/routing/<store_id>.json`: a 0.5 m walkable grid built from
+  mapped department floor, the front-end service area (6 m around checkout /
+  pick-up / service desks) and corridors narrower than 10 m between them,
+  minus every rack and fixture grown by a 0.35 m cart clearance. Also stores
+  each rack's picking access cell (racks with no walkable cell within 2 m are
+  listed for review, not routed) and the PRODUCT PICK-UP desk, used as cart
+  start and drop-off.
+* `python scripts/generate_sample_orders.py` - 15 orders and the starting cart
+  assignments per store in `frontend/data/orders/<store_id>.json`. Every line
+  reuses an inventory SKU and its rack; only racks reachable from the pick-up
+  desk are used. Run it after the two inventory/routing scripts.
+* `frontend/indoor-routing.js` - Dijkstra on the grid (no corner cutting),
+  line-of-sight smoothing that stays on walkable cells, and stop ordering:
+  exhaustive for up to 8 stops, nearest-neighbour + 2-opt above that (shown as
+  a heuristic in the UI).
+* `frontend/order-management.js` - orders, carts, picks and the stock ledger
+  (picks deduct from the Rack Inventory model once; undo and Reset Orders give
+  the stock back). State is saved per store in `localStorage`.
+* `frontend/picking-workflow.js` - map layers (`picking-routes`,
+  `picking-target`) and the Order Picking tab.
+
+Browser checks: `tests/test_order_picking_browser.py`.

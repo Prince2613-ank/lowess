@@ -101,28 +101,11 @@ def test_frontend_switch_search_filters_layers_race_and_missing_maps():
             await page.wait_for_function("document.querySelector('#map-status').textContent === 'Indoor map ready'")
             assert await page.evaluate('state.layers.data.departmentLines.features.length') >= 0
             assert await page.evaluate('state.layers.markerGroup.getLayers().length') > 0
-            await page.evaluate("""() => {
-                state.map.jumpTo({ center: [-72.71, 41.82], zoom: 18 });
-                adjustDebug('east'); adjustDebug('north');
-                adjustDebug('scale-up'); adjustDebug('rotate-right');
-                document.querySelector('#debug-panel').hidden = false;
-                document.querySelector('#debug-mode').checked = true;
-                document.querySelector('#corner-mode').checked = true;
-                renderDebugCorners();
-                const marker = directory.cornerLayer.markers[0];
-                const point = marker.getLngLat();
-                marker.setLngLat([point.lng + 0.0001, point.lat + 0.0001]);
-                marker.fire('dragend');
-            }""")
-            assert await page.evaluate('state.map.getZoom()') == 18
-            assert await page.evaluate("Math.abs(state.map.getCenter().lat - 41.82) < 0.000001")
-            assert await page.evaluate("Math.abs(state.map.getCenter().lng + 72.71) < 0.000001")
+            # The corner adjustment tool is gone; the saved alignment still loads.
+            assert await page.locator('#debug-panel, #layer-debug, .debug-corner-marker').count() == 0
+            assert await page.evaluate("typeof adjustDebug === 'undefined' && !state.map.getLayer('debug-corners-line')")
             expected = await page.evaluate('JSON.parse(JSON.stringify(state.currentStore.debugGeoreference))')
             bounds = await page.evaluate('JSON.stringify(directory.bounds.toArray())')
-            await page.evaluate("document.querySelector('#debug-controls').hidden = false; document.querySelector('#corner-controls').hidden = false;")
-            await page.locator('#corner-save').click()
-            await page.wait_for_function("document.querySelector('#adjustment-save-status').textContent === 'Saved. No expiry.'")
-            assert await page.locator('#map-status').inner_text() == 'Alignment saved for everyone'
             await page.reload()
             await page.wait_for_function("document.querySelector('#map-status').textContent === 'Indoor map ready'")
             assert await page.evaluate('state.currentStore.debugGeoreference') == expected

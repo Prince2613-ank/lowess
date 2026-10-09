@@ -11,7 +11,7 @@ from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from generate_demo_inventory import MIN_RACK_AREA, StoreGeometry  # noqa: E402
+from generate_inventory import MIN_RACK_AREA, StoreGeometry  # noqa: E402
 STORE_IDS = ('1665', '2544')
 
 
@@ -180,7 +180,7 @@ def test_inventory_dashboard_links_racks_edits_and_persists():
             await page.locator('#inventory-set-occupied').click()
             assert 'whole number' in await page.locator('#inventory-edit-status').inner_text()
 
-            # 7. Edits persist after a refresh; Reset All restores the demo data.
+            # 7. Edits persist after a refresh; Reset All restores the default stock.
             await page.reload()
             await page.wait_for_function(ready)
             await page.evaluate(f"window.RACK = '{A}'")
@@ -201,7 +201,7 @@ def test_inventory_dashboard_links_racks_edits_and_persists():
             await page.locator('#inventory-more').click()
             assert await page.locator('#inventory-table-body tr').count() == 200
 
-            # 10. Visualisation off leaves the original rack layers untouched.
+            # 10. Visualisation off leaves the store's rack layers untouched.
             racks_before = await page.evaluate("JSON.stringify([state.layers.data.racks, state.map.getLayoutProperty('racks-fill', 'visibility')])")
             await page.locator('#layer-inventory').uncheck()
             assert await page.evaluate("state.map.getLayoutProperty('inventory-rack-fill', 'visibility')") == 'none'
@@ -211,7 +211,7 @@ def test_inventory_dashboard_links_racks_edits_and_persists():
             await page.locator('#layer-inventory').check()
             assert await page.evaluate("state.map.getLayoutProperty('inventory-rack-fill', 'visibility')") == 'visible'
 
-            # 8. Original controls still work.
+            # 8. Existing map controls still work.
             zoom = await page.evaluate("state.map.getZoom()")
             await page.locator('.maplibregl-ctrl-zoom-out').click()
             await page.wait_for_function(f"state.map.getZoom() < {zoom} && !state.map.isMoving()")

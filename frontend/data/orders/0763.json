@@ -1,0 +1,976 @@
+{
+ "simulated": true,
+ "notice": "Sample online orders - not from any live Lowe's order system.",
+ "store_id": "0763",
+ "generated_at": "2026-10-09T12:00:00Z",
+ "product_pool": [
+  {
+   "type": "Cordless Drill",
+   "product_name": "20V Cordless Drill/Driver Kit",
+   "sku": "PT-0763-15081",
+   "rack_id": "R-1508",
+   "aisle_id": "59",
+   "department": "Tools",
+   "max_quantity": 2
+  },
+  {
+   "type": "Hammer",
+   "product_name": "16 oz Claw Hammer",
+   "sku": "HT-0763-15103",
+   "rack_id": "R-1510",
+   "aisle_id": "59",
+   "department": "Tools",
+   "max_quantity": 3
+  },
+  {
+   "type": "LED Bulbs",
+   "product_name": "LED A19 Bulb (4-Pack)",
+   "sku": "EL-0763-07732",
+   "rack_id": "R-0773",
+   "aisle_id": "10",
+   "department": "Lighting",
+   "max_quantity": 6
+  },
+  {
+   "type": "PEX Pipe",
+   "product_name": "1/2 in PEX Pipe, 100 ft",
+   "sku": "PL-0763-13591",
+   "rack_id": "R-1359",
+   "aisle_id": "15",
+   "department": "Rough Plumbing",
+   "max_quantity": 3
+  },
+  {
+   "type": "Wall Paint",
+   "product_name": "Interior Eggshell Paint, 1 gal",
+   "sku": "PS-0763-12441",
+   "rack_id": "R-1244",
+   "aisle_id": "3",
+   "department": "Paint",
+   "max_quantity": 4
+  },
+  {
+   "type": "Paint Roller",
+   "product_name": "9 in Roller Kit",
+   "sku": "PS-0763-12291",
+   "rack_id": "R-1229",
+   "aisle_id": "2",
+   "department": "Paint",
+   "max_quantity": 3
+  },
+  {
+   "type": "Electrical Wire",
+   "product_name": "14/2 NM-B Wire, 50 ft",
+   "sku": "EL-0763-07681",
+   "rack_id": "R-0768",
+   "aisle_id": "10",
+   "department": "Lighting",
+   "max_quantity": 3
+  },
+  {
+   "type": "Screwdriver Set",
+   "product_name": "Screwdriver Set (10-Piece)",
+   "sku": "HT-0763-15271",
+   "rack_id": "R-1527",
+   "aisle_id": "63",
+   "department": "Tools",
+   "max_quantity": 2
+  },
+  {
+   "type": "Garden Hose",
+   "product_name": "50 ft Garden Hose",
+   "sku": "LG-0763-11492",
+   "rack_id": "R-1149",
+   "aisle_id": "GC2",
+   "department": "Outside Lawn And Garden",
+   "max_quantity": 2
+  },
+  {
+   "type": "Storage Containers",
+   "product_name": "27 gal Storage Tote",
+   "sku": "ST-0763-14581",
+   "rack_id": "R-1458",
+   "aisle_id": "30",
+   "department": "Storage",
+   "max_quantity": 4
+  },
+  {
+   "type": "Wood Screws",
+   "product_name": "Deck Screws #8 x 2-1/2 in, 5 lb",
+   "sku": "HW-0763-04931",
+   "rack_id": "R-0493",
+   "aisle_id": "17",
+   "department": "Hardware",
+   "max_quantity": 3
+  },
+  {
+   "type": "Floor Tiles",
+   "product_name": "Porcelain Tile 12x24 (Case)",
+   "sku": "FL-0763-04381",
+   "rack_id": "R-0438",
+   "aisle_id": "39",
+   "department": "Flooring",
+   "max_quantity": 6
+  },
+  {
+   "type": "Plumbing Fittings",
+   "product_name": "PVC 90-Degree Elbow (10-Pack)",
+   "sku": "PL-0763-13492",
+   "rack_id": "R-1349",
+   "aisle_id": "14",
+   "department": "Rough Plumbing",
+   "max_quantity": 4
+  },
+  {
+   "type": "Safety Gloves",
+   "product_name": "Work Gloves (3-Pack)",
+   "sku": "GM-0763-16082",
+   "rack_id": "R-1608",
+   "aisle_id": "40",
+   "department": "Unassigned",
+   "max_quantity": 4
+  }
+ ],
+ "orders": [
+  {
+   "order_id": "ORD-1001",
+   "customer_ref": "CUST-50865",
+   "order_time": "2026-10-09T07:08:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "LED Bulbs",
+     "product_name": "LED A19 Bulb (4-Pack)",
+     "sku": "EL-0763-07732",
+     "quantity": 1,
+     "rack_id": "R-0773",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 2,
+     "type": "Paint Roller",
+     "product_name": "9 in Roller Kit",
+     "sku": "PS-0763-12291",
+     "quantity": 1,
+     "rack_id": "R-1229",
+     "aisle_id": "2",
+     "department": "Paint"
+    },
+    {
+     "line_no": 3,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 2,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    },
+    {
+     "line_no": 4,
+     "type": "Floor Tiles",
+     "product_name": "Porcelain Tile 12x24 (Case)",
+     "sku": "FL-0763-04381",
+     "quantity": 5,
+     "rack_id": "R-0438",
+     "aisle_id": "39",
+     "department": "Flooring"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1002",
+   "customer_ref": "CUST-19522",
+   "order_time": "2026-10-09T07:24:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Hammer",
+     "product_name": "16 oz Claw Hammer",
+     "sku": "HT-0763-15103",
+     "quantity": 3,
+     "rack_id": "R-1510",
+     "aisle_id": "59",
+     "department": "Tools"
+    },
+    {
+     "line_no": 2,
+     "type": "Wall Paint",
+     "product_name": "Interior Eggshell Paint, 1 gal",
+     "sku": "PS-0763-12441",
+     "quantity": 4,
+     "rack_id": "R-1244",
+     "aisle_id": "3",
+     "department": "Paint"
+    },
+    {
+     "line_no": 3,
+     "type": "Electrical Wire",
+     "product_name": "14/2 NM-B Wire, 50 ft",
+     "sku": "EL-0763-07681",
+     "quantity": 3,
+     "rack_id": "R-0768",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 4,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 4,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 5,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 2,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1003",
+   "customer_ref": "CUST-26156",
+   "order_time": "2026-10-09T07:31:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Wood Screws",
+     "product_name": "Deck Screws #8 x 2-1/2 in, 5 lb",
+     "sku": "HW-0763-04931",
+     "quantity": 1,
+     "rack_id": "R-0493",
+     "aisle_id": "17",
+     "department": "Hardware"
+    },
+    {
+     "line_no": 2,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 4,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 3,
+     "type": "LED Bulbs",
+     "product_name": "LED A19 Bulb (4-Pack)",
+     "sku": "EL-0763-07732",
+     "quantity": 5,
+     "rack_id": "R-0773",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 4,
+     "type": "Hammer",
+     "product_name": "16 oz Claw Hammer",
+     "sku": "HT-0763-15103",
+     "quantity": 1,
+     "rack_id": "R-1510",
+     "aisle_id": "59",
+     "department": "Tools"
+    },
+    {
+     "line_no": 5,
+     "type": "Plumbing Fittings",
+     "product_name": "PVC 90-Degree Elbow (10-Pack)",
+     "sku": "PL-0763-13492",
+     "quantity": 2,
+     "rack_id": "R-1349",
+     "aisle_id": "14",
+     "department": "Rough Plumbing"
+    },
+    {
+     "line_no": 6,
+     "type": "Cordless Drill",
+     "product_name": "20V Cordless Drill/Driver Kit",
+     "sku": "PT-0763-15081",
+     "quantity": 2,
+     "rack_id": "R-1508",
+     "aisle_id": "59",
+     "department": "Tools"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1004",
+   "customer_ref": "CUST-55670",
+   "order_time": "2026-10-09T07:46:00Z",
+   "priority": "Low",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Wood Screws",
+     "product_name": "Deck Screws #8 x 2-1/2 in, 5 lb",
+     "sku": "HW-0763-04931",
+     "quantity": 3,
+     "rack_id": "R-0493",
+     "aisle_id": "17",
+     "department": "Hardware"
+    },
+    {
+     "line_no": 2,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 3,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    },
+    {
+     "line_no": 3,
+     "type": "Paint Roller",
+     "product_name": "9 in Roller Kit",
+     "sku": "PS-0763-12291",
+     "quantity": 1,
+     "rack_id": "R-1229",
+     "aisle_id": "2",
+     "department": "Paint"
+    },
+    {
+     "line_no": 4,
+     "type": "Floor Tiles",
+     "product_name": "Porcelain Tile 12x24 (Case)",
+     "sku": "FL-0763-04381",
+     "quantity": 2,
+     "rack_id": "R-0438",
+     "aisle_id": "39",
+     "department": "Flooring"
+    },
+    {
+     "line_no": 5,
+     "type": "Garden Hose",
+     "product_name": "50 ft Garden Hose",
+     "sku": "LG-0763-11492",
+     "quantity": 1,
+     "rack_id": "R-1149",
+     "aisle_id": "GC2",
+     "department": "Outside Lawn And Garden"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1005",
+   "customer_ref": "CUST-98441",
+   "order_time": "2026-10-09T07:56:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "LED Bulbs",
+     "product_name": "LED A19 Bulb (4-Pack)",
+     "sku": "EL-0763-07732",
+     "quantity": 5,
+     "rack_id": "R-0773",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 2,
+     "type": "Safety Gloves",
+     "product_name": "Work Gloves (3-Pack)",
+     "sku": "GM-0763-16082",
+     "quantity": 3,
+     "rack_id": "R-1608",
+     "aisle_id": "40",
+     "department": "Unassigned"
+    },
+    {
+     "line_no": 3,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 3,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1006",
+   "customer_ref": "CUST-82862",
+   "order_time": "2026-10-09T08:07:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 3,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    },
+    {
+     "line_no": 2,
+     "type": "Garden Hose",
+     "product_name": "50 ft Garden Hose",
+     "sku": "LG-0763-11492",
+     "quantity": 2,
+     "rack_id": "R-1149",
+     "aisle_id": "GC2",
+     "department": "Outside Lawn And Garden"
+    },
+    {
+     "line_no": 3,
+     "type": "Cordless Drill",
+     "product_name": "20V Cordless Drill/Driver Kit",
+     "sku": "PT-0763-15081",
+     "quantity": 2,
+     "rack_id": "R-1508",
+     "aisle_id": "59",
+     "department": "Tools"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1007",
+   "customer_ref": "CUST-25690",
+   "order_time": "2026-10-09T08:16:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Screwdriver Set",
+     "product_name": "Screwdriver Set (10-Piece)",
+     "sku": "HT-0763-15271",
+     "quantity": 1,
+     "rack_id": "R-1527",
+     "aisle_id": "63",
+     "department": "Tools"
+    },
+    {
+     "line_no": 2,
+     "type": "Electrical Wire",
+     "product_name": "14/2 NM-B Wire, 50 ft",
+     "sku": "EL-0763-07681",
+     "quantity": 2,
+     "rack_id": "R-0768",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 3,
+     "type": "Floor Tiles",
+     "product_name": "Porcelain Tile 12x24 (Case)",
+     "sku": "FL-0763-04381",
+     "quantity": 4,
+     "rack_id": "R-0438",
+     "aisle_id": "39",
+     "department": "Flooring"
+    },
+    {
+     "line_no": 4,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 2,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1008",
+   "customer_ref": "CUST-70401",
+   "order_time": "2026-10-09T08:26:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 1,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 2,
+     "type": "Wood Screws",
+     "product_name": "Deck Screws #8 x 2-1/2 in, 5 lb",
+     "sku": "HW-0763-04931",
+     "quantity": 2,
+     "rack_id": "R-0493",
+     "aisle_id": "17",
+     "department": "Hardware"
+    },
+    {
+     "line_no": 3,
+     "type": "Floor Tiles",
+     "product_name": "Porcelain Tile 12x24 (Case)",
+     "sku": "FL-0763-04381",
+     "quantity": 5,
+     "rack_id": "R-0438",
+     "aisle_id": "39",
+     "department": "Flooring"
+    },
+    {
+     "line_no": 4,
+     "type": "Plumbing Fittings",
+     "product_name": "PVC 90-Degree Elbow (10-Pack)",
+     "sku": "PL-0763-13492",
+     "quantity": 2,
+     "rack_id": "R-1349",
+     "aisle_id": "14",
+     "department": "Rough Plumbing"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1009",
+   "customer_ref": "CUST-28638",
+   "order_time": "2026-10-09T08:36:00Z",
+   "priority": "High",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Floor Tiles",
+     "product_name": "Porcelain Tile 12x24 (Case)",
+     "sku": "FL-0763-04381",
+     "quantity": 4,
+     "rack_id": "R-0438",
+     "aisle_id": "39",
+     "department": "Flooring"
+    },
+    {
+     "line_no": 2,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 2,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 3,
+     "type": "Garden Hose",
+     "product_name": "50 ft Garden Hose",
+     "sku": "LG-0763-11492",
+     "quantity": 1,
+     "rack_id": "R-1149",
+     "aisle_id": "GC2",
+     "department": "Outside Lawn And Garden"
+    },
+    {
+     "line_no": 4,
+     "type": "Cordless Drill",
+     "product_name": "20V Cordless Drill/Driver Kit",
+     "sku": "PT-0763-15081",
+     "quantity": 1,
+     "rack_id": "R-1508",
+     "aisle_id": "59",
+     "department": "Tools"
+    },
+    {
+     "line_no": 5,
+     "type": "Screwdriver Set",
+     "product_name": "Screwdriver Set (10-Piece)",
+     "sku": "HT-0763-15271",
+     "quantity": 2,
+     "rack_id": "R-1527",
+     "aisle_id": "63",
+     "department": "Tools"
+    },
+    {
+     "line_no": 6,
+     "type": "Wood Screws",
+     "product_name": "Deck Screws #8 x 2-1/2 in, 5 lb",
+     "sku": "HW-0763-04931",
+     "quantity": 1,
+     "rack_id": "R-0493",
+     "aisle_id": "17",
+     "department": "Hardware"
+    },
+    {
+     "line_no": 7,
+     "type": "Electrical Wire",
+     "product_name": "14/2 NM-B Wire, 50 ft",
+     "sku": "EL-0763-07681",
+     "quantity": 1,
+     "rack_id": "R-0768",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 8,
+     "type": "Hammer",
+     "product_name": "16 oz Claw Hammer",
+     "sku": "HT-0763-15103",
+     "quantity": 1,
+     "rack_id": "R-1510",
+     "aisle_id": "59",
+     "department": "Tools"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1010",
+   "customer_ref": "CUST-30861",
+   "order_time": "2026-10-09T08:52:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Hammer",
+     "product_name": "16 oz Claw Hammer",
+     "sku": "HT-0763-15103",
+     "quantity": 2,
+     "rack_id": "R-1510",
+     "aisle_id": "59",
+     "department": "Tools"
+    },
+    {
+     "line_no": 2,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 4,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 3,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 3,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    },
+    {
+     "line_no": 4,
+     "type": "Garden Hose",
+     "product_name": "50 ft Garden Hose",
+     "sku": "LG-0763-11492",
+     "quantity": 2,
+     "rack_id": "R-1149",
+     "aisle_id": "GC2",
+     "department": "Outside Lawn And Garden"
+    },
+    {
+     "line_no": 5,
+     "type": "Screwdriver Set",
+     "product_name": "Screwdriver Set (10-Piece)",
+     "sku": "HT-0763-15271",
+     "quantity": 1,
+     "rack_id": "R-1527",
+     "aisle_id": "63",
+     "department": "Tools"
+    },
+    {
+     "line_no": 6,
+     "type": "Safety Gloves",
+     "product_name": "Work Gloves (3-Pack)",
+     "sku": "GM-0763-16082",
+     "quantity": 2,
+     "rack_id": "R-1608",
+     "aisle_id": "40",
+     "department": "Unassigned"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1011",
+   "customer_ref": "CUST-28010",
+   "order_time": "2026-10-09T08:55:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Safety Gloves",
+     "product_name": "Work Gloves (3-Pack)",
+     "sku": "GM-0763-16082",
+     "quantity": 1,
+     "rack_id": "R-1608",
+     "aisle_id": "40",
+     "department": "Unassigned"
+    },
+    {
+     "line_no": 2,
+     "type": "Electrical Wire",
+     "product_name": "14/2 NM-B Wire, 50 ft",
+     "sku": "EL-0763-07681",
+     "quantity": 1,
+     "rack_id": "R-0768",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 3,
+     "type": "Floor Tiles",
+     "product_name": "Porcelain Tile 12x24 (Case)",
+     "sku": "FL-0763-04381",
+     "quantity": 6,
+     "rack_id": "R-0438",
+     "aisle_id": "39",
+     "department": "Flooring"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1012",
+   "customer_ref": "CUST-69731",
+   "order_time": "2026-10-09T09:13:00Z",
+   "priority": "High",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Screwdriver Set",
+     "product_name": "Screwdriver Set (10-Piece)",
+     "sku": "HT-0763-15271",
+     "quantity": 2,
+     "rack_id": "R-1527",
+     "aisle_id": "63",
+     "department": "Tools"
+    },
+    {
+     "line_no": 2,
+     "type": "Garden Hose",
+     "product_name": "50 ft Garden Hose",
+     "sku": "LG-0763-11492",
+     "quantity": 2,
+     "rack_id": "R-1149",
+     "aisle_id": "GC2",
+     "department": "Outside Lawn And Garden"
+    },
+    {
+     "line_no": 3,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 1,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    },
+    {
+     "line_no": 4,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 3,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 5,
+     "type": "Floor Tiles",
+     "product_name": "Porcelain Tile 12x24 (Case)",
+     "sku": "FL-0763-04381",
+     "quantity": 3,
+     "rack_id": "R-0438",
+     "aisle_id": "39",
+     "department": "Flooring"
+    },
+    {
+     "line_no": 6,
+     "type": "LED Bulbs",
+     "product_name": "LED A19 Bulb (4-Pack)",
+     "sku": "EL-0763-07732",
+     "quantity": 1,
+     "rack_id": "R-0773",
+     "aisle_id": "10",
+     "department": "Lighting"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1013",
+   "customer_ref": "CUST-86722",
+   "order_time": "2026-10-09T09:23:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Hammer",
+     "product_name": "16 oz Claw Hammer",
+     "sku": "HT-0763-15103",
+     "quantity": 3,
+     "rack_id": "R-1510",
+     "aisle_id": "59",
+     "department": "Tools"
+    },
+    {
+     "line_no": 2,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 3,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 3,
+     "type": "Screwdriver Set",
+     "product_name": "Screwdriver Set (10-Piece)",
+     "sku": "HT-0763-15271",
+     "quantity": 2,
+     "rack_id": "R-1527",
+     "aisle_id": "63",
+     "department": "Tools"
+    },
+    {
+     "line_no": 4,
+     "type": "LED Bulbs",
+     "product_name": "LED A19 Bulb (4-Pack)",
+     "sku": "EL-0763-07732",
+     "quantity": 3,
+     "rack_id": "R-0773",
+     "aisle_id": "10",
+     "department": "Lighting"
+    },
+    {
+     "line_no": 5,
+     "type": "Paint Roller",
+     "product_name": "9 in Roller Kit",
+     "sku": "PS-0763-12291",
+     "quantity": 3,
+     "rack_id": "R-1229",
+     "aisle_id": "2",
+     "department": "Paint"
+    },
+    {
+     "line_no": 6,
+     "type": "PEX Pipe",
+     "product_name": "1/2 in PEX Pipe, 100 ft",
+     "sku": "PL-0763-13591",
+     "quantity": 2,
+     "rack_id": "R-1359",
+     "aisle_id": "15",
+     "department": "Rough Plumbing"
+    },
+    {
+     "line_no": 7,
+     "type": "Garden Hose",
+     "product_name": "50 ft Garden Hose",
+     "sku": "LG-0763-11492",
+     "quantity": 2,
+     "rack_id": "R-1149",
+     "aisle_id": "GC2",
+     "department": "Outside Lawn And Garden"
+    },
+    {
+     "line_no": 8,
+     "type": "Safety Gloves",
+     "product_name": "Work Gloves (3-Pack)",
+     "sku": "GM-0763-16082",
+     "quantity": 2,
+     "rack_id": "R-1608",
+     "aisle_id": "40",
+     "department": "Unassigned"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1014",
+   "customer_ref": "CUST-53244",
+   "order_time": "2026-10-09T09:32:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Storage Containers",
+     "product_name": "27 gal Storage Tote",
+     "sku": "ST-0763-14581",
+     "quantity": 2,
+     "rack_id": "R-1458",
+     "aisle_id": "30",
+     "department": "Storage"
+    },
+    {
+     "line_no": 2,
+     "type": "Screwdriver Set",
+     "product_name": "Screwdriver Set (10-Piece)",
+     "sku": "HT-0763-15271",
+     "quantity": 1,
+     "rack_id": "R-1527",
+     "aisle_id": "63",
+     "department": "Tools"
+    }
+   ]
+  },
+  {
+   "order_id": "ORD-1015",
+   "customer_ref": "CUST-55829",
+   "order_time": "2026-10-09T09:45:00Z",
+   "priority": "Normal",
+   "lines": [
+    {
+     "line_no": 1,
+     "type": "Cordless Drill",
+     "product_name": "20V Cordless Drill/Driver Kit",
+     "sku": "PT-0763-15081",
+     "quantity": 2,
+     "rack_id": "R-1508",
+     "aisle_id": "59",
+     "department": "Tools"
+    },
+    {
+     "line_no": 2,
+     "type": "Wood Screws",
+     "product_name": "Deck Screws #8 x 2-1/2 in, 5 lb",
+     "sku": "HW-0763-04931",
+     "quantity": 1,
+     "rack_id": "R-0493",
+     "aisle_id": "17",
+     "department": "Hardware"
+    }
+   ]
+  }
+ ],
+ "carts": [
+  {
+   "cart_id": "CART-01",
+   "name": "Cart 01",
+   "color": "#2563eb",
+   "picker": "M. Johnson",
+   "orders": [
+    "ORD-1001",
+    "ORD-1002",
+    "ORD-1003"
+   ]
+  },
+  {
+   "cart_id": "CART-02",
+   "name": "Cart 02",
+   "color": "#7c3aed",
+   "picker": "S. Patel",
+   "orders": [
+    "ORD-1004",
+    "ORD-1005"
+   ]
+  },
+  {
+   "cart_id": "CART-03",
+   "name": "Cart 03",
+   "color": "#ea580c",
+   "picker": "D. Garcia",
+   "orders": []
+  }
+ ]
+}
