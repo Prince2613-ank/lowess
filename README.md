@@ -550,10 +550,12 @@ Build order: `generate_inventory.py` -> `build_store_zones.py` ->
   assignments per store in `frontend/data/orders/<store_id>.json`. Every line
   reuses an inventory SKU and its rack; only racks reachable from Pack &
   Dispatch are used.
-* `frontend/indoor-routing.js` - routes follow the aisles: Dijkstra on the
-  grid with straight moves only (the drawings are grid-aligned), a 2 m cost
-  per turn, and a small cost for hugging shelving so routes keep to corridor
-  centre lines. Parallel stretches of a cart's legs within 2 m share one drawn
+* `frontend/indoor-routing.js` - routes follow the aisles and stay close to
+  the shortest walk (about 5% longer on the sample carts): Dijkstra on the
+  grid with straight moves inside aisles (the drawings are grid-aligned),
+  diagonal moves only across open floor at least 2 m from shelving, a light
+  cost per turn (1 m per 90 degrees), and a light cost for hugging shelving so
+  routes keep to corridor centre lines. Parallel stretches of a cart's legs within 2 m share one drawn
   line, so walking out and back along a corridor is a single line. Stop order
   is exhaustive for up to 8 stops, nearest-neighbour + 2-opt above that (shown
   as a heuristic in the UI). Distances and times are measured on the drawn line.

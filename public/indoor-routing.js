@@ -3,21 +3,31 @@
  *
  * Loads frontend/data/routing/<store>.json (built by
  * scripts/build_routing_network.py): a walkable grid in the store's source
- * coordinates. Routes follow the aisles: Dijkstra on that grid with straight
- * moves only (the drawings are aligned with the grid), a small cost per turn
- * so paths run straight with clean corners, and a small cost for hugging
- * shelving so routes keep to the middle of an aisle. No DOM or map code here.
+ * coordinates. Routes follow the aisles and stay close to the shortest walk:
+ * Dijkstra on that grid with straight moves inside aisles (the drawings are
+ * aligned with the grid) and diagonal moves only across open floor at least
+ * 2 m from shelving, a light cost per turn so paths run straight with clean
+ * corners, and a light cost for hugging shelving so routes keep to the middle
+ * of an aisle. No DOM or map code here.
  * ========================================================================== */
 
 const IndoorRouting = (() => {
     const EXACT_STOP_LIMIT = 8;       // exhaustive stop ordering up to this many stops
     const DENSIFY_METERS = 3;         // keeps drawn legs on the floor under non-linear alignment
-    const TURN_COST = 2;              // m added per 90-degree turn: fewer, cleaner corners
-    const CENTRE_WEIGHT = 1;          // extra step cost = weight / cells from the nearest shelving or wall
+    const TURN_COST = 1;              // m added per 90 degrees of turning: fewer, cleaner corners
+    const CENTRE_WEIGHT = 0.4;        // extra step cost = weight / cells from the nearest shelving or wall
+    const OPEN_CELLS = 4;             // cells (2 m) from shelving on every side before diagonal moves are allowed
     const MAX_CLEARANCE = 80;         // cells (40 m): clearance is measured up to this far
     const LANE_SNAP = 4;              // cells (2 m): parallel stretches this close share one drawn line
     const LANE_BIAS = 0.02;           // tie-break: of two equally central rows, every route takes the same one
     const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    // Moves [dc, dr]: four straight, then four diagonal (open floor only), with headings in degrees.
+    const MOVES = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+    const HEADINGS = MOVES.map(([dc, dr]) => Math.atan2(dr, dc) * 180 / Math.PI);
+    const TURNS = HEADINGS.map((a) => HEADINGS.map((b) => {
+        const angle = Math.abs(a - b) % 360;
+        return TURN_COST * Math.min(angle, 360 - angle) / 90;
+    }));
 
     /* -- binary heap of (cost, node) for Dijkstra ------------------------- */
     class MinHeap {
@@ -80,6 +90,7 @@ const IndoorRouting = (() => {
         centreCosts() {
             const { cols, rows, walkable } = this;
             const clearance = new Uint8Array(walkable.length).fill(MAX_CLEARANCE);
+            this.clearance = clearance;
             let frontier = [];
             for (let i = 0; i < walkable.length; i += 1) {
                 const r = Math.floor(i / cols), c = i - r * cols;
@@ -141,11 +152,11 @@ const IndoorRouting = (() => {
         }
 
         // Cheapest walk from one cell to every target, over (cell, heading)
-        // states: straight moves only, a cost per turn and per step near
-        // shelving. Stops once every target is reached.
+        // states: straight moves, diagonal ones across open floor, a cost per
+        // turn and per step near shelving. Stops once every target is reached.
         route(source, targets) {
-            const { cols, rows, walkable, stepCost } = this;
-            const states = walkable.length * 4;
+            const { cols, rows, walkable, stepCost, clearance } = this;
+            const states = walkable.length * 8;
             const cost = new Float64Array(states).fill(Infinity);
             const prev = new Int32Array(states).fill(-1);
             const best = new Map();
@@ -153,23 +164,28 @@ const IndoorRouting = (() => {
             remaining.delete(source);
             best.set(source, { cost: 0, state: -1 });
             const heap = new MinHeap();
-            for (let d = 0; d < 4; d += 1) { cost[source * 4 + d] = 0; heap.push(0, source * 4 + d); }
+            for (let d = 0; d < 8; d += 1) { cost[source * 8 + d] = 0; heap.push(0, source * 8 + d); }
             while (heap.size && remaining.size) {
                 const [total, state] = heap.pop();
                 if (total > cost[state]) continue;
-                const cell = state >> 2, heading = state & 3;
+                const cell = state >> 3, heading = state & 7;
                 if (remaining.has(cell)) { remaining.delete(cell); best.set(cell, { cost: total, state }); }
                 const r = Math.floor(cell / cols), c = cell - r * cols;
-                for (let d = 0; d < 4; d += 1) {
-                    const nc = c + DIRECTIONS[d][0], nr = r + DIRECTIONS[d][1];
+                for (let d = 0; d < 8; d += 1) {
+                    const nc = c + MOVES[d][0], nr = r + MOVES[d][1];
                     if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
                     const next = nr * cols + nc;
                     if (!walkable[next]) continue;
+                    const diagonal = d >= 4;
+                    // Diagonals only across open floor, never past a shelf corner.
+                    if (diagonal && (clearance[cell] < OPEN_CELLS || clearance[next] < OPEN_CELLS
+                        || !walkable[r * cols + nc] || !walkable[nr * cols + c])) continue;
                     // Moving along a row (d < 2) prefers even rows, along a column even columns,
                     // so routes sharing a corridor share one lane instead of running side by side.
-                    const lane = d < 2 ? nr & 1 : nc & 1;
-                    const candidate = total + stepCost[next] + lane * LANE_BIAS + (d !== heading && cell !== source ? TURN_COST : 0);
-                    const nextState = next * 4 + d;
+                    const lane = diagonal ? 0 : d < 2 ? nr & 1 : nc & 1;
+                    const step = diagonal ? stepCost[next] * Math.SQRT2 : stepCost[next];
+                    const candidate = total + step + lane * LANE_BIAS + (cell !== source ? TURNS[heading][d] : 0);
+                    const nextState = next * 8 + d;
                     if (candidate < cost[nextState]) {
                         cost[nextState] = candidate;
                         prev[nextState] = state;
@@ -190,7 +206,7 @@ const IndoorRouting = (() => {
             const found = run.best.get(target);
             if (!found) return null;
             const cells = [];
-            for (let state = found.state; state !== -1; state = run.prev[state]) cells.push(state >> 2);
+            for (let state = found.state; state !== -1; state = run.prev[state]) cells.push(state >> 3);
             if (cells[cells.length - 1] !== run.source) return null;
             return cells.reverse();
         }
@@ -237,6 +253,8 @@ const IndoorRouting = (() => {
                 const na = a.slice(), nb = b.slice();
                 na[axis] = pos; nb[axis] = pos;
                 const before = i === 0 ? a : pts[i - 1], after = i + 1 === pts.length - 1 ? b : pts[i + 2];
+                const across = (p, q) => p[1 - axis] === q[1 - axis] && p[axis] !== q[axis];
+                if ((i > 0 && !across(before, a)) || (i + 1 < pts.length - 1 && !across(b, after))) return false;
                 if (!clear(na, nb) || !clear(before, na) || !clear(nb, after)) return false;
                 if (i + 1 === pts.length - 1) pts.splice(i + 1, 0, nb); else nb.forEach((v, k) => { b[k] = v; });
                 if (i === 0) pts.splice(1, 0, na); else na.forEach((v, k) => { a[k] = v; });
@@ -262,8 +280,8 @@ const IndoorRouting = (() => {
             return paths.map((pts) => {
                 if (!pts) return null;
                 const cells = pts.map(([r, c]) => r * cols + c).filter((cell, i, all) => i === 0 || cell !== all[i - 1]);
-                return cells.filter((cell, i) => i === 0 || i === cells.length - 1
-                    || Math.sign(cell - cells[i - 1]) * (Math.abs(cell - cells[i - 1]) < cols ? 1 : cols) !== Math.sign(cells[i + 1] - cell) * (Math.abs(cells[i + 1] - cell) < cols ? 1 : cols));
+                const heading = (a, b) => `${Math.sign(Math.floor(b / cols) - Math.floor(a / cols))},${Math.sign((b % cols) - (a % cols))}`;
+                return cells.filter((cell, i) => i === 0 || i === cells.length - 1 || heading(cells[i - 1], cell) !== heading(cell, cells[i + 1]));
             });
         }
 

@@ -11,7 +11,7 @@
 
 const PICKING_ROUTE_SOURCE = "picking-routes";
 const PICKING_TARGET_SOURCE = "picking-target";
-const PICKING_LAYERS = ["picking-target-fill", "picking-target-outline", "picking-route-casing", "picking-route-line", "picking-route-arrows"];
+const PICKING_LAYERS = ["picking-target-fill", "picking-target-halo", "picking-target-outline", "picking-route-casing", "picking-route-line", "picking-route-arrows"];
 const PICKING_LABELS = {
     generate: "Create Order",
     reset: "Reset Orders",
@@ -151,8 +151,22 @@ function ensurePickingLayers() {
     map.addSource(PICKING_ROUTE_SOURCE, { type: "geojson", data: emptyCollection() });
     if (!map.hasImage("picking-arrow")) map.addImage("picking-arrow", arrowImage(), { pixelRatio: 2 });
     const selected = ["boolean", ["get", "selected"], false];
-    map.addLayer({ id: "picking-target-fill", type: "fill", source: PICKING_TARGET_SOURCE, paint: { "fill-color": ["get", "color"], "fill-opacity": 0.35 } }, before);
-    map.addLayer({ id: "picking-target-outline", type: "line", source: PICKING_TARGET_SOURCE, paint: { "line-color": ["get", "color"], "line-width": 4 } }, before);
+    // Every rack on the route: the next stop strongest, remaining stops lighter, picked ones faint grey.
+    const stage = ["get", "stage"];
+    // A white halo under a cart-coloured outline keeps each rack readable over the occupancy colours.
+    const width = (next, pending, done) => ["interpolate", ["linear"], ["zoom"], 17, ["match", stage, "next", next * 0.6, "pending", pending * 0.6, done * 0.6],
+        20, ["match", stage, "next", next, "pending", pending, done]];
+    map.addLayer({ id: "picking-target-fill", type: "fill", source: PICKING_TARGET_SOURCE, paint: {
+        "fill-color": ["match", stage, "done", "#94a3b8", ["get", "color"]],
+        "fill-opacity": ["match", stage, "next", 0.75, "pending", 0.55, 0.3],
+    } }, before);
+    map.addLayer({ id: "picking-target-halo", type: "line", source: PICKING_TARGET_SOURCE, paint: {
+        "line-color": "#ffffff", "line-width": width(9, 7, 4), "line-opacity": ["match", stage, "done", 0.6, 0.95],
+    } }, before);
+    map.addLayer({ id: "picking-target-outline", type: "line", source: PICKING_TARGET_SOURCE, paint: {
+        "line-color": ["match", stage, "done", "#64748b", ["get", "color"]],
+        "line-width": width(4.5, 3, 1.5),
+    } }, before);
     map.addLayer({
         id: "picking-route-casing", type: "line", source: PICKING_ROUTE_SOURCE,
         layout: { "line-join": "round", "line-cap": "round" },
@@ -232,9 +246,23 @@ function drawPickingMap() {
 
     const cart = picking.store.cart(settings.selectedCart);
     const plan = cart && planFor(cart.cart_id);
-    const next = plan?.order?.[0];
-    const rackLink = next ? inventory.racks.get(next) : null;
-    target.setData(rackLink ? { type: "Feature", properties: { color: cart.color }, geometry: rackLink.geometry } : emptyCollection());
+    // Highlight every rack each shown cart has to visit (and has visited).
+    const racks = [];
+    for (const shown of picking.store.carts) {
+        if (shown.cart_id !== settings.selectedCart && !settings.showAllRoutes) continue;
+        const shownPlan = planFor(shown.cart_id);
+        if (!shownPlan) continue;
+        const next = shownPlan.order[0];
+        for (const stop of shownPlan.stops) {
+            const link = inventory.racks.get(stop.rack_id);
+            if (!link) continue;
+            const stage = stop.done ? "done" : stop.rack_id === next && shown.cart_id === settings.selectedCart ? "next" : "pending";
+            racks.push({ type: "Feature", properties: { color: shown.color, stage, rack_id: stop.rack_id, cart_id: shown.cart_id }, geometry: link.geometry });
+        }
+    }
+    // Next stop drawn last so it sits on top.
+    racks.sort((a, b) => (a.properties.stage === "next") - (b.properties.stage === "next"));
+    target.setData({ type: "FeatureCollection", features: racks });
     if (!cart || !plan || !cart.orders.length) return;
 
     const network = picking.network;
