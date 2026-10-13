@@ -1,0 +1,223 @@
+{
+ "version": 2,
+ "store_id": "2263",
+ "description": "Staff-only back-of-house areas for online-order fulfilment (Receiving, Pack & Dispatch, Returns), laid out around the store map's receiving desk - the stand-in for the dock, as no dock doors are mapped.",
+ "zones": [
+  {
+   "id": "RCV-2263",
+   "type": "receiving",
+   "name": "Receiving Area",
+   "source": "map_marker",
+   "note": "Supplier deliveries are checked in here and put away to the racks. Laid out around the receiving desk marker on the store map. Back-of-house section (50% of the back room).",
+   "anchor": [
+    -76.986411,
+    39.827164
+   ],
+   "area_m2": 460,
+   "size_m": [
+    26.3,
+    19.2
+   ],
+   "rack_ids": [
+    "R-1285",
+    "R-1286",
+    "R-1287",
+    "R-1288",
+    "R-1289",
+    "R-1290",
+    "R-1291",
+    "R-1292",
+    "R-1296",
+    "R-1297",
+    "R-1298",
+    "R-1299",
+    "R-1300",
+    "R-1301",
+    "R-1304",
+    "R-1305",
+    "R-1306",
+    "R-1307",
+    "R-1308",
+    "R-1309",
+    "R-1312",
+    "R-1313",
+    "R-1317",
+    "R-1318",
+    "R-1319",
+    "R-1320",
+    "R-1321",
+    "R-1322",
+    "R-1324",
+    "R-1325",
+    "R-1327",
+    "R-1328",
+    "R-1329",
+    "R-1330",
+    "R-1333",
+    "R-1334",
+    "R-1338",
+    "R-1339",
+    "R-1340",
+    "R-1341",
+    "R-1342",
+    "R-1343",
+    "R-1347",
+    "R-1348",
+    "R-1349",
+    "R-1350",
+    "R-1351",
+    "R-1352"
+   ],
+   "polygon": [
+    [
+     -76.986257401,
+     39.827252044
+    ],
+    [
+     -76.986257401,
+     39.827145172
+    ],
+    [
+     -76.986358622,
+     39.827077987
+    ],
+    [
+     -76.986362,
+     39.827077963
+    ],
+    [
+     -76.986362,
+     39.827085
+    ],
+    [
+     -76.986564599,
+     39.827085
+    ],
+    [
+     -76.986564599,
+     39.827252044
+    ],
+    [
+     -76.986257401,
+     39.827252044
+    ]
+   ]
+  },
+  {
+   "id": "DSP-2263",
+   "type": "dispatch",
+   "name": "Pack & Dispatch",
+   "source": "map_marker",
+   "note": "Pick carts start and finish here; orders are packed, staged and handed to the delivery driver. Laid out around the receiving desk marker on the store map. Back-of-house section (30% of the back room).",
+   "anchor": [
+    -76.986650375,
+    39.827182031
+   ],
+   "area_m2": 252,
+   "size_m": [
+    18.5,
+    14.7
+   ],
+   "rack_ids": [
+    "R-1280",
+    "R-1281",
+    "R-1282",
+    "R-1283",
+    "R-1284",
+    "R-1294",
+    "R-1295",
+    "R-1302",
+    "R-1303",
+    "R-1310",
+    "R-1311",
+    "R-1314",
+    "R-1315",
+    "R-1316",
+    "R-1323",
+    "R-1326",
+    "R-1331",
+    "R-1332",
+    "R-1335",
+    "R-1336",
+    "R-1337",
+    "R-1344",
+    "R-1345",
+    "R-1346",
+    "R-1353"
+   ],
+   "polygon": [
+    [
+     -76.986736697,
+     39.827209614
+    ],
+    [
+     -76.986729209,
+     39.827252044
+    ],
+    [
+     -76.986564599,
+     39.827252044
+    ],
+    [
+     -76.986564599,
+     39.827085
+    ],
+    [
+     -76.986683521,
+     39.827085
+    ],
+    [
+     -76.986735607,
+     39.827154448
+    ],
+    [
+     -76.986736697,
+     39.827209614
+    ]
+   ]
+  },
+  {
+   "id": "RTN-2263",
+   "type": "returns",
+   "name": "Returns Area",
+   "source": "map_marker",
+   "note": "Items brought back by delivery drivers wait here for inspection. Laid out around the receiving desk marker on the store map. Back-of-house section (20% of the back room).",
+   "anchor": [
+    -76.986223627,
+    39.827190009
+   ],
+   "area_m2": 79,
+   "size_m": [
+    11.8,
+    11.5
+   ],
+   "rack_ids": [
+    "R-1278",
+    "R-1279",
+    "R-1293"
+   ],
+   "polygon": [
+    [
+     -76.986122303,
+     39.827252044
+    ],
+    [
+     -76.986122303,
+     39.827234845
+    ],
+    [
+     -76.986257401,
+     39.827145172
+    ],
+    [
+     -76.986257401,
+     39.827252044
+    ],
+    [
+     -76.986122303,
+     39.827252044
+    ]
+   ]
+  }
+ ]
+}

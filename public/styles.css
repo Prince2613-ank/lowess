@@ -76,6 +76,9 @@ html, body {
     pointer-events: none;
 }
 
+/* Set by declutterLabels() when a label would overlap another. */
+.label-hidden { visibility: hidden !important; }
+
 .rack-label {
     background: rgba(255,255,255,0.95);
     border-radius: 3px;
@@ -452,13 +455,15 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .picking-row-actions button:hover:not(:disabled), .picking-assign button:hover:not(:disabled), .picking-line button:hover:not(:disabled) { background: #edf6ff; }
 .picking-tab button:disabled, #picking-tab button:disabled { opacity: 0.5; cursor: not-allowed; }
 .picking-toolbar .picking-reset { color: #b91c1c; border-color: #f3c4c4; }
-.picking-stats { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.picking-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .picking-stats .inventory-stat { padding: 8px 7px; }
 .picking-stats .inventory-stat-value { font-size: 17px; }
 .picking-stats .inventory-stat-label { font-size: 10px; }
 .inventory-stat.status-pending { border-top: 3px solid #94a3b8; }
 .inventory-stat.status-picking { border-top: 3px solid var(--inv-blue); }
 .inventory-stat.status-completed { border-top: 3px solid var(--inv-high); }
+.inventory-stat.status-packed { border-top: 3px solid #b45309; }
+.inventory-stat.status-dispatched { border-top: 3px solid var(--inv-high); }
 .picking-toggle { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--inv-muted); cursor: pointer; }
 
 .picking-carts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -479,8 +484,15 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .picking-status.status-pending { background: #eef2f7; color: #475569; }
 .picking-status.status-assigned { background: #e0e7ff; color: #3730a3; }
 .picking-status.status-picking { background: #dbeafe; color: #1d4ed8; }
-.picking-status.status-ready { background: #fef3c7; color: #854d0e; }
-.picking-status.status-completed { background: #dcfce7; color: #166534; }
+.picking-status.status-picked { background: #fef3c7; color: #854d0e; }
+.picking-status.status-packed { background: #ffedd5; color: #9a3412; }
+.picking-status.status-dispatched { background: #dcfce7; color: #166534; }
+.picking-toolbar .picking-handover, .picking-row-actions .picking-handover, td .picking-handover {
+    padding: 4px 9px; border: 1px solid #fdba74; border-radius: 6px; background: #fff7ed; color: #9a3412;
+    font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.picking-handover:hover:not(:disabled) { background: #ffedd5; }
+.picking-handover:disabled { opacity: 0.55; cursor: not-allowed; }
 .picking-status.status-idle { background: #f1f5f9; color: #64748b; }
 .picking-status.status-returning { background: #fef3c7; color: #854d0e; }
 .picking-priority.priority-high { background: #fee2e2; color: #991b1b; }
@@ -593,3 +605,19 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
     #inventory-panel { top: 296px; width: 100%; }
     .inventory-stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Receiving and returns areas                                            */
+/* ---------------------------------------------------------------------- */
+
+.store-zone-label {
+    padding: 3px 9px; border-radius: 999px; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; white-space: nowrap; pointer-events: none; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
+}
+.store-zone-label.receiving { background: #0f766e; }
+.store-zone-label.dispatch { background: #b45309; }
+.store-zone-label.returns { background: #be185d; }
+.store-zone-label span { font-weight: 600; text-transform: none; opacity: 0.9; }
+.zone-popup { font-size: 12px; line-height: 1.45; }
+.zone-popup-title { font-weight: 800; color: var(--inv-navy); margin-bottom: 2px; }
+.zone-popup-note { margin-top: 4px; color: var(--inv-muted); }

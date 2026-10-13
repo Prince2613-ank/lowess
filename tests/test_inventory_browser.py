@@ -154,9 +154,11 @@ def test_inventory_dashboard_links_racks_edits_and_persists():
             assert await page.locator('.inventory-hover').count() == 1  # hover tooltip with occupancy
 
             # 9. Existing department / aisle labels remain on the map.
-            assert await page.locator('.maplibregl-canvas-container .dept-label').count() > 0
+            assert await page.locator('.maplibregl-canvas-container .dept-label, .maplibregl-canvas-container .aisle-label').count() > 0
             assert await page.locator('.maplibregl-canvas-container .aisle-label').count() > 0
-            assert await page.locator('.inventory-rack-label').count() > 0
+            # Rack ID tags appear once zoomed in close.
+            await page.evaluate("state.map.jumpTo({ center: inventory.racks.get(RACK).center, zoom: INVENTORY_LABEL_ZOOM + 0.5 })")
+            await page.wait_for_function("document.querySelectorAll('.inventory-rack-label').length > 0")
 
             # 6. Editing updates record, map colour and dashboard immediately.
             before = await page.evaluate("inventory.model.stats()")

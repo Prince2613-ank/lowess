@@ -9,7 +9,7 @@
         rel="stylesheet"
         href="vendor/maplibre-gl/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="styles.css?v=inventory-12" />
+    <link rel="stylesheet" href="styles.css?v=inventory-15" />
 </head>
 <body>
     <div id="topbar">
@@ -101,6 +101,7 @@
         <div id="picking-tab" role="tabpanel" aria-labelledby="ops-tab-picking" hidden>
             <div class="picking-toolbar">
                 <div class="picking-toolbar-actions">
+                    <button id="picking-dispatch-all" type="button" class="picking-handover" disabled>Hand Packed to Driver</button>
                     <button id="picking-generate" type="button">Create Order</button>
                     <button id="picking-reset" type="button" class="picking-reset">Reset Orders</button>
                 </div>
@@ -130,8 +131,9 @@
                             <option>Pending</option>
                             <option>Assigned</option>
                             <option>Picking</option>
-                            <option>Ready</option>
-                            <option>Completed</option>
+                            <option>Picked</option>
+                            <option>Packed</option>
+                            <option value="Dispatched">Handed to driver</option>
                         </select>
                         <select id="picking-filter-priority" aria-label="Priority">
                             <option value="">All priorities</option>
@@ -196,18 +198,20 @@
             <label class="layer-row"><input type="checkbox" id="layer-rack" checked /> Lowes_rack</label>
             <label class="layer-row"><input type="checkbox" id="layer-department" checked /> Lowes_depertment</label>
             <label class="layer-row layer-row-divider"><input type="checkbox" id="layer-inventory" checked /> Inventory visualization</label>
+            <label class="layer-row"><input type="checkbox" id="layer-zones" checked /> Back-of-house areas</label>
         </div>
     </div>
 
     <script
         src="vendor/maplibre-gl/maplibre-gl.js"
     ></script>
-    <script src="app.js?v=maplibre-10"></script>
+    <script src="app.js?v=maplibre-14"></script>
     <script src="directory.js?v=maplibre-10"></script>
-    <script src="inventory-data.js?v=inventory-10"></script>
-    <script src="inventory.js?v=inventory-11"></script>
-    <script src="indoor-routing.js?v=picking-2"></script>
-    <script src="order-management.js?v=picking-2"></script>
-    <script src="picking-workflow.js?v=picking-2"></script>
+    <script src="inventory-data.js?v=inventory-11"></script>
+    <script src="inventory.js?v=inventory-15"></script>
+    <script src="indoor-routing.js?v=picking-6"></script>
+    <script src="order-management.js?v=picking-3"></script>
+    <script src="picking-workflow.js?v=picking-6"></script>
+    <script src="store-zones.js?v=zones-5"></script>
 </body>
 </html>

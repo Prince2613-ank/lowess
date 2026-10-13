@@ -10,10 +10,11 @@
 
 const INVENTORY_SOURCE = "inventory-racks";
 const INVENTORY_LAYERS = ["inventory-rack-halo", "inventory-rack-fill", "inventory-rack-outline"];
-const INVENTORY_LABEL_ZOOM = 19;   // MapLibre zoom (Leaflet 20)
+const INVENTORY_LABEL_ZOOM = 20.5; // MapLibre zoom (Leaflet 21.5)
 const INVENTORY_FOCUS_ZOOM = 20;
 const CENTROID_TOLERANCE = 1e-6;   // degrees, ~0.1 m
 const MAX_RACK_LABELS = 250;       // labels are only built for racks in view
+const RACK_LABEL_CELL = [110, 44];   // px: at most one rack label per screen cell
 const LIST_PAGE_SIZE = 100;
 
 const inventory = {
@@ -61,7 +62,14 @@ function h(tag, attrs = {}, ...children) {
 }
 
 const formatNumber = (value) => Number(value).toLocaleString();
-const aisleText = (rack) => (rack.aisle_id ? `Aisle ${rack.aisle_id}` : "No aisle");
+// Aisle number when the map has one near the rack, otherwise the named area
+// it sits in ("Near Back Wall", or "Lighting area" for its own department).
+const ownArea = (rack) => !rack.aisle_id && rack.location && rack.location.toLowerCase() === String(rack.department).toLowerCase();
+const areaText = (rack) => (ownArea(rack) ? `${rack.department} area` : rack.location ? `Near ${rack.location}` : "Aisle not marked");
+const aisleText = (rack) => (rack.aisle_id ? `Aisle ${rack.aisle_id}` : areaText(rack));
+const aisleCell = (rack) => rack.aisle_id || (rack.location ? areaText(rack) : "—");
+// "Aisle 8 · Lighting", "Near Back Wall · Lighting" or just "Lighting area".
+const rackPlace = (rack) => (ownArea(rack) ? areaText(rack) : `${aisleText(rack)} · ${rack.department}`);
 const formatTime = (iso) => {
     const date = new Date(iso);
     return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -197,7 +205,7 @@ function onRackHover(event) {
     const rack = inventory.model?.get(feature.properties.rack_id);
     if (!rack) return;
     inventory.hoverPopup.setLngLat(event.lngLat).setDOMContent(h("div", {},
-        h("strong", {}, rack.rack_id), ` · ${aisleText(rack)} · ${rack.department}`,
+        h("strong", {}, rack.rack_id), ` · ${rackPlace(rack)}`,
         h("div", {}, `${rack.occupancy_percentage}% occupied · ${formatNumber(rack.available_capacity)} slots free`),
     )).addTo(state.map);
 }
@@ -259,7 +267,17 @@ function updateRackLabels() {
         inView.push({ rack, link, distance: id === inventory.selectedId ? -1 : Math.hypot(link.center[0] - middle.lng, link.center[1] - middle.lat) });
     }
     inView.sort((a, b) => a.distance - b.distance);
-    for (const { rack, link } of inView.slice(0, MAX_RACK_LABELS)) {
+    // One label per screen cell spreads labels evenly instead of piling them
+    // up around the centre of the view.
+    const cells = new Set();
+    const spread = inView.filter(({ link }) => {
+        const { x, y } = state.map.project(link.center);
+        const cell = `${Math.floor(x / RACK_LABEL_CELL[0])}:${Math.floor(y / RACK_LABEL_CELL[1])}`;
+        if (cells.has(cell)) return false;
+        cells.add(cell);
+        return true;
+    });
+    for (const { rack, link } of spread.slice(0, MAX_RACK_LABELS)) {
         const label = h("div", { className: `inventory-rack-label band-${rack.occupancy_band}` }, rack.rack_id);
         const marker = new maplibregl.Marker({ element: label, anchor: "center" }).setLngLat(link.center);
         marker.rackId = rack.rack_id;
@@ -268,7 +286,8 @@ function updateRackLabels() {
     inventory.labels.setVisible(true);
     requestAnimationFrame(() => {
         const container = state.map.getCanvasContainer();
-        const taken = [...container.querySelectorAll(".dept-label, .aisle-label, .rack-label, .marker-icon")]
+        const taken = [...container.querySelectorAll(".dept-label, .aisle-label, .rack-label, .marker-icon, .store-zone-label")]
+            .filter((node) => !node.closest(".label-hidden"))
             .map((node) => node.getBoundingClientRect())
             .filter((rect) => rect.width && rect.height);
         const overlaps = (a) => taken.some((b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
@@ -350,6 +369,7 @@ async function onInventoryMapRendered(store, alignedData, sourceData) {
         renderInventoryPanel();
     }
     if (typeof onPickingInventoryReady === "function") onPickingInventoryReady(store, alignedData, sourceData);
+    if (typeof onStoreZonesReady === "function") onStoreZonesReady(store, alignedData, sourceData);
 }
 
 function clearInventoryLayer() {
@@ -476,7 +496,7 @@ function renderSearchResults() {
                 selectRack(rack.rack_id, { zoom: true, scroll: true });
             },
         },
-        h("span", { className: "inventory-result-title" }, h("strong", {}, rack.rack_id), ` · ${aisleText(rack)} · ${rack.department}`),
+        h("span", { className: "inventory-result-title" }, h("strong", {}, rack.rack_id), ` · ${rackPlace(rack)}`),
         h("span", { className: "inventory-result-meta" }, reason || rack.product_category, " · ", `${rack.occupancy_percentage}% occupied`)))));
 }
 
@@ -515,9 +535,10 @@ function renderDetails() {
         ...(linked ? [] : [h("p", { className: "inventory-warning" }, "This rack could not be located on the current map.")]),
         h("dl", { className: "inventory-fields" },
             field("Department", rack.department),
-            field("Aisle", rack.aisle_id || "—"),
+            field("Aisle", aisleCell(rack)),
             field("Category", rack.product_category),
             field("Last updated", formatTime(rack.last_updated)),
+            ...(typeof zoneForRack === "function" && zoneForRack(rack.rack_id) ? [field("Storage area", zoneForRack(rack.rack_id).name)] : []),
         ),
         h("div", { className: "inventory-capacity" },
             h("div", { className: "inventory-capacity-head" },
@@ -583,7 +604,7 @@ function renderRackTable() {
         onKeydown: (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectRack(rack.rack_id, { zoom: true, scroll: true }); } },
     },
     h("td", { className: "rack" }, rack.rack_id),
-    h("td", {}, rack.aisle_id || "—"),
+    h("td", {}, aisleCell(rack)),
     h("td", { title: rack.department }, rack.department),
     h("td", { title: rack.product_category }, rack.product_category),
     h("td", { className: "occupancy" }, h("span", {}, `${rack.occupancy_percentage}%`), progressBar(rack, true)),

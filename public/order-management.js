@@ -9,8 +9,9 @@
  * ========================================================================== */
 
 const OrderManagement = (() => {
-    const STORAGE_PREFIX = "lowes-order-picking:v1:";
-    const STATUSES = ["Pending", "Assigned", "Picking", "Ready", "Completed"];
+    // v2: orders are packed at Pack & Dispatch and handed to delivery drivers.
+    const STORAGE_PREFIX = "lowes-order-picking:v2:";
+    const STATUSES = ["Pending", "Assigned", "Picking", "Picked", "Packed", "Dispatched"];
     const PRIORITIES = ["High", "Normal", "Low"];
     const clone = (value) => JSON.parse(JSON.stringify(value));
     const lineKey = (orderId, lineNo) => `${orderId}#${lineNo}`;
@@ -23,6 +24,7 @@ const OrderManagement = (() => {
             this.sample = clone(sample);
             this.storageAvailable = true;
             this.state = this.read() || this.initialState();
+            this.state.dispatched ||= {};
         }
 
         initialState() {
@@ -31,7 +33,8 @@ const OrderManagement = (() => {
                 orders,
                 carts: this.sample.carts.map((cart) => ({ ...clone(cart), started: false, location: null })),
                 picks: {},              // lineKey -> { picked_at, rack_id, sku, quantity, deducted }
-                completed: {},          // order_id -> completed_at
+                completed: {},          // order_id -> packed_at (left the floor, at Pack & Dispatch)
+                dispatched: {},         // order_id -> handed_to_driver_at
                 nextOrderNumber: Math.max(1000, ...orders.map((o) => Number(o.order_id.replace(/\D/g, "")) || 0)) + 1,
                 settings: { walkSpeed: 1.0, showAllRoutes: false, selectedCart: this.sample.carts[0]?.cart_id || null },
             };
@@ -72,7 +75,9 @@ const OrderManagement = (() => {
         cart(id) { return this.state.carts.find((cart) => cart.cart_id === id) || null; }
         cartOf(orderId) { return this.state.carts.find((cart) => cart.orders.includes(orderId)) || null; }
         pick(orderId, lineNo) { return this.state.picks[lineKey(orderId, lineNo)] || null; }
+        // Packed (and possibly handed over): the order has left the sales floor.
         isCompleted(orderId) { return Boolean(this.state.completed[orderId]); }
+        isDispatched(orderId) { return Boolean(this.state.dispatched[orderId]); }
 
         progress(order) {
             const total = order.lines.reduce((sum, line) => sum + line.quantity, 0);
@@ -82,11 +87,12 @@ const OrderManagement = (() => {
         }
 
         status(order) {
-            if (this.isCompleted(order.order_id)) return "Completed";
+            if (this.isDispatched(order.order_id)) return "Dispatched";
+            if (this.isCompleted(order.order_id)) return "Packed";
             const cart = this.cartOf(order.order_id);
             if (!cart) return "Pending";
             const { pickedLines, lines } = this.progress(order);
-            if (pickedLines === lines) return "Ready";
+            if (pickedLines === lines) return "Picked";
             return cart.started || pickedLines ? "Picking" : "Assigned";
         }
 
@@ -105,8 +111,10 @@ const OrderManagement = (() => {
             return {
                 total: statuses.length,
                 pending: count("Pending"),
-                inProgress: count("Assigned", "Picking", "Ready"),
-                completed: count("Completed"),
+                inProgress: count("Assigned", "Picking", "Picked"),
+                packed: count("Packed"),
+                dispatched: count("Dispatched"),
+                completed: count("Packed", "Dispatched"),
                 activeCarts: this.state.carts.filter((cart) => cart.orders.length).length,
             };
         }
@@ -197,7 +205,7 @@ const OrderManagement = (() => {
             const line = order?.lines.find((item) => item.line_no === lineNo);
             const cart = this.cartOf(orderId);
             if (!line || !cart) return { ok: false, message: "Assign the order to a cart before picking." };
-            if (this.isCompleted(orderId)) return { ok: false, message: `${orderId} is already completed.` };
+            if (this.isCompleted(orderId)) return { ok: false, message: `${orderId} is already packed.` };
             if (this.pick(orderId, lineNo)) return { ok: false, message: "This item is already picked." };
             const stock = this.available(inventory, line);
             if (stock == null) return { ok: false, message: `${line.sku} is not stocked on ${line.rack_id}.` };
@@ -214,7 +222,7 @@ const OrderManagement = (() => {
             const key = lineKey(orderId, lineNo);
             const pick = this.state.picks[key];
             if (!pick) return { ok: false, message: "This item is not picked." };
-            if (this.isCompleted(orderId)) return { ok: false, message: `${orderId} is completed; its items have left the floor.` };
+            if (this.isCompleted(orderId)) return { ok: false, message: `${orderId} is packed; its items have left the floor.` };
             if (pick.deducted) {
                 const result = inventory?.changeStock(pick.rack_id, pick.sku, pick.quantity);
                 if (!result?.ok) return { ok: false, message: result?.message || "Stock could not be restored." };
@@ -232,9 +240,11 @@ const OrderManagement = (() => {
             return { ok: true, message: `Returned ${pick.quantity} × ${pick.sku} to ${pick.rack_id}.` };
         }
 
+        // Every item picked: the order is packed at Pack & Dispatch and leaves the cart.
         complete(orderId) {
             const order = this.order(orderId);
             if (!order) return { ok: false, message: "Unknown order." };
+            if (this.isCompleted(orderId)) return { ok: false, message: `${orderId} is already packed.` };
             const { pickedLines, lines } = this.progress(order);
             if (pickedLines < lines) return { ok: false, message: `${orderId} still has ${lines - pickedLines} item(s) to pick.` };
             const cart = this.cartOf(orderId);
@@ -244,7 +254,21 @@ const OrderManagement = (() => {
                 if (!cart.orders.length) Object.assign(cart, { started: false, location: null });
             }
             this.save();
-            return { ok: true, message: `${orderId} completed and staged at pick-up.` };
+            return { ok: true, message: `${orderId} packed at Pack & Dispatch, ready for the delivery driver.` };
+        }
+
+        // A packed order (or every packed order) is handed to the delivery driver.
+        handToDriver(orderId = null) {
+            const ids = orderId ? [orderId] : this.state.orders.map((o) => o.order_id).filter((id) => this.isCompleted(id) && !this.isDispatched(id));
+            if (!ids.length) return { ok: false, message: "No packed orders are waiting for a driver." };
+            for (const id of ids) {
+                if (!this.isCompleted(id)) return { ok: false, message: `${id} is not packed yet.` };
+                if (this.isDispatched(id)) return { ok: false, message: `${id} was already handed to the driver.` };
+            }
+            const at = now();
+            ids.forEach((id) => { this.state.dispatched[id] = at; });
+            this.save();
+            return { ok: true, message: ids.length === 1 ? `${ids[0]} handed to the delivery driver.` : `${ids.length} orders handed to the delivery driver.` };
         }
 
         // The inventory panel reset racks to their default stock: those

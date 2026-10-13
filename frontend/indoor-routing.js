@@ -3,14 +3,21 @@
  *
  * Loads frontend/data/routing/<store>.json (built by
  * scripts/build_routing_network.py): a walkable grid in the store's source
- * coordinates. Walking distances come from Dijkstra on that grid (8-way
- * moves, no cutting past shelf corners); drawn paths are smoothed only where
- * a straight line stays on walkable cells. No DOM or map code here.
+ * coordinates. Routes follow the aisles: Dijkstra on that grid with straight
+ * moves only (the drawings are aligned with the grid), a small cost per turn
+ * so paths run straight with clean corners, and a small cost for hugging
+ * shelving so routes keep to the middle of an aisle. No DOM or map code here.
  * ========================================================================== */
 
 const IndoorRouting = (() => {
     const EXACT_STOP_LIMIT = 8;       // exhaustive stop ordering up to this many stops
     const DENSIFY_METERS = 3;         // keeps drawn legs on the floor under non-linear alignment
+    const TURN_COST = 2;              // m added per 90-degree turn: fewer, cleaner corners
+    const CENTRE_WEIGHT = 1;          // extra step cost = weight / cells from the nearest shelving or wall
+    const MAX_CLEARANCE = 80;         // cells (40 m): clearance is measured up to this far
+    const LANE_SNAP = 4;              // cells (2 m): parallel stretches this close share one drawn line
+    const LANE_BIAS = 0.02;           // tie-break: of two equally central rows, every route takes the same one
+    const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
     /* -- binary heap of (cost, node) for Dijkstra ------------------------- */
     class MinHeap {
@@ -55,7 +62,7 @@ const IndoorRouting = (() => {
             if (!grid || !grid.mask || !(grid.cols > 0) || !(grid.rows > 0)) throw new Error("Malformed routing network");
             Object.assign(this, { cols: grid.cols, rows: grid.rows, cell: grid.cell, x0: grid.x0, y0: grid.y0 });
             this.projection = payload.projection;
-            this.pickup = payload.pickup && Number.isInteger(payload.pickup.cell) ? payload.pickup : null;
+            this.dispatch = payload.dispatch && Number.isInteger(payload.dispatch.cell) ? payload.dispatch : null;
             this.rackAccess = payload.rack_access || {};
             this.stats = payload.stats || {};
             const bytes = Uint8Array.from(atob(grid.mask), (c) => c.charCodeAt(0));
@@ -63,6 +70,38 @@ const IndoorRouting = (() => {
             this.walkable = new Uint8Array(count);
             for (let i = 0; i < count; i += 1) this.walkable[i] = (bytes[i >> 3] >> (i & 7)) & 1;
             this.component = this.labelComponents();
+            this.stepCost = this.centreCosts();
+        }
+
+        // Cost (metres) of stepping onto each cell: one cell length, plus a
+        // little more the closer it is to shelving or walls. The cheapest line
+        // through any corridor is then its centre line, however wide, so every
+        // route through a corridor shares one lane.
+        centreCosts() {
+            const { cols, rows, walkable } = this;
+            const clearance = new Uint8Array(walkable.length).fill(MAX_CLEARANCE);
+            let frontier = [];
+            for (let i = 0; i < walkable.length; i += 1) {
+                const r = Math.floor(i / cols), c = i - r * cols;
+                if (!walkable[i]) { clearance[i] = 0; frontier.push(i); }
+                else if (r === 0 || c === 0 || r === rows - 1 || c === cols - 1) clearance[i] = 1;
+            }
+            for (let level = 1; level < MAX_CLEARANCE && frontier.length; level += 1) {
+                const next = [];
+                for (const cell of frontier) {
+                    const r = Math.floor(cell / cols), c = cell - r * cols;
+                    for (const [dc, dr] of DIRECTIONS) {
+                        const nc = c + dc, nr = r + dr;
+                        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+                        const n = nr * cols + nc;
+                        if (clearance[n] > level) { clearance[n] = level; next.push(n); }
+                    }
+                }
+                frontier = next;
+            }
+            const cost = new Float32Array(walkable.length);
+            for (let i = 0; i < cost.length; i += 1) cost[i] = this.cell * (1 + CENTRE_WEIGHT / Math.max(1, clearance[i]));
+            return cost;
         }
 
         // Neighbour moves: [dc, dr, cost]; diagonals need both side cells free.
@@ -101,71 +140,69 @@ const IndoorRouting = (() => {
             return a != null && b != null && this.component[a] !== -1 && this.component[a] === this.component[b];
         }
 
-        // Shortest walking distance (metres, source frame) from one cell to all
-        // cells until every target is settled.
-        dijkstra(source, targets) {
-            const dist = new Float64Array(this.walkable.length).fill(Infinity);
-            const prev = new Int32Array(this.walkable.length).fill(-1);
+        // Cheapest walk from one cell to every target, over (cell, heading)
+        // states: straight moves only, a cost per turn and per step near
+        // shelving. Stops once every target is reached.
+        route(source, targets) {
+            const { cols, rows, walkable, stepCost } = this;
+            const states = walkable.length * 4;
+            const cost = new Float64Array(states).fill(Infinity);
+            const prev = new Int32Array(states).fill(-1);
+            const best = new Map();
             const remaining = new Set(targets);
             remaining.delete(source);
-            dist[source] = 0;
+            best.set(source, { cost: 0, state: -1 });
             const heap = new MinHeap();
-            heap.push(0, source);
+            for (let d = 0; d < 4; d += 1) { cost[source * 4 + d] = 0; heap.push(0, source * 4 + d); }
             while (heap.size && remaining.size) {
-                const [cost, cell] = heap.pop();
-                if (cost > dist[cell]) continue;
-                remaining.delete(cell);
-                for (const [next, step] of this.neighbours(cell)) {
-                    const candidate = cost + step * this.cell;
-                    if (candidate < dist[next]) {
-                        dist[next] = candidate;
-                        prev[next] = cell;
-                        heap.push(candidate, next);
+                const [total, state] = heap.pop();
+                if (total > cost[state]) continue;
+                const cell = state >> 2, heading = state & 3;
+                if (remaining.has(cell)) { remaining.delete(cell); best.set(cell, { cost: total, state }); }
+                const r = Math.floor(cell / cols), c = cell - r * cols;
+                for (let d = 0; d < 4; d += 1) {
+                    const nc = c + DIRECTIONS[d][0], nr = r + DIRECTIONS[d][1];
+                    if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+                    const next = nr * cols + nc;
+                    if (!walkable[next]) continue;
+                    // Moving along a row (d < 2) prefers even rows, along a column even columns,
+                    // so routes sharing a corridor share one lane instead of running side by side.
+                    const lane = d < 2 ? nr & 1 : nc & 1;
+                    const candidate = total + stepCost[next] + lane * LANE_BIAS + (d !== heading && cell !== source ? TURN_COST : 0);
+                    const nextState = next * 4 + d;
+                    if (candidate < cost[nextState]) {
+                        cost[nextState] = candidate;
+                        prev[nextState] = state;
+                        heap.push(candidate, nextState);
                     }
                 }
             }
-            return { dist, prev };
+            return { source, prev, best };
         }
 
-        static pathFrom(prev, source, target) {
-            const cells = [target];
-            for (let cell = target; cell !== source; ) {
-                cell = prev[cell];
-                if (cell === -1) return null;
-                cells.push(cell);
-            }
+        // Cost from the run's source to a cell (Infinity if not reached).
+        static costTo(run, cell) {
+            return run.best.get(cell)?.cost ?? Infinity;
+        }
+
+        static pathFrom(run, target) {
+            if (target === run.source) return [target];
+            const found = run.best.get(target);
+            if (!found) return null;
+            const cells = [];
+            for (let state = found.state; state !== -1; state = run.prev[state]) cells.push(state >> 2);
+            if (cells[cells.length - 1] !== run.source) return null;
             return cells.reverse();
         }
 
-        // Straight line between two cell centres stays on walkable cells.
-        lineOfSight(a, b) {
-            const { cols } = this;
-            const ar = Math.floor(a / cols), ac = a - ar * cols, br = Math.floor(b / cols), bc = b - br * cols;
-            const steps = Math.ceil(Math.max(Math.abs(br - ar), Math.abs(bc - ac)) * 4);
-            for (let i = 1; i < steps; i += 1) {
-                const t = i / steps;
-                const r = Math.round(ar + (br - ar) * t), c = Math.round(ac + (bc - ac) * t);
-                if (!this.walkable[r * cols + c]) return false;
-                // Exactly between two cells: both must be free so the line cannot slip past a corner.
-                const rf = ar + (br - ar) * t, cf = ac + (bc - ac) * t;
-                if (Math.abs(rf - Math.floor(rf) - 0.5) < 1e-9 && !this.walkable[Math.floor(rf) * cols + c]) return false;
-                if (Math.abs(cf - Math.floor(cf) - 0.5) < 1e-9 && !this.walkable[r * cols + Math.floor(cf)]) return false;
-            }
-            return true;
-        }
-
-        smooth(cells) {
+        // Corner cells of a straight-move path (where the heading changes).
+        corners(cells) {
             if (cells.length <= 2) return cells.slice();
             const out = [cells[0]];
-            let anchor = 0;
-            while (anchor < cells.length - 1) {
-                let next = anchor + 1;
-                for (let j = cells.length - 1; j > next; j -= 1) {
-                    if (this.lineOfSight(cells[anchor], cells[j])) { next = j; break; }
-                }
-                out.push(cells[next]);
-                anchor = next;
+            for (let i = 1; i < cells.length - 1; i += 1) {
+                if (cells[i] - cells[i - 1] !== cells[i + 1] - cells[i]) out.push(cells[i]);
             }
+            out.push(cells[cells.length - 1]);
             return out;
         }
 
@@ -177,9 +214,66 @@ const IndoorRouting = (() => {
             return [p.lon0 + x / p.kx, p.lat0 + y / p.ky];
         }
 
-        // Smoothed walking line for a cell path, in map coordinates.
+        // Corner lists for a route's legs, with parallel stretches of different
+        // legs that run within LANE_SNAP cells of each other moved onto one
+        // line wherever the floor along it is clear - so walking out and back
+        // along a corridor is drawn as a single line, not two side by side.
+        alignLanes(legs) {
+            const { cols } = this;
+            const paths = legs.map((cells) => (cells && cells.length > 1 ? this.corners(cells).map((cell) => [Math.floor(cell / cols), cell % cols]) : null));
+            const clear = (a, b) => {
+                const axis = a[0] === b[0] ? 0 : 1, along = 1 - axis;
+                const step = Math.sign(b[along] - a[along]);
+                for (let v = a[along]; ; v += step) {
+                    const rc = axis === 0 ? [a[0], v] : [v, a[1]];
+                    if (!this.walkable[rc[0] * cols + rc[1]]) return false;
+                    if (v === b[along]) return true;
+                }
+            };
+            // Move the stretch a-b of `pts` onto line `pos` of `axis` (0: same row, 1: same column).
+            const move = (pts, a, b, axis, pos) => {
+                const i = pts.indexOf(a);
+                if (i < 0 || pts[i + 1] !== b) return false;
+                const na = a.slice(), nb = b.slice();
+                na[axis] = pos; nb[axis] = pos;
+                const before = i === 0 ? a : pts[i - 1], after = i + 1 === pts.length - 1 ? b : pts[i + 2];
+                if (!clear(na, nb) || !clear(before, na) || !clear(nb, after)) return false;
+                if (i + 1 === pts.length - 1) pts.splice(i + 1, 0, nb); else nb.forEach((v, k) => { b[k] = v; });
+                if (i === 0) pts.splice(1, 0, na); else na.forEach((v, k) => { a[k] = v; });
+                return true;
+            };
+            for (const axis of [0, 1]) {
+                const along = 1 - axis;
+                const stretches = [];
+                for (const pts of paths) {
+                    if (!pts) continue;
+                    for (let k = 0; k < pts.length - 1; k += 1) {
+                        if (pts[k][axis] === pts[k + 1][axis] && pts[k][along] !== pts[k + 1][along]) stretches.push([pts, pts[k], pts[k + 1]]);
+                    }
+                }
+                stretches.sort((s, u) => Math.abs(u[2][along] - u[1][along]) - Math.abs(s[2][along] - s[1][along]));
+                const lanes = [];
+                for (const [pts, a, b] of stretches) {
+                    const lo = Math.min(a[along], b[along]), hi = Math.max(a[along], b[along]);
+                    const lane = lanes.find((l) => l.pos !== a[axis] && Math.abs(l.pos - a[axis]) <= LANE_SNAP && l.lo < hi && lo < l.hi);
+                    if (!lane || !move(pts, a, b, axis, lane.pos)) lanes.push({ pos: a[axis], lo, hi });
+                }
+            }
+            return paths.map((pts) => {
+                if (!pts) return null;
+                const cells = pts.map(([r, c]) => r * cols + c).filter((cell, i, all) => i === 0 || cell !== all[i - 1]);
+                return cells.filter((cell, i) => i === 0 || i === cells.length - 1
+                    || Math.sign(cell - cells[i - 1]) * (Math.abs(cell - cells[i - 1]) < cols ? 1 : cols) !== Math.sign(cells[i + 1] - cell) * (Math.abs(cells[i + 1] - cell) < cols ? 1 : cols));
+            });
+        }
+
+        // Walking line through corner cells, in map coordinates.
         lineToMap(cells, toMap) {
-            const corners = this.smooth(cells).map((cell) => this.cellToSource(cell));
+            return this.cornersToMap(this.corners(cells), toMap);
+        }
+
+        cornersToMap(cornerCells, toMap) {
+            const corners = cornerCells.map((cell) => this.cellToSource(cell));
             const p = this.projection;
             const coords = [];
             corners.forEach((point, i) => {
@@ -276,17 +370,22 @@ const IndoorRouting = (() => {
         const nodes = [start, ...reachable.map((stop) => stop.cell)];
         if (endCell != null) nodes.push(endCell);
         const endIndex = endCell != null ? nodes.length - 1 : null;
-        const runs = nodes.slice(0, endIndex ?? nodes.length).map((cell) => network.dijkstra(cell, nodes));
-        const matrix = runs.map(({ dist }) => nodes.map((cell) => dist[cell]));
+        const runs = nodes.slice(0, endIndex ?? nodes.length).map((cell) => network.route(cell, nodes));
+        const matrix = runs.map((run) => nodes.map((cell) => Network.costTo(run, cell)));
         const stopIndexes = reachable.map((_, i) => i + 1);
         const exact = stopIndexes.length <= EXACT_STOP_LIMIT;
         const order = exact ? exactOrder(matrix, stopIndexes, endIndex) : heuristicOrder(matrix, stopIndexes, endIndex);
         const sequence = [0, ...order, ...(endIndex != null ? [endIndex] : [])];
+        // Each pair of nodes uses one grid path whichever way it is walked, so
+        // going to a rack and back along the same aisle draws a single line.
+        const legPath = (from, to) => {
+            if (nodes[from] === nodes[to]) return [nodes[from]];
+            const lo = Math.min(from, to), hi = Math.max(from, to);
+            const path = Network.pathFrom(runs[lo], nodes[hi]);
+            return path && lo !== from ? path.reverse() : path;
+        };
         const legs = [];
-        for (let i = 0; i < sequence.length - 1; i += 1) {
-            const from = sequence[i], to = sequence[i + 1];
-            legs.push(nodes[from] === nodes[to] ? [nodes[from]] : Network.pathFrom(runs[from].prev, nodes[from], nodes[to]));
-        }
+        for (let i = 0; i < sequence.length - 1; i += 1) legs.push(legPath(sequence[i], sequence[i + 1]));
         return {
             order: order.map((index) => reachable[index - 1].key),
             legs,

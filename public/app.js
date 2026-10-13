@@ -20,6 +20,7 @@ const ZOOM = {
     DEPT_LABELS: 17,
     DEPT_LABELS_ALL: 19,
     AISLE_LABELS: 17,
+    AISLE_NUMBERS: 18,
     RACK_DETAIL: 21,
     MAX_DETAIL: 22,
 };
@@ -131,7 +132,7 @@ function labelMarker(lngLat, className, text) {
     const element = document.createElement("div");
     element.className = className;
     element.textContent = text;
-    return new maplibregl.Marker({ element, anchor: "top-left" }).setLngLat(lngLat);
+    return new maplibregl.Marker({ element, anchor: "center" }).setLngLat(lngLat);
 }
 
 function iconMarker(lngLat, category, emoji) {
@@ -367,6 +368,7 @@ function initMap() {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
 
     map.on("zoomend", updateZoomVisibility);
+    map.on("moveend", declutterLabels);
     map.on("click", showFeaturePopup);
     map.on("mousemove", (event) => {
         map.getCanvas().style.cursor = interactiveFeatureAt(event.point) ? "pointer" : "";
@@ -426,7 +428,8 @@ function addPolygonLabels(features, group, className, labelFor) {
     for (const feature of features || []) {
         const bounds = geometryBounds(feature.geometry);
         if (!boundsAreValid(bounds)) continue;
-        group.addLayer(labelMarker(bounds.getCenter(), className, labelFor(feature.properties || {})));
+        const text = labelFor(feature.properties || {});
+        if (text) group.addLayer(labelMarker(bounds.getCenter(), className, text));
     }
 }
 
@@ -480,7 +483,7 @@ function updateZoomVisibility() {
     const rackVisible = document.getElementById("layer-rack").checked;
 
     state.layers.deptLabels.setVisible(deptVisible && zoom >= ZOOM.DEPT_LABELS);
-    state.layers.aisleLabels.setVisible(aisleVisible && zoom >= ZOOM.AISLE_LABELS);
+    state.layers.aisleLabels.setVisible(aisleVisible && zoom >= ZOOM.AISLE_NUMBERS);
     state.layers.rackLabels.setVisible(rackVisible && zoom >= ZOOM.RACK_DETAIL);
 
     // Aisle geometry itself becomes visible a level before its labels do,
@@ -495,6 +498,60 @@ function updateZoomVisibility() {
     state.layers.markerGroup.setVisible(deptVisible, (marker) => zoom >= marker.minZoom);
 
     if (typeof updateExtrasVisibility === "function") updateExtrasVisibility();
+    declutterLabels();
+}
+
+/* ---------------------------------------------------------------------- */
+/* Label collision                                                        */
+/* ---------------------------------------------------------------------- */
+
+const LABEL_GAP = 4;              // px kept clear around every label
+const SAME_TEXT_SPACING = 220;    // px between repeats of the same label text
+
+// Hides labels and icons that would overlap one already placed, in priority
+// order (icons, departments, aisle numbers, rack info), and repeats of the
+// same text close together. Runs after every pan or zoom.
+function declutterLabels() {
+    if (!state.map || !state.layers) return;
+    const map = state.map;
+    const canvas = map.getCanvas();
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const groups = [state.layers.markerGroup, state.layers.deptLabels, state.layers.aisleLabels, state.layers.rackLabels];
+    const items = [];
+    for (const group of groups) {
+        for (const marker of group.getLayers()) {
+            if (!marker._shown) continue;
+            const element = marker.getElement();
+            const { x, y } = map.project(marker.getLngLat());
+            const w = element.offsetWidth;
+            const h = element.offsetHeight;
+            const onScreen = x + w / 2 >= 0 && x - w / 2 <= width && y + h / 2 >= 0 && y - h / 2 <= height;
+            const text = element.querySelector(".marker-icon") ? null : element.textContent.trim().toUpperCase();
+            items.push({ element, x, y, w, h, onScreen, text, hide: false });
+        }
+    }
+    // Picking route stops and area names always stay visible, so labels give way to them.
+    const origin = canvas.getBoundingClientRect();
+    const placed = [...map.getCanvasContainer().querySelectorAll(".picking-marker, .store-zone-label")].map((node) => {
+        const r = node.getBoundingClientRect();
+        return { left: r.left - origin.left, right: r.right - origin.left, top: r.top - origin.top, bottom: r.bottom - origin.top };
+    });
+    const placedText = new Map();
+    for (const item of items) {
+        if (!item.onScreen) continue;
+        const rect = {
+            left: item.x - item.w / 2 - LABEL_GAP, right: item.x + item.w / 2 + LABEL_GAP,
+            top: item.y - item.h / 2 - LABEL_GAP, bottom: item.y + item.h / 2 + LABEL_GAP,
+        };
+        const overlaps = placed.some((other) => rect.left < other.right && rect.right > other.left && rect.top < other.bottom && rect.bottom > other.top);
+        const repeats = item.text && (placedText.get(item.text) || []).some(([x, y]) => Math.hypot(item.x - x, item.y - y) < SAME_TEXT_SPACING);
+        item.hide = overlaps || Boolean(repeats);
+        if (item.hide) continue;
+        placed.push(rect);
+        if (item.text) placedText.set(item.text, [...(placedText.get(item.text) || []), [item.x, item.y]]);
+    }
+    for (const item of items) item.element.classList.toggle("label-hidden", item.hide);
 }
 
 function setLayerVisible(key, visible) {
@@ -537,18 +594,20 @@ function clearFeatureLayers() {
     state.layers.markers = [];
     if (typeof clearInventoryLayer === "function") clearInventoryLayer();
     if (typeof clearPickingLayers === "function") clearPickingLayers();
+    if (typeof clearStoreZones === "function") clearStoreZones();
 }
 
 function renderGeoJsonFloorplanData(data) {
     clearFeatureLayers();
     setFloorplanData(data);
 
+    // Unnamed areas get no label rather than a generic placeholder.
     addPolygonLabels(data.departments.features, state.layers.deptLabels, "dept-label",
-        (props) => props.label || props.name || props.poi_name || "Department");
+        (props) => props.label || props.name || props.poi_name || "");
     addPolygonLabels(data.aisles.features, state.layers.aisleLabels, "aisle-label",
-        (props) => props.label || props.name || "Aisle");
+        (props) => props.label || props.name || "");
     addPolygonLabels(data.racks.features, state.layers.rackLabels, "rack-label",
-        (props) => props.info || props.label || props.name || "Rack");
+        (props) => props.info || props.label || props.name || "");
 
     for (const feature of data.departmentPoints.features || []) {
         const point = buildGeoJsonPointLayer(feature);
@@ -556,14 +615,14 @@ function renderGeoJsonFloorplanData(data) {
             point.layer.minZoom = point.minZoom;
             state.layers.markers.push(point);
             state.layers.markerGroup.addLayer(point.layer);
-        } else {
+        } else if (point.layer.getElement().textContent.trim()) {
             state.layers.deptLabels.addLayer(point.layer);
         }
     }
 
     for (const feature of data.aislePoints.features || []) {
         const point = buildGeoJsonPointLayer(feature);
-        state.layers.aisleLabels.addLayer(point.layer);
+        if (point.layer.getElement().textContent.trim()) state.layers.aisleLabels.addLayer(point.layer);
     }
 }
 

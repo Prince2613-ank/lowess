@@ -1,0 +1,235 @@
+{
+ "version": 2,
+ "store_id": "2327",
+ "description": "Staff-only back-of-house areas for online-order fulfilment (Receiving, Pack & Dispatch, Returns), laid out around the store map's receiving desk - the stand-in for the dock, as no dock doors are mapped.",
+ "zones": [
+  {
+   "id": "RCV-2327",
+   "type": "receiving",
+   "name": "Receiving Area",
+   "source": "map_marker",
+   "note": "Supplier deliveries are checked in here and put away to the racks. Laid out around the receiving desk marker on the store map. Back-of-house section (50% of the back room).",
+   "anchor": [
+    -76.986331,
+    39.82717
+   ],
+   "area_m2": 634,
+   "size_m": [
+    37.0,
+    17.1
+   ],
+   "rack_ids": [
+    "R-1537",
+    "R-1542",
+    "R-1543",
+    "R-1545",
+    "R-1546",
+    "R-1547",
+    "R-1548",
+    "R-1549",
+    "R-1550",
+    "R-1551",
+    "R-1552",
+    "R-1553",
+    "R-1554",
+    "R-1559",
+    "R-1560",
+    "R-1561",
+    "R-1562",
+    "R-1563",
+    "R-1564",
+    "R-1565",
+    "R-1566",
+    "R-1567",
+    "R-1568",
+    "R-1570",
+    "R-1571",
+    "R-1572",
+    "R-1573",
+    "R-1574",
+    "R-1575",
+    "R-1576",
+    "R-1577",
+    "R-1578",
+    "R-1579",
+    "R-1581",
+    "R-1582",
+    "R-1583",
+    "R-1584",
+    "R-1585",
+    "R-1586",
+    "R-1587",
+    "R-1588",
+    "R-1589",
+    "R-1590",
+    "R-1598",
+    "R-1599",
+    "R-1600",
+    "R-1601",
+    "R-1602",
+    "R-1603",
+    "R-1604",
+    "R-1605",
+    "R-1606",
+    "R-1607",
+    "R-1608",
+    "R-1609"
+   ],
+   "polygon": [
+    [
+     -76.986114651,
+     39.827251044
+    ],
+    [
+     -76.986114651,
+     39.827096
+    ],
+    [
+     -76.986547349,
+     39.827096
+    ],
+    [
+     -76.986547349,
+     39.827251044
+    ],
+    [
+     -76.986114651,
+     39.827251044
+    ]
+   ]
+  },
+  {
+   "id": "DSP-2327",
+   "type": "dispatch",
+   "name": "Pack & Dispatch",
+   "source": "map_marker",
+   "note": "Pick carts start and finish here; orders are packed, staged and handed to the delivery driver. Laid out around the receiving desk marker on the store map. Back-of-house section (30% of the back room).",
+   "anchor": [
+    -76.986644753,
+    39.827201872
+   ],
+   "area_m2": 297,
+   "size_m": [
+    19.1,
+    17.1
+   ],
+   "rack_ids": [
+    "R-1540",
+    "R-1541",
+    "R-1544",
+    "R-1555",
+    "R-1556",
+    "R-1557",
+    "R-1558",
+    "R-1569",
+    "R-1580",
+    "R-1591",
+    "R-1592",
+    "R-1593",
+    "R-1594",
+    "R-1595",
+    "R-1596",
+    "R-1597"
+   ],
+   "polygon": [
+    [
+     -76.986770697,
+     39.827155023
+    ],
+    [
+     -76.986713617,
+     39.82724872
+    ],
+    [
+     -76.986661336,
+     39.827251044
+    ],
+    [
+     -76.986547349,
+     39.827251044
+    ],
+    [
+     -76.986547349,
+     39.827096
+    ],
+    [
+     -76.986756408,
+     39.827096
+    ],
+    [
+     -76.986770697,
+     39.82714295
+    ],
+    [
+     -76.986770697,
+     39.827155023
+    ]
+   ]
+  },
+  {
+   "id": "RTN-2327",
+   "type": "returns",
+   "name": "Returns Area",
+   "source": "map_marker",
+   "note": "Items brought back by delivery drivers wait here for inspection. Laid out around the receiving desk marker on the store map. Back-of-house section (20% of the back room).",
+   "anchor": [
+    -76.986049059,
+    39.827180697
+   ],
+   "area_m2": 206,
+   "size_m": [
+    17.9,
+    17.9
+   ],
+   "rack_ids": [
+    "R-1538",
+    "R-1610",
+    "R-1611",
+    "R-1612",
+    "R-1613"
+   ],
+   "polygon": [
+    [
+     -76.986061628,
+     39.827251044
+    ],
+    [
+     -76.985905303,
+     39.827110351
+    ],
+    [
+     -76.985905303,
+     39.827096
+    ],
+    [
+     -76.985954,
+     39.827096
+    ],
+    [
+     -76.985954,
+     39.827088956
+    ],
+    [
+     -76.985997,
+     39.827088956
+    ],
+    [
+     -76.985997,
+     39.827096
+    ],
+    [
+     -76.986114651,
+     39.827096
+    ],
+    [
+     -76.986114651,
+     39.827251044
+    ],
+    [
+     -76.986061628,
+     39.827251044
+    ]
+   ]
+  }
+ ]
+}

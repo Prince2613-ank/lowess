@@ -510,9 +510,12 @@ simulated**; nothing connects to a real Lowe's inventory system.
   centroid, which the browser re-checks before linking). Map GeoJSON is never
   modified.
 * Departments come from the most specific labelled department polygon
-  containing the bay; aisles from the numbered label in the walkway the bay
-  faces. Where either is not clear-cut the record says `"Unassigned"` /
-  `aisle_id: null` (shown as "—") rather than guessing.
+  containing the bay (`"Unassigned"` where that is not clear-cut). Aisles come
+  from the numbered label in the walkway the bay faces (`aisle_source:
+  "walkway"`), else the nearest numbered label within 12 m that no other bay
+  hides (`"nearest"`). Bays with neither carry a `location` - the nearest named
+  area such as "Back Wall" or "Garden Center" - shown as "Near Back Wall" (or
+  "Lighting area" when it is the bay's own department).
 * `frontend/inventory-data.js` holds the model (occupancy bands, stats,
   search, edits); `frontend/inventory.js` draws the overlay and sidebar.
   Edits are stored per store in browser `localStorage` and can be reset per
@@ -523,32 +526,71 @@ simulated**; nothing connects to a real Lowe's inventory system.
 ## Online order picking & multi-cart routes (sample data)
 
 The inventory sidebar has an **Order Picking** tab next to **Rack Inventory**.
+It is a staff tool: store staff pick online orders with carts, pack them at
+**Pack & Dispatch** in back-of-house and hand them to the delivery driver.
 Orders are sample data generated for each store; nothing connects to a real
 Lowe's order system.
 
+Order steps: Pending -> Assigned -> Picking -> **Picked** -> **Packed** (Mark
+Packed, at Pack & Dispatch) -> **Handed to driver** (Hand to Driver, per order
+or all packed orders at once).
+
+Build order: `generate_inventory.py` -> `build_store_zones.py` ->
+`build_routing_network.py` -> `generate_sample_orders.py`.
+
 * `python scripts/build_routing_network.py` - walking network per store in
   `frontend/data/routing/<store_id>.json`: a 0.5 m walkable grid built from
-  mapped department floor, the front-end service area (6 m around checkout /
-  pick-up / service desks) and corridors narrower than 10 m between them,
-  minus every rack and fixture grown by a 0.35 m cart clearance. Also stores
-  each rack's picking access cell (racks with no walkable cell within 2 m are
-  listed for review, not routed) and the PRODUCT PICK-UP desk, used as cart
-  start and drop-off.
+  mapped department floor, the front-end (6 m around checkout / service-desk
+  markers), the back-of-house block and corridors narrower than 10 m between
+  them, minus every rack, fixture and drawn outline grown by a 0.35 m cart
+  clearance. Also stores each rack's picking access cell (racks with no
+  walkable cell within 2 m are listed for review, not routed) and the **Pack &
+  Dispatch** point (`dispatch`), where carts start and finish.
 * `python scripts/generate_sample_orders.py` - 15 orders and the starting cart
   assignments per store in `frontend/data/orders/<store_id>.json`. Every line
-  reuses an inventory SKU and its rack; only racks reachable from the pick-up
-  desk are used. Run it after the two inventory/routing scripts.
-* `frontend/indoor-routing.js` - Dijkstra on the grid (no corner cutting),
-  line-of-sight smoothing that stays on walkable cells, and stop ordering:
-  exhaustive for up to 8 stops, nearest-neighbour + 2-opt above that (shown as
-  a heuristic in the UI).
-* `frontend/order-management.js` - orders, carts, picks and the stock ledger
-  (picks deduct from the Rack Inventory model once; undo and Reset Orders give
-  the stock back). State is saved per store in `localStorage`.
+  reuses an inventory SKU and its rack; only racks reachable from Pack &
+  Dispatch are used.
+* `frontend/indoor-routing.js` - routes follow the aisles: Dijkstra on the
+  grid with straight moves only (the drawings are grid-aligned), a 2 m cost
+  per turn, and a small cost for hugging shelving so routes keep to corridor
+  centre lines. Parallel stretches of a cart's legs within 2 m share one drawn
+  line, so walking out and back along a corridor is a single line. Stop order
+  is exhaustive for up to 8 stops, nearest-neighbour + 2-opt above that (shown
+  as a heuristic in the UI). Distances and times are measured on the drawn line.
+* `frontend/order-management.js` - orders, carts, picks, packing, hand-over and
+  the stock ledger (picks deduct from the Rack Inventory model once; undo and
+  Reset Orders give the stock back). State is saved per store in `localStorage`.
 * `frontend/picking-workflow.js` - map layers (`picking-routes`,
   `picking-target`) and the Order Picking tab.
 
 Browser checks: `tests/test_order_picking_browser.py`.
+
+## Back-of-house areas: Receiving, Pack & Dispatch, Returns
+
+Staff-only areas for online-order fulfilment, all behind the sales floor
+(nothing customer-facing). The maps mark no dock doors or area outlines; the
+one back-of-house marker is the RECEIVING DESK (`icon_id: receiving_desk`, 15 of
+16 stores - not Bloomfield #1665), always at the back of the building facing
+the truck yard, so it stands in for the dock. `python scripts/build_store_zones.py`
+writes `frontend/data/zones/<store_id>.json`:
+
+* **Back-of-house block** - the back-room rack group the receiving desk sits in
+  (racks outside the sales-floor departments, chained at gaps up to 4 m),
+  outlined with the desk and kept off the sales floor.
+* The block is divided along its length, each section keeping its racks as
+  that area's shelving (`rack_ids`; Rack Details shows the "Storage area"):
+  * **Receiving** (~50 %), centred on the receiving desk - supplier deliveries
+    are checked in and put away;
+  * **Pack & Dispatch** (~30 %), next to Receiving - carts start and finish
+    here, orders are packed, staged and handed to the delivery driver;
+  * **Returns** (~20 %), next to Pack & Dispatch - items brought back by
+    delivery drivers wait for inspection.
+* **No receiving desk** (Bloomfield) - the position is taken from the store
+  with the most similar building (Southington #2910) and the nearest back-room
+  rack group is used; the areas are labelled "estimated" (`source: "inferred"`).
+
+`frontend/store-zones.js` draws them (Layers: "Back-of-house areas"); click an
+area for its size and how it was placed. Check: `tests/test_store_zones.py`.
 
 ## Hosted site (Vercel)
 

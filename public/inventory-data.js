@@ -175,7 +175,7 @@ const InventoryModel = (() => {
                 && (!filters.aisle || rack.aisle_id === filters.aisle);
         }
 
-        // Finds racks by rack ID, aisle, department, category, product or SKU.
+        // Finds racks by rack ID, aisle, area, department, category, product or SKU.
         search(query, limit = 8) {
             const text = String(query || "").trim().toLowerCase();
             if (!text) return [];
@@ -193,6 +193,7 @@ const InventoryModel = (() => {
                 else if (rack.rack_id.toLowerCase().replace("-", "").includes(compact) && /^r/.test(compact)) consider(rack.rack_id, "", 60);
                 if (rack.aisle_id && rack.aisle_id.toLowerCase() === aisleQuery) consider(rack.aisle_id, "Aisle", 90);
                 if (rack.department.toLowerCase().includes(text)) consider(rack.department, "Department", 50);
+                if (rack.location && rack.location.toLowerCase().includes(text)) consider(rack.location, "Area", 48);
                 if (rack.product_category.toLowerCase().includes(text)) consider(rack.product_category, "Category", 45);
                 for (const product of rack.products) {
                     if (product.sku.toLowerCase() === text) consider(product.sku, "SKU", 95);

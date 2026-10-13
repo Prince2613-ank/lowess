@@ -74,8 +74,9 @@ function lineMeters(coords) {
 /* Route planning per cart                                                 */
 /* ---------------------------------------------------------------------- */
 
-function pickupCell() {
-    return picking.network?.pickup?.cell ?? null;
+// Pack & Dispatch: where carts start and finish, and orders go to the driver.
+function dispatchCell() {
+    return picking.network?.dispatch?.cell ?? null;
 }
 
 function cartSignature(cart) {
@@ -93,7 +94,7 @@ function planFor(cartId, { force = false } = {}) {
 
     const stops = store.stops(cartId);
     const remaining = stops.filter((stop) => !stop.done);
-    const dropOff = pickupCell();
+    const dropOff = dispatchCell();
     const start = cart.location != null && network.rackAccess[cart.location] != null ? network.rackAccess[cart.location] : dropOff;
     const routable = [], noAccess = [];
     for (const stop of remaining) {
@@ -105,9 +106,9 @@ function planFor(cartId, { force = false } = {}) {
         plan = { order: [], legs: [], coords: [], distance: 0, method: "none", unreachable: [], warnings: [], stops };
     } else {
         const route = IndoorRouting.planRoute(network, { start, end: dropOff, stops: routable });
-        const coords = route.legs.filter((cells) => cells && cells.length > 1).map((cells) => network.lineToMap(cells, picking.toMap));
+        const coords = network.alignLanes(route.legs).filter((corners) => corners && corners.length > 1).map((corners) => network.cornersToMap(corners, picking.toMap));
         const warnings = route.warnings.slice();
-        if (dropOff == null) warnings.push("No confirmed PRODUCT PICK-UP point in this store's map; the route ends at the last stop.");
+        if (dropOff == null) warnings.push("No Pack & Dispatch point on this store's walking network; the route ends at the last stop.");
         if (noAccess.length) warnings.push(`No walkable access found next to ${noAccess.join(", ")} - flagged for review, not routed.`);
         if (route.unreachable.length) warnings.push(`${route.unreachable.join(", ")} cannot be reached on the walking network from the cart's position - flagged for review.`);
         plan = {
@@ -118,7 +119,7 @@ function planFor(cartId, { force = false } = {}) {
             warnings,
             stops,
             start,
-            startLabel: cart.location ? `Last pick at ${cart.location}` : network.pickup ? `Staging at ${titleCase(network.pickup.name)}` : "Unknown",
+            startLabel: cart.location ? `Last pick at ${cart.location}` : network.dispatch ? `Staging at ${network.dispatch.name}` : "Unknown",
         };
     }
     picking.plans.set(cartId, { signature, plan });
@@ -183,7 +184,7 @@ function stopPopup(stop, number, plan, cart) {
         h("span", {}, ` · ${entry.order_id} · ${entry.picked ? "Picked" : "To pick"}`)));
     return h("div", { className: "picking-popup" },
         h("div", { className: "picking-popup-title" }, number ? `Stop ${number}` : "Completed stop", ` · ${cart.name}`),
-        h("div", {}, h("strong", {}, stop.rack_id), ` · ${stop.aisle_id ? `Aisle ${stop.aisle_id}` : "No aisle"} · ${stop.department}`),
+        h("div", {}, h("strong", {}, stop.rack_id), ` · ${rackPlace(inventory.model?.get(stop.rack_id) || stop)}`),
         h("ul", {}, lines));
 }
 
@@ -197,6 +198,12 @@ function addMarker(lngLat, className, text, popupContent, title) {
 }
 
 function renderPickingMap() {
+    drawPickingMap();
+    // Route stops are placed first; map labels under them step aside.
+    if (typeof declutterLabels === "function") declutterLabels();
+}
+
+function drawPickingMap() {
     if (!picking.layersReady) return;
     clearPickingMarkers();
     const routes = state.map.getSource(PICKING_ROUTE_SOURCE);
@@ -247,8 +254,9 @@ function renderPickingMap() {
     if (plan.start != null && cart.location == null) {
         tint(addMarker(toMap(plan.start), "start", "S", h("div", {}, h("strong", {}, `${cart.name} start`), h("div", {}, plan.startLabel)), "Cart start"));
     }
-    if (pickupCell() != null) {
-        tint(addMarker(toMap(pickupCell()), "end", "P", h("div", {}, h("strong", {}, titleCase(network.pickup.name)), h("div", {}, "Drop-off for completed orders")), "Drop-off"));
+    if (dispatchCell() != null) {
+        tint(addMarker(toMap(dispatchCell()), "end", "D", h("div", {}, h("strong", {}, network.dispatch.name),
+            h("div", {}, "Picked orders are packed here and handed to the delivery driver.")), network.dispatch.name));
     }
 }
 
@@ -352,7 +360,7 @@ function pickNextItem() {
     const stop = plan?.stops.find((s) => s.rack_id === plan.order[0]);
     const entry = stop?.lines.find((item) => !item.picked);
     if (!entry) {
-        setPickingMessage({ ok: false, message: cart?.orders.length ? "Nothing left to pick on the route; complete the orders at pick-up." : "This cart has no orders." });
+        setPickingMessage({ ok: false, message: cart?.orders.length ? "Nothing left to pick on the route; pack the orders at Pack & Dispatch." : "This cart has no orders." });
         refreshPicking();
         return;
     }
@@ -361,6 +369,11 @@ function pickNextItem() {
 
 function completeOrder(orderId) {
     setPickingMessage(picking.store.complete(orderId));
+    refreshPicking();
+}
+
+function handToDriver(orderId = null) {
+    setPickingMessage(picking.store.handToDriver(orderId));
     refreshPicking();
 }
 
@@ -420,9 +433,13 @@ function renderPickingStats() {
         tile("Total orders", stats.total),
         tile("Pending", stats.pending, "status-pending"),
         tile("In progress", stats.inProgress, "status-picking"),
-        tile("Completed", stats.completed, "status-completed"),
+        tile("Packed", stats.packed, "status-packed"),
+        tile("Handed to driver", stats.dispatched, "status-dispatched"),
         tile("Active carts", `${stats.activeCarts} / ${picking.store.carts.length}`),
     );
+    const waiting = pk$("picking-dispatch-all");
+    waiting.disabled = !stats.packed;
+    waiting.textContent = stats.packed ? `Hand ${stats.packed} Packed to Driver` : "Hand Packed to Driver";
     pk$("picking-show-all").checked = Boolean(picking.store.settings.showAllRoutes);
 }
 
@@ -501,7 +518,7 @@ function renderCartDetail() {
                         h("span", { className: "picking-muted" }, `${progress.picked}/${progress.total} items`)),
                     miniProgress(progress.percent, cart.color),
                     h("div", { className: "picking-row-actions" },
-                        h("button", { type: "button", className: "picking-complete", disabled: orderStatus !== "Ready", onClick: () => completeOrder(order.order_id) }, "Complete Order"),
+                        h("button", { type: "button", className: "picking-complete", disabled: orderStatus !== "Picked", onClick: () => completeOrder(order.order_id) }, "Mark Packed"),
                         h("button", { type: "button", disabled: progress.pickedLines > 0, onClick: () => { setPickingMessage(picking.store.unassign(order.order_id)); refreshPicking(); } }, "Remove")));
             })) : null,
         cart.orders.length ? h("div", { className: "picking-checklist" },
@@ -510,8 +527,8 @@ function renderCartDetail() {
             ...flagged.map((stop) => checklistStop(stop, "flagged", null, cart)),
             done.length ? h("div", { className: "picking-done-head" }, `Completed stops (${done.length})`) : null,
             ...done.map((stop) => checklistStop(stop, "done", null, cart)),
-            pickupCell() != null ? h("div", { className: "picking-stop dropoff" }, h("div", { className: "picking-stop-head" },
-                h("span", { className: "picking-stop-number end" }, "P"), h("strong", {}, `Drop off at ${titleCase(picking.network.pickup.name)}`))) : null)
+            dispatchCell() != null ? h("div", { className: "picking-stop dropoff" }, h("div", { className: "picking-stop-head" },
+                h("span", { className: "picking-stop-number end" }, "D"), h("strong", {}, `Drop off at ${picking.network.dispatch.name}`))) : null)
             : null,
     );
 }
@@ -521,7 +538,7 @@ function checklistStop(stop, kind, number, cart) {
     return h("div", { className: `picking-stop ${kind}`, style: { "--cart": cart.color }, dataset: { rackId: stop.rack_id } },
         h("div", { className: "picking-stop-head" },
             h("span", { className: "picking-stop-number" }, kind === "done" ? "✓" : kind === "flagged" ? "!" : String(number)),
-            h("strong", {}, stop.rack_id), h("span", { className: "picking-muted" }, ` · ${stop.aisle_id ? `Aisle ${stop.aisle_id}` : "No aisle"} · ${stop.department}`),
+            h("strong", {}, stop.rack_id), h("span", { className: "picking-muted" }, ` · ${rackPlace(inventory.model?.get(stop.rack_id) || stop)}`),
             label ? h("span", { className: `picking-stop-tag ${kind}` }, label) : null),
         ...stop.lines.map((entry) => checklistLine(entry, kind)));
 }
@@ -566,7 +583,7 @@ function renderOrderQueue() {
         const status = store.status(order);
         const cart = store.cartOf(order.order_id);
         const progress = store.progress(order);
-        const completed = status === "Completed";
+        const completed = store.isCompleted(order.order_id);
         return h("tr", { className: picking.detailsOrderId === order.order_id ? "selected" : "", dataset: { orderId: order.order_id } },
             h("td", { className: "picking-check" }, h("input", {
                 type: "checkbox", "aria-label": `Select ${order.order_id}`, disabled: completed,
@@ -578,7 +595,9 @@ function renderOrderQueue() {
             h("td", {}, priorityBadge(order.priority)),
             h("td", {}, cart ? h("span", { className: "picking-cart-label" }, cartDot(cart), cart.name.replace("Cart ", "C")) : "—"),
             h("td", {}, statusBadge(status)),
-            h("td", {}, h("button", { type: "button", className: "inventory-link-button", onClick: () => { picking.detailsOrderId = order.order_id; renderOrderQueue(); renderOrderDetails(true); } }, "Details")));
+            h("td", {}, status === "Packed"
+                ? h("button", { type: "button", className: "picking-handover", onClick: () => handToDriver(order.order_id) }, "Hand to Driver")
+                : h("button", { type: "button", className: "inventory-link-button", onClick: () => { picking.detailsOrderId = order.order_id; renderOrderQueue(); renderOrderDetails(true); } }, "Details")));
     }));
 }
 
@@ -608,12 +627,14 @@ function renderOrderDetails(scroll = false) {
                 const pick = store.pick(order.order_id, line.line_no);
                 return h("tr", {},
                     h("td", {}, line.product_name, h("div", { className: "sku" }, line.sku)),
-                    h("td", {}, line.rack_id), h("td", {}, line.aisle_id || "—"),
+                    h("td", {}, line.rack_id), h("td", {}, aisleCell(inventory.model?.get(line.rack_id) || line)),
                     h("td", { className: "num" }, String(line.quantity)),
                     h("td", {}, pick ? "Picked" : "To pick"));
             }))),
         h("div", { className: "picking-row-actions" },
-            h("button", { type: "button", className: "picking-complete", disabled: status !== "Ready", onClick: () => completeOrder(order.order_id) }, "Complete Order"),
+            status === "Packed" || status === "Dispatched"
+                ? h("button", { type: "button", className: "picking-handover", disabled: status === "Dispatched", onClick: () => handToDriver(order.order_id) }, status === "Dispatched" ? "Handed to driver" : "Hand to Driver")
+                : h("button", { type: "button", className: "picking-complete", disabled: status !== "Picked", onClick: () => completeOrder(order.order_id) }, "Mark Packed"),
             cart && !progress.pickedLines ? h("button", { type: "button", onClick: () => { setPickingMessage(store.unassign(order.order_id)); refreshPicking(); } }, `Remove from ${cart.name}`) : null),
     );
     if (scroll) panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -649,6 +670,7 @@ function wirePickingPanel() {
         });
     }
 
+    pk$("picking-dispatch-all").addEventListener("click", () => { if (picking.store) handToDriver(); });
     pk$("picking-generate").addEventListener("click", () => {
         if (!picking.store) return;
         const result = picking.store.generateOrder();

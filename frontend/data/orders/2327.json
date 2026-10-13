@@ -10,6 +10,7 @@
    "sku": "PT-2327-13921",
    "rack_id": "R-1392",
    "aisle_id": "59",
+   "location": null,
    "department": "Tools",
    "max_quantity": 2
   },
@@ -19,6 +20,7 @@
    "sku": "HT-2327-13881",
    "rack_id": "R-1388",
    "aisle_id": "59",
+   "location": null,
    "department": "Tools",
    "max_quantity": 3
   },
@@ -28,6 +30,7 @@
    "sku": "EL-2327-12391",
    "rack_id": "R-1239",
    "aisle_id": "10",
+   "location": null,
    "department": "Rough Electrical",
    "max_quantity": 6
   },
@@ -37,6 +40,7 @@
    "sku": "PL-2327-13162",
    "rack_id": "R-1316",
    "aisle_id": "35",
+   "location": null,
    "department": "Rough Plumbing",
    "max_quantity": 3
   },
@@ -46,6 +50,7 @@
    "sku": "PS-2327-11941",
    "rack_id": "R-1194",
    "aisle_id": "2",
+   "location": null,
    "department": "Paint",
    "max_quantity": 4
   },
@@ -55,6 +60,7 @@
    "sku": "PS-2327-11852",
    "rack_id": "R-1185",
    "aisle_id": "2",
+   "location": null,
    "department": "Paint",
    "max_quantity": 3
   },
@@ -64,6 +70,7 @@
    "sku": "EL-2327-06961",
    "rack_id": "R-0696",
    "aisle_id": "7",
+   "location": null,
    "department": "Lighting",
    "max_quantity": 3
   },
@@ -73,6 +80,7 @@
    "sku": "HT-2327-13851",
    "rack_id": "R-1385",
    "aisle_id": "59",
+   "location": null,
    "department": "Tools",
    "max_quantity": 2
   },
@@ -82,6 +90,7 @@
    "sku": "LG-2327-10751",
    "rack_id": "R-1075",
    "aisle_id": "GC4",
+   "location": null,
    "department": "Outside Lawn And Garden",
    "max_quantity": 2
   },
@@ -91,6 +100,7 @@
    "sku": "ST-2327-13611",
    "rack_id": "R-1361",
    "aisle_id": "38",
+   "location": null,
    "department": "Storage",
    "max_quantity": 4
   },
@@ -99,7 +109,8 @@
    "product_name": "Deck Screws #8 x 2-1/2 in, 5 lb",
    "sku": "HW-2327-05502",
    "rack_id": "R-0550",
-   "aisle_id": null,
+   "aisle_id": "12",
+   "location": null,
    "department": "Hardware",
    "max_quantity": 3
   },
@@ -109,6 +120,7 @@
    "sku": "FL-2327-04143",
    "rack_id": "R-0414",
    "aisle_id": "40",
+   "location": null,
    "department": "Flooring",
    "max_quantity": 6
   },
@@ -118,6 +130,7 @@
    "sku": "PL-2327-03531",
    "rack_id": "R-0353",
    "aisle_id": "32",
+   "location": null,
    "department": "Fashion Plumbing",
    "max_quantity": 4
   },
@@ -127,6 +140,7 @@
    "sku": "GM-2327-15241",
    "rack_id": "R-1524",
    "aisle_id": "45",
+   "location": null,
    "department": "Unassigned",
    "max_quantity": 4
   }
@@ -146,6 +160,7 @@
      "quantity": 1,
      "rack_id": "R-1524",
      "aisle_id": "45",
+     "location": null,
      "department": "Unassigned"
     },
     {
@@ -155,7 +170,8 @@
      "sku": "HW-2327-05502",
      "quantity": 3,
      "rack_id": "R-0550",
-     "aisle_id": null,
+     "aisle_id": "12",
+     "location": null,
      "department": "Hardware"
     }
    ]
@@ -174,6 +190,7 @@
      "quantity": 5,
      "rack_id": "R-1239",
      "aisle_id": "10",
+     "location": null,
      "department": "Rough Electrical"
     },
     {
@@ -184,6 +201,7 @@
      "quantity": 3,
      "rack_id": "R-1388",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -194,6 +212,7 @@
      "quantity": 2,
      "rack_id": "R-1194",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -204,6 +223,7 @@
      "quantity": 1,
      "rack_id": "R-1392",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -214,6 +234,7 @@
      "quantity": 1,
      "rack_id": "R-1075",
      "aisle_id": "GC4",
+     "location": null,
      "department": "Outside Lawn And Garden"
     },
     {
@@ -224,6 +245,7 @@
      "quantity": 1,
      "rack_id": "R-1524",
      "aisle_id": "45",
+     "location": null,
      "department": "Unassigned"
     },
     {
@@ -234,6 +256,7 @@
      "quantity": 1,
      "rack_id": "R-1316",
      "aisle_id": "35",
+     "location": null,
      "department": "Rough Plumbing"
     }
    ]
@@ -252,6 +275,7 @@
      "quantity": 5,
      "rack_id": "R-0414",
      "aisle_id": "40",
+     "location": null,
      "department": "Flooring"
     },
     {
@@ -262,6 +286,7 @@
      "quantity": 3,
      "rack_id": "R-0696",
      "aisle_id": "7",
+     "location": null,
      "department": "Lighting"
     },
     {
@@ -272,6 +297,7 @@
      "quantity": 4,
      "rack_id": "R-1361",
      "aisle_id": "38",
+     "location": null,
      "department": "Storage"
     },
     {
@@ -282,6 +308,7 @@
      "quantity": 3,
      "rack_id": "R-1194",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -292,6 +319,7 @@
      "quantity": 3,
      "rack_id": "R-1185",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     }
    ]
@@ -310,6 +338,7 @@
      "quantity": 3,
      "rack_id": "R-1194",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -320,6 +349,7 @@
      "quantity": 4,
      "rack_id": "R-1524",
      "aisle_id": "45",
+     "location": null,
      "department": "Unassigned"
     },
     {
@@ -330,6 +360,7 @@
      "quantity": 1,
      "rack_id": "R-1392",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -340,6 +371,7 @@
      "quantity": 1,
      "rack_id": "R-1075",
      "aisle_id": "GC4",
+     "location": null,
      "department": "Outside Lawn And Garden"
     },
     {
@@ -350,6 +382,7 @@
      "quantity": 1,
      "rack_id": "R-1361",
      "aisle_id": "38",
+     "location": null,
      "department": "Storage"
     },
     {
@@ -360,6 +393,7 @@
      "quantity": 3,
      "rack_id": "R-1316",
      "aisle_id": "35",
+     "location": null,
      "department": "Rough Plumbing"
     }
    ]
@@ -378,6 +412,7 @@
      "quantity": 3,
      "rack_id": "R-0353",
      "aisle_id": "32",
+     "location": null,
      "department": "Fashion Plumbing"
     },
     {
@@ -388,6 +423,7 @@
      "quantity": 3,
      "rack_id": "R-1185",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     }
    ]
@@ -406,6 +442,7 @@
      "quantity": 3,
      "rack_id": "R-1185",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -416,6 +453,7 @@
      "quantity": 3,
      "rack_id": "R-1316",
      "aisle_id": "35",
+     "location": null,
      "department": "Rough Plumbing"
     },
     {
@@ -425,7 +463,8 @@
      "sku": "HW-2327-05502",
      "quantity": 2,
      "rack_id": "R-0550",
-     "aisle_id": null,
+     "aisle_id": "12",
+     "location": null,
      "department": "Hardware"
     },
     {
@@ -436,6 +475,7 @@
      "quantity": 3,
      "rack_id": "R-0696",
      "aisle_id": "7",
+     "location": null,
      "department": "Lighting"
     },
     {
@@ -446,6 +486,7 @@
      "quantity": 6,
      "rack_id": "R-0414",
      "aisle_id": "40",
+     "location": null,
      "department": "Flooring"
     },
     {
@@ -456,6 +497,7 @@
      "quantity": 1,
      "rack_id": "R-1524",
      "aisle_id": "45",
+     "location": null,
      "department": "Unassigned"
     },
     {
@@ -466,6 +508,7 @@
      "quantity": 1,
      "rack_id": "R-0353",
      "aisle_id": "32",
+     "location": null,
      "department": "Fashion Plumbing"
     }
    ]
@@ -484,6 +527,7 @@
      "quantity": 1,
      "rack_id": "R-1316",
      "aisle_id": "35",
+     "location": null,
      "department": "Rough Plumbing"
     },
     {
@@ -494,6 +538,7 @@
      "quantity": 2,
      "rack_id": "R-1075",
      "aisle_id": "GC4",
+     "location": null,
      "department": "Outside Lawn And Garden"
     },
     {
@@ -504,6 +549,7 @@
      "quantity": 2,
      "rack_id": "R-1385",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -514,6 +560,7 @@
      "quantity": 5,
      "rack_id": "R-0414",
      "aisle_id": "40",
+     "location": null,
      "department": "Flooring"
     }
    ]
@@ -532,6 +579,7 @@
      "quantity": 2,
      "rack_id": "R-0414",
      "aisle_id": "40",
+     "location": null,
      "department": "Flooring"
     },
     {
@@ -542,6 +590,7 @@
      "quantity": 3,
      "rack_id": "R-1239",
      "aisle_id": "10",
+     "location": null,
      "department": "Rough Electrical"
     },
     {
@@ -552,6 +601,7 @@
      "quantity": 3,
      "rack_id": "R-1388",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -562,6 +612,7 @@
      "quantity": 2,
      "rack_id": "R-1194",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     }
    ]
@@ -580,6 +631,7 @@
      "quantity": 1,
      "rack_id": "R-1194",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -590,6 +642,7 @@
      "quantity": 2,
      "rack_id": "R-0696",
      "aisle_id": "7",
+     "location": null,
      "department": "Lighting"
     }
    ]
@@ -608,6 +661,7 @@
      "quantity": 2,
      "rack_id": "R-1524",
      "aisle_id": "45",
+     "location": null,
      "department": "Unassigned"
     },
     {
@@ -618,6 +672,7 @@
      "quantity": 2,
      "rack_id": "R-1388",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -628,6 +683,7 @@
      "quantity": 2,
      "rack_id": "R-0414",
      "aisle_id": "40",
+     "location": null,
      "department": "Flooring"
     },
     {
@@ -638,6 +694,7 @@
      "quantity": 3,
      "rack_id": "R-1194",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -648,6 +705,7 @@
      "quantity": 1,
      "rack_id": "R-0353",
      "aisle_id": "32",
+     "location": null,
      "department": "Fashion Plumbing"
     }
    ]
@@ -666,6 +724,7 @@
      "quantity": 1,
      "rack_id": "R-1185",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -676,6 +735,7 @@
      "quantity": 5,
      "rack_id": "R-0414",
      "aisle_id": "40",
+     "location": null,
      "department": "Flooring"
     },
     {
@@ -686,6 +746,7 @@
      "quantity": 1,
      "rack_id": "R-1392",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -696,6 +757,7 @@
      "quantity": 2,
      "rack_id": "R-1239",
      "aisle_id": "10",
+     "location": null,
      "department": "Rough Electrical"
     },
     {
@@ -706,6 +768,7 @@
      "quantity": 3,
      "rack_id": "R-1388",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -716,6 +779,7 @@
      "quantity": 2,
      "rack_id": "R-1361",
      "aisle_id": "38",
+     "location": null,
      "department": "Storage"
     },
     {
@@ -726,6 +790,7 @@
      "quantity": 2,
      "rack_id": "R-1075",
      "aisle_id": "GC4",
+     "location": null,
      "department": "Outside Lawn And Garden"
     },
     {
@@ -736,6 +801,7 @@
      "quantity": 2,
      "rack_id": "R-0696",
      "aisle_id": "7",
+     "location": null,
      "department": "Lighting"
     }
    ]
@@ -754,6 +820,7 @@
      "quantity": 3,
      "rack_id": "R-1185",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -764,6 +831,7 @@
      "quantity": 2,
      "rack_id": "R-1194",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     },
     {
@@ -774,6 +842,7 @@
      "quantity": 1,
      "rack_id": "R-0696",
      "aisle_id": "7",
+     "location": null,
      "department": "Lighting"
     },
     {
@@ -784,6 +853,7 @@
      "quantity": 1,
      "rack_id": "R-1392",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -794,6 +864,7 @@
      "quantity": 4,
      "rack_id": "R-1361",
      "aisle_id": "38",
+     "location": null,
      "department": "Storage"
     },
     {
@@ -804,6 +875,7 @@
      "quantity": 6,
      "rack_id": "R-1239",
      "aisle_id": "10",
+     "location": null,
      "department": "Rough Electrical"
     }
    ]
@@ -822,6 +894,7 @@
      "quantity": 1,
      "rack_id": "R-1524",
      "aisle_id": "45",
+     "location": null,
      "department": "Unassigned"
     },
     {
@@ -832,6 +905,7 @@
      "quantity": 6,
      "rack_id": "R-1239",
      "aisle_id": "10",
+     "location": null,
      "department": "Rough Electrical"
     },
     {
@@ -842,6 +916,7 @@
      "quantity": 2,
      "rack_id": "R-1385",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -852,6 +927,7 @@
      "quantity": 3,
      "rack_id": "R-1361",
      "aisle_id": "38",
+     "location": null,
      "department": "Storage"
     }
    ]
@@ -870,6 +946,7 @@
      "quantity": 1,
      "rack_id": "R-1385",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -880,6 +957,7 @@
      "quantity": 1,
      "rack_id": "R-1388",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -890,6 +968,7 @@
      "quantity": 2,
      "rack_id": "R-1392",
      "aisle_id": "59",
+     "location": null,
      "department": "Tools"
     },
     {
@@ -900,6 +979,7 @@
      "quantity": 5,
      "rack_id": "R-0414",
      "aisle_id": "40",
+     "location": null,
      "department": "Flooring"
     },
     {
@@ -910,6 +990,7 @@
      "quantity": 1,
      "rack_id": "R-1361",
      "aisle_id": "38",
+     "location": null,
      "department": "Storage"
     },
     {
@@ -920,6 +1001,7 @@
      "quantity": 1,
      "rack_id": "R-1185",
      "aisle_id": "2",
+     "location": null,
      "department": "Paint"
     }
    ]
@@ -938,6 +1020,7 @@
      "quantity": 2,
      "rack_id": "R-0696",
      "aisle_id": "7",
+     "location": null,
      "department": "Lighting"
     },
     {
@@ -948,6 +1031,7 @@
      "quantity": 3,
      "rack_id": "R-1316",
      "aisle_id": "35",
+     "location": null,
      "department": "Rough Plumbing"
     },
     {
@@ -958,6 +1042,7 @@
      "quantity": 4,
      "rack_id": "R-0353",
      "aisle_id": "32",
+     "location": null,
      "department": "Fashion Plumbing"
     },
     {
@@ -968,6 +1053,7 @@
      "quantity": 1,
      "rack_id": "R-1361",
      "aisle_id": "38",
+     "location": null,
      "department": "Storage"
     }
    ]

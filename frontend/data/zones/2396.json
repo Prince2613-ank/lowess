@@ -1,0 +1,253 @@
+{
+ "version": 2,
+ "store_id": "2396",
+ "description": "Staff-only back-of-house areas for online-order fulfilment (Receiving, Pack & Dispatch, Returns), laid out around the store map's receiving desk - the stand-in for the dock, as no dock doors are mapped.",
+ "zones": [
+  {
+   "id": "RCV-2396",
+   "type": "receiving",
+   "name": "Receiving Area",
+   "source": "map_marker",
+   "note": "Supplier deliveries are checked in here and put away to the racks. Laid out around the receiving desk marker on the store map. Back-of-house section (50% of the back room).",
+   "anchor": [
+    -76.986196,
+    39.827173
+   ],
+   "area_m2": 531,
+   "size_m": [
+    32.5,
+    16.4
+   ],
+   "rack_ids": [
+    "R-1445",
+    "R-1450",
+    "R-1451",
+    "R-1453",
+    "R-1454",
+    "R-1455",
+    "R-1456",
+    "R-1457",
+    "R-1458",
+    "R-1459",
+    "R-1460",
+    "R-1461",
+    "R-1462",
+    "R-1468",
+    "R-1469",
+    "R-1470",
+    "R-1471",
+    "R-1472",
+    "R-1473",
+    "R-1474",
+    "R-1475",
+    "R-1476",
+    "R-1477",
+    "R-1479",
+    "R-1480",
+    "R-1481",
+    "R-1482",
+    "R-1483",
+    "R-1484",
+    "R-1485",
+    "R-1486",
+    "R-1487",
+    "R-1488",
+    "R-1490",
+    "R-1493",
+    "R-1494",
+    "R-1495",
+    "R-1496",
+    "R-1497",
+    "R-1498",
+    "R-1499",
+    "R-1500",
+    "R-1501",
+    "R-1506",
+    "R-1507",
+    "R-1508",
+    "R-1509",
+    "R-1510",
+    "R-1511",
+    "R-1512",
+    "R-1513",
+    "R-1514",
+    "R-1515",
+    "R-1516"
+   ],
+   "polygon": [
+    [
+     -76.986005651,
+     39.827250958
+    ],
+    [
+     -76.986005651,
+     39.827103
+    ],
+    [
+     -76.986386349,
+     39.827103
+    ],
+    [
+     -76.986386349,
+     39.827250147
+    ],
+    [
+     -76.986005651,
+     39.827250958
+    ]
+   ]
+  },
+  {
+   "id": "DSP-2396",
+   "type": "dispatch",
+   "name": "Pack & Dispatch",
+   "source": "map_marker",
+   "note": "Pick carts start and finish here; orders are packed, staged and handed to the delivery driver. Laid out around the receiving desk marker on the store map. Back-of-house section (30% of the back room).",
+   "anchor": [
+    -76.986469514,
+    39.827205399
+   ],
+   "area_m2": 255,
+   "size_m": [
+    18.4,
+    16.4
+   ],
+   "rack_ids": [
+    "R-1291",
+    "R-1292",
+    "R-1448",
+    "R-1449",
+    "R-1452",
+    "R-1464",
+    "R-1465",
+    "R-1466",
+    "R-1467",
+    "R-1478",
+    "R-1489",
+    "R-1491",
+    "R-1492",
+    "R-1502",
+    "R-1503",
+    "R-1504",
+    "R-1505",
+    "R-1522",
+    "R-1523",
+    "R-1524",
+    "R-1525"
+   ],
+   "polygon": [
+    [
+     -76.986477,
+     39.827103
+    ],
+    [
+     -76.98656641,
+     39.827103
+    ],
+    [
+     -76.986578697,
+     39.827149077
+    ],
+    [
+     -76.986578697,
+     39.827160951
+    ],
+    [
+     -76.98652666,
+     39.827249847
+    ],
+    [
+     -76.986386349,
+     39.827250147
+    ],
+    [
+     -76.986386349,
+     39.827103
+    ],
+    [
+     -76.98641,
+     39.827103
+    ],
+    [
+     -76.98641,
+     39.827084
+    ],
+    [
+     -76.986477,
+     39.827084381
+    ],
+    [
+     -76.986477,
+     39.827103
+    ]
+   ]
+  },
+  {
+   "id": "RTN-2396",
+   "type": "returns",
+   "name": "Returns Area",
+   "source": "map_marker",
+   "note": "Items brought back by delivery drivers wait here for inspection. Laid out around the receiving desk marker on the store map. Back-of-house section (20% of the back room).",
+   "anchor": [
+    -76.985948514,
+    39.827182623
+   ],
+   "area_m2": 172,
+   "size_m": [
+    17.5,
+    16.1
+   ],
+   "rack_ids": [
+    "R-1446",
+    "R-1463",
+    "R-1517",
+    "R-1518",
+    "R-1519",
+    "R-1520",
+    "R-1521"
+   ],
+   "polygon": [
+    [
+     -76.985965541,
+     39.827251044
+    ],
+    [
+     -76.985817303,
+     39.827114289
+    ],
+    [
+     -76.985817303,
+     39.827103
+    ],
+    [
+     -76.985845,
+     39.827103
+    ],
+    [
+     -76.985845,
+     39.827093679
+    ],
+    [
+     -76.985888,
+     39.827092939
+    ],
+    [
+     -76.985888,
+     39.827103
+    ],
+    [
+     -76.986005651,
+     39.827103
+    ],
+    [
+     -76.986005651,
+     39.827250958
+    ],
+    [
+     -76.985965541,
+     39.827251044
+    ]
+   ]
+  }
+ ]
+}

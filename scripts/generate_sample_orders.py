@@ -4,9 +4,9 @@ Writes ``frontend/data/orders/<store_id>.json`` with 15 orders and the
 starting state of three picking carts. Every order line reuses an existing
 inventory SKU and its rack (``frontend/data/inventory/<store_id>.json``), so
 products have exactly one location and it is the same one the Rack Inventory
-panel shows. Only racks whose picking access point is reachable from the
-PRODUCT PICK-UP desk on the walking network are used
-(``frontend/data/routing/<store_id>.json``).
+panel shows. Only racks whose picking access point is reachable from Pack &
+Dispatch on the walking network are used (``frontend/data/routing/<store_id>.json``);
+store staff pick the orders, pack them there and hand them to delivery drivers.
 
 Usage:  python scripts/generate_sample_orders.py [--stores 1665,2544]
 """
@@ -54,15 +54,15 @@ STARTING_ASSIGNMENTS = {"CART-01": ["ORD-1001", "ORD-1002", "ORD-1003"], "CART-0
 
 
 def reachable_cells(network: dict) -> set[int] | None:
-    """Cells connected (8-way, no corner cutting) to the pick-up desk."""
-    grid, pickup = network["grid"], network.get("pickup")
-    if not pickup or pickup.get("cell") is None:
+    """Cells connected to Pack & Dispatch, where pick carts start and finish."""
+    grid, dispatch = network["grid"], network.get("dispatch")
+    if not dispatch or dispatch.get("cell") is None:
         return None
     cols, rows = grid["cols"], grid["rows"]
     bits = np.unpackbits(np.frombuffer(base64.b64decode(grid["mask"]), dtype=np.uint8), bitorder="little")[: cols * rows]
     walkable = bits.astype(bool)
-    seen = {pickup["cell"]}
-    queue = deque([pickup["cell"]])
+    seen = {dispatch["cell"]}
+    queue = deque([dispatch["cell"]])
     while queue:
         cell = queue.popleft()
         r, c = divmod(cell, cols)
@@ -87,12 +87,12 @@ def product_pool(inventory: dict, network: dict) -> list[dict]:
                 continue
             for product in rack["products"]:
                 if product["product_name"] == product_name and product["stock_quantity"] >= 12:
-                    candidates.append((rack["department"] != UNASSIGNED, rack["aisle_id"] is not None, product["stock_quantity"], rack, product))
+                    candidates.append((rack["department"] != UNASSIGNED, rack.get("aisle_source") == "walkway", product["stock_quantity"], rack, product))
         if not candidates:
             continue
         *_, rack, product = max(candidates, key=lambda c: c[:3])
         pool.append({"type": item_type, "product_name": product_name, "sku": product["sku"], "rack_id": rack["rack_id"],
-                     "aisle_id": rack["aisle_id"], "department": rack["department"], "max_quantity": PRODUCT_TYPES[item_type][1][1]})
+                     "aisle_id": rack["aisle_id"], "location": rack.get("location"), "department": rack["department"], "max_quantity": PRODUCT_TYPES[item_type][1][1]})
     return pool
 
 
@@ -116,7 +116,7 @@ def generate(store_id: str) -> dict | None:
             low, high = PRODUCT_TYPES[item["type"]][1]
             lines.append({"line_no": line_no, "type": item["type"], "product_name": item["product_name"], "sku": item["sku"],
                           "quantity": rng.randint(low, high), "rack_id": item["rack_id"], "aisle_id": item["aisle_id"],
-                          "department": item["department"]})
+                          "location": item["location"], "department": item["department"]})
         placed = start + timedelta(minutes=n * 11 + rng.randint(0, 9))
         orders.append({
             "order_id": f"ORD-{1001 + n}",

@@ -4,22 +4,28 @@ For every store with map + inventory data this writes
 ``frontend/data/routing/<store_id>.json``: a walkable occupancy grid in the
 store's own source coordinates (the browser applies the same alignment as the
 map), plus the picking access cell of every inventory rack and of the
-PRODUCT PICK-UP desk. Map GeoJSON is never modified.
+Pack & Dispatch area, where pick carts start and finish (see
+scripts/build_store_zones.py). Map GeoJSON is never modified.
 
 Walkable floor is derived only from mapped geometry:
 
-* floor   = mapped department areas, plus the customer service front-end
-            (6 m around checkout / pick-up / service-desk markers), with gaps
-            narrower than 10 m between them closed - these are the corridors
-            and cross-aisles bounded on both sides by mapped floor;
-* blocked = every rack bay and fixture (Lowes_rack and Lowes_aisle polygons)
-            grown by a 0.35 m cart clearance;
+* floor   = mapped department areas, the front-end (6 m around checkout /
+            service-desk markers) and the back-of-house block (Receiving,
+            Pack & Dispatch, Returns), with gaps narrower than 10 m between
+            them closed - these are the corridors and cross-aisles bounded on
+            both sides by mapped floor;
+* blocked = every rack bay and fixture (Lowes_rack and Lowes_aisle polygons),
+            plus every drawn outline (the layers' line geometry: counters,
+            desks, seating and other furniture drawn only as outlines) and
+            the closed shapes those outlines enclose, all grown by a 0.35 m
+            cart clearance;
 * walkable = floor - blocked, sampled on a 0.5 m grid.
 
 Racks with no walkable cell within 2 m are reported, not given an invented
 access point. Entrances are not used as floor because they sit on the building
 edge.
 
+Run after scripts/build_store_zones.py.
 Usage:  python scripts/build_routing_network.py [--stores 1665,2544]
 """
 from __future__ import annotations
@@ -32,12 +38,13 @@ from pathlib import Path
 
 import numpy as np
 import shapely
-from shapely.geometry import Point
-from shapely.ops import unary_union
+from shapely.geometry import LineString, Point
+from shapely.ops import polygonize, unary_union
 
 from generate_inventory import OUTPUT_DIR as INVENTORY_DIR, ROOT, STORES_DIR, StoreGeometry, load, polygon_parts
 
 OUTPUT_DIR = ROOT / "frontend" / "data" / "routing"
+ZONES_DIR = ROOT / "frontend" / "data" / "zones"
 CELL = 0.5            # m
 CLEARANCE = 0.35      # m, half a picking cart
 CLOSE_RADIUS = 5.0    # m, closes gaps up to 10 m between mapped floor areas
@@ -45,7 +52,26 @@ SERVICE_RADIUS = 6.0  # m around front-end service markers
 RACK_ACCESS_RADIUS = 2.0
 POI_ACCESS_RADIUS = 8.0
 SERVICE_ICONS = {"checkouts", "store_pick_up", "pickup_lockers", "customer_service_desk", "pro_service_desk", "returns"}
-PICKUP_ICON = "store_pick_up"
+
+
+def outlines(store_dir: Path, proj) -> tuple[list, list]:
+    """Drawn outline lines of every layer, and the closed shapes they enclose."""
+    parts = set()
+    for name in ("rack", "aisle", "department"):
+        for feature in load(store_dir, name):
+            geometry = feature.get("geometry") or {}
+            if geometry.get("type") == "LineString":
+                lines = [geometry["coordinates"]]
+            elif geometry.get("type") == "MultiLineString":
+                lines = geometry["coordinates"]
+            else:
+                continue
+            for line in lines:
+                key = tuple((round(p[0], 9), round(p[1], 9)) for p in line)
+                if len(set(key)) >= 2:
+                    parts.add(key)
+    lines = [LineString([proj.xy(*p) for p in key]) for key in parts]
+    return lines, list(polygonize(unary_union(lines))) if lines else []
 
 
 def components(mask: np.ndarray) -> np.ndarray:
@@ -88,12 +114,15 @@ class Grid:
         self.mask = shapely.contains_xy(walkable_area, self.cx, self.cy)
         self.labels = components(self.mask)
 
-    def nearest(self, geometry, radius: float) -> int | None:
-        """Index (row * cols + col) of the walkable cell nearest to the geometry, within radius."""
+    def nearest(self, geometry, radius: float, component: int | None = None) -> int | None:
+        """Index (row * cols + col) of the walkable cell nearest to the geometry, within
+        radius (and in the given connected component, if any)."""
         minx, miny, maxx, maxy = geometry.bounds
         c0, c1 = max(0, int((minx - radius - self.x0) / CELL)), min(self.cols - 1, int((maxx + radius - self.x0) / CELL) + 1)
         r0, r1 = max(0, int((miny - radius - self.y0) / CELL)), min(self.rows - 1, int((maxy + radius - self.y0) / CELL) + 1)
         window = self.mask[r0:r1 + 1, c0:c1 + 1]
+        if component is not None:
+            window = window & (self.labels[r0:r1 + 1, c0:c1 + 1] == component)
         if not window.any():
             return None
         rr, cc = np.nonzero(window)
@@ -120,20 +149,30 @@ def build(store_dir: Path) -> dict | None:
     service = [Point(proj.xy(*f["geometry"]["coordinates"][:2])).buffer(SERVICE_RADIUS)
                for f in pois if f["properties"]["icon_id"] in SERVICE_ICONS]
 
-    mapped_floor = unary_union([poly for poly, _ in geometry.departments] + service)
+    zones_path = ZONES_DIR / f"{store_id}.json"
+    zones = json.loads(zones_path.read_text(encoding="utf-8"))["zones"] if zones_path.is_file() else []
+    back_of_house = [shapely.Polygon([proj.xy(lon, lat) for lon, lat in zone["polygon"]]).buffer(0) for zone in zones]
+    mapped_floor = unary_union([poly for poly, _ in geometry.departments] + service + back_of_house)
     floor = mapped_floor.buffer(CLOSE_RADIUS, join_style="mitre").buffer(-CLOSE_RADIUS, join_style="mitre")
-    blocked = unary_union(racks + fixtures).buffer(CLEARANCE)
+    outline_lines, outline_shapes = outlines(store_dir, proj)
+    blocked = unary_union(racks + fixtures + outline_lines + outline_shapes).buffer(CLEARANCE)
     walkable = floor.difference(blocked)
     grid = Grid(walkable, floor.bounds)
 
-    pickup = None
-    for f in pois:
-        if f["properties"]["icon_id"] == PICKUP_ICON:
-            lon, lat = f["geometry"]["coordinates"][:2]
-            cell = grid.nearest(Point(proj.xy(lon, lat)), POI_ACCESS_RADIUS)
-            pickup = {"name": f["properties"].get("poi_name") or "Product Pick-Up", "icon_id": PICKUP_ICON,
-                      "source": [lon, lat], "cell": cell}
-            break
+    # Carts start and finish at Pack & Dispatch: the walkable cell on the main
+    # store floor (largest connected component) nearest the area's centre,
+    # inside the area or just outside it.
+    dispatch = None
+    zone = next((z for z in zones if z["type"] == "dispatch"), None)
+    if zone:
+        lon, lat = zone["anchor"]
+        area = shapely.Polygon([proj.xy(*p) for p in zone["polygon"]])
+        centre = Point(proj.xy(lon, lat))
+        cell = grid.nearest(centre, 40.0, component=0)
+        if cell is not None and not area.buffer(POI_ACCESS_RADIUS).contains(Point(grid.cx.flat[cell], grid.cy.flat[cell])):
+            cell = None
+        dispatch = {"name": zone["name"], "zone_id": zone["id"], "source": [lon, lat], "cell": cell,
+                    "estimated": zone["source"] == "inferred"}
 
     part_to_rack = {(r["geometry_ref"]["feature"], r["geometry_ref"]["part"]): r["rack_id"]
                     for r in json.loads(inventory_path.read_text(encoding="utf-8"))["racks"]}
@@ -150,18 +189,18 @@ def build(store_dir: Path) -> dict | None:
 
     labels = grid.labels.ravel()
     main = 0
-    if pickup and pickup["cell"] is not None:
-        main = int(labels[pickup["cell"]])
+    if dispatch and dispatch["cell"] is not None:
+        main = int(labels[dispatch["cell"]])
     reachable = sum(1 for cell in rack_access.values() if labels[cell] == main)
     sizes = np.bincount(labels[labels >= 0]) if grid.mask.any() else np.array([0])
     return {
         "version": 1,
         "store_id": store_id,
-        "description": "Walkable grid derived from mapped department floor, front-end service areas and corridors between them, minus racks and fixtures with cart clearance.",
+        "description": "Walkable grid derived from mapped department floor, the front-end, the back-of-house block and corridors between them, minus racks, fixtures and drawn outlines (furniture, counters) with cart clearance.",
         "projection": {"lon0": proj.lon0, "lat0": proj.lat0, "kx": proj.kx, "ky": proj.ky},
         "grid": {"x0": grid.x0, "y0": grid.y0, "cell": CELL, "cols": grid.cols, "rows": grid.rows,
                  "mask": grid.packed_mask(), "clearance": CLEARANCE},
-        "pickup": pickup,
+        "dispatch": dispatch,
         "rack_access": rack_access,
         "stats": {
             "walkable_cells": int(grid.mask.sum()),
@@ -169,7 +208,7 @@ def build(store_dir: Path) -> dict | None:
             "main_component_share": round(float(sizes.max() / sizes.sum()), 4) if sizes.sum() else 0,
             "racks_with_access": len(rack_access),
             "racks_without_access": len(no_access),
-            "racks_reachable_from_pickup": reachable,
+            "racks_reachable_from_dispatch": reachable,
         },
         "racks_without_access": no_access,
     }
@@ -190,10 +229,10 @@ def main() -> None:
         path = OUTPUT_DIR / f"{store_dir.name}.json"
         path.write_text(json.dumps(network, separators=(",", ":")) + "\n", encoding="utf-8")
         stats = network["stats"]
-        pickup = network["pickup"]
+        dispatch = network["dispatch"]
         print(f"{store_dir.name}: {network['grid']['cols']}x{network['grid']['rows']} grid, {stats['components']} components "
-              f"(main {stats['main_component_share']:.0%}), pick-up {'ok' if pickup and pickup['cell'] is not None else 'MISSING'}, "
-              f"racks reachable {stats['racks_reachable_from_pickup']}/{stats['racks_with_access'] + stats['racks_without_access']} "
+              f"(main {stats['main_component_share']:.0%}), dispatch {'ok' if dispatch and dispatch['cell'] is not None else 'MISSING'}, "
+              f"racks reachable {stats['racks_reachable_from_dispatch']}/{stats['racks_with_access'] + stats['racks_without_access']} "
               f"-> {path.relative_to(ROOT)} ({path.stat().st_size // 1024} KB)")
 
 

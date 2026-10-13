@@ -93,7 +93,7 @@ def test_order_picking_routes_picks_and_persists():
                 !inventory.racks.has(l.rack_id) || !inventory.model.get(l.rack_id).products.some(p => p.sku === l.sku)).length""")
             assert missing == 0
 
-            # 8. Selected cart's route: one stop per rack, starts/ends at pick-up, exact order for <= 8 stops.
+            # 8. Selected cart's route: one stop per rack, starts/ends at Pack & Dispatch, exact order for <= 8 stops.
             plan = await page.evaluate("""() => { const p = planFor('CART-01'); const racks = new Set(picking.store.stops('CART-01').map(s => s.rack_id));
                 return { order: p.order, racks: [...racks], method: p.method, distance: p.distance, unreachable: p.unreachable, legs: p.coords.length }; }""")
             assert sorted(plan['order']) == sorted(plan['racks']) and len(plan['order']) == len(set(plan['order']))
@@ -101,6 +101,9 @@ def test_order_picking_routes_picks_and_persists():
             assert plan['method'] == ('exact' if len(plan['order']) <= 8 else 'heuristic')
             assert await page.locator('.picking-marker.current').count() == 1
             assert await page.locator('.picking-marker.end').count() == 1
+            assert await page.locator('.picking-marker.end').inner_text() == 'D'
+            assert await page.evaluate("picking.network.dispatch.name") == 'Pack & Dispatch'
+            assert await page.evaluate("planFor('CART-01').start === picking.network.dispatch.cell")
             assert await page.evaluate("state.map.getSource('picking-routes')._data.features.every(f => f.properties.cart_id === 'CART-01')")
 
             # 7. Routes never pass through a rack (sampled along every leg of every cart).
@@ -185,11 +188,17 @@ def test_order_picking_routes_picks_and_persists():
                 if not await page.evaluate(f"picking.store.pick('{target}', {no})"):
                     result = await page.evaluate(f"(() => {{ const r = picking.store.pickLine('{target}', {no}, inventory.model); refreshAfterEdit(); refreshPicking(); return r; }})()")
                     assert result['ok'], result
-            assert await page.evaluate(f"picking.store.status(picking.store.order('{target}'))") == 'Ready'
+            # Picked -> packed at Pack & Dispatch -> handed to the delivery driver.
+            assert await page.evaluate(f"picking.store.status(picking.store.order('{target}'))") == 'Picked'
             await page.locator(f'.picking-cart-order[data-order-id="{target}"] .picking-complete').click()
-            assert await page.evaluate(f"picking.store.status(picking.store.order('{target}'))") == 'Completed'
+            assert await page.evaluate(f"picking.store.status(picking.store.order('{target}'))") == 'Packed'
             assert await page.evaluate(f"picking.store.cartOf('{target}')") is None
-            assert await page.evaluate("picking.store.stats().completed") == 1
+            assert await page.evaluate("picking.store.stats().packed") == 1
+            assert await page.locator('#picking-dispatch-all').is_enabled()
+            await page.locator('#picking-dispatch-all').click()
+            assert await page.evaluate(f"picking.store.status(picking.store.order('{target}'))") == 'Dispatched'
+            assert await page.evaluate("[picking.store.stats().packed, picking.store.stats().dispatched]") == [0, 1]
+            assert not await page.locator('#picking-dispatch-all').is_enabled()
 
             # Mark Item Picked follows the route; recalculation keeps the same remaining stops.
             remaining = await page.evaluate("planFor('CART-01').order.length")

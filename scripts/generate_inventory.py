@@ -7,8 +7,8 @@ each rack record points at its bay by ``geometry_ref`` (feature index +
 polygon part index) and carries the bay's source centroid so the frontend can
 verify the link. Slivers under 0.05 m2 (drawing artefacts) are skipped.
 
-Associations are derived spatially and only kept when unambiguous; otherwise
-the department is "Unassigned" and/or the aisle is null:
+Associations are derived spatially. The department is only kept when
+unambiguous (otherwise "Unassigned"); the aisle falls back step by step:
 
 * Department - the smallest department polygon part containing the bay that
   carries exactly one department label. A part holding several different
@@ -16,7 +16,11 @@ the department is "Unassigned" and/or the aisle is null:
   distance of the next).
 * Aisle - the bay's open (customer-facing) long side looks onto a walkway; the
   aisle is the one numbered label standing in that walkway with an unblocked
-  line of sight along it. Zero or several candidates leave the aisle empty.
+  line of sight along it (``aisle_source: "walkway"``). Otherwise the nearest
+  numbered label within 12 m that no other bay hides from the bay
+  (``"nearest"``). Bays with neither get a ``location`` instead: the nearest
+  named area label within 30 m (e.g. "Back Wall", "Garden Center"), else
+  their department.
 
 Usage:  python scripts/generate_inventory.py [--stores 1665,2544]
 """
@@ -31,7 +35,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from shapely import STRtree
-from shapely.geometry import Point, Polygon
+from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import nearest_points
 
 ROOT = Path(__file__).resolve().parents[1]
 STORES_DIR = ROOT / "stores"
@@ -39,6 +44,8 @@ OUTPUT_DIR = ROOT / "frontend" / "data" / "inventory"
 MIN_RACK_AREA = 0.05  # m2
 UNASSIGNED = "Unassigned"
 AISLE_LABEL = re.compile(r"^(\d+|GC\d+)$")
+NEAREST_AISLE_RADIUS = 12.0  # m
+AREA_LABEL_RADIUS = 30.0     # m
 
 # Department label -> product category.
 DEPARTMENT_CATEGORIES = {
@@ -258,6 +265,29 @@ class StoreGeometry:
         return candidates.pop() if len(candidates) == 1 else None
 
 
+def nearest_aisle(geometry: "StoreGeometry", rack) -> str | None:
+    """Nearest numbered aisle label within reach that no other bay hides from this one."""
+    poly = rack["poly"]
+    for distance, name, label in sorted(((poly.distance(label), name, label) for name, label in geometry.aisle_labels), key=lambda c: c[:2]):
+        if distance > NEAREST_AISLE_RADIUS:
+            return None
+        edge = nearest_points(poly, label)[0]
+        sight = LineString([(edge.x, edge.y), (label.x, label.y)])
+        if not any(geometry.racks[i]["poly"] is not poly and geometry.racks[i]["poly"].intersection(sight).length > 0.05
+                   for i in geometry.rack_tree.query(sight, predicate="intersects")):
+            return name
+    return None
+
+
+def area_name(geometry: "StoreGeometry", rack, department: str) -> str:
+    """Nearest named area label (e.g. "Back Wall"), else the bay's department."""
+    poly = rack["poly"]
+    distance, name = min(((poly.distance(label), name) for name, label in geometry.department_labels), default=(math.inf, ""))
+    if distance <= AREA_LABEL_RADIUS:
+        return name.title()
+    return department.title() if department != UNASSIGNED else "Store floor"
+
+
 def aisle_sort_key(aisle: str | None):
     if aisle is None:
         return (2, 0, "")
@@ -290,7 +320,9 @@ def inventory_record(index: int, rack: dict, rng: random.Random, fill_level: flo
     centroid = ring_centroid(rack["rings"])
     return {
         "rack_id": f"R-{index:04d}",
-        "aisle_id": rack["aisle"],
+        "aisle_id": rack["aisle_id"],
+        "aisle_source": rack["aisle_source"],
+        "location": rack["location"],
         "department": rack["department"].title() if rack["department"] != UNASSIGNED else UNASSIGNED,
         "product_category": category,
         "product_name": products[0]["product_name"],
@@ -323,6 +355,13 @@ def generate(store_dir: Path) -> dict | None:
         racks.append({**rack, "department": department, "aisle": geometry.aisle(rack), "category": rng.choice(categories)})
     racks.sort(key=lambda r: (r["department"] == UNASSIGNED, r["department"], aisle_sort_key(r["aisle"]),
                               -round(r["poly"].centroid.y, 1), round(r["poly"].centroid.x, 1)))
+    # Fallbacks are filled in after sorting so rack IDs (sorted by the walkway
+    # aisle) and the random stock levels stay as they were.
+    for rack in racks:
+        nearest = None if rack["aisle"] else nearest_aisle(geometry, rack)
+        rack["aisle_id"] = rack["aisle"] or nearest
+        rack["aisle_source"] = "walkway" if rack["aisle"] else "nearest" if nearest else None
+        rack["location"] = None if rack["aisle_id"] else area_name(geometry, rack, rack["department"])
     fill_levels = {department: rng.uniform(0.3, 0.85) for department in sorted({r["department"] for r in racks})}
     now = datetime(2026, 10, 9, 12, 0, tzinfo=timezone.utc)
     records = [inventory_record(i + 1, rack, rng, fill_levels[rack["department"]], store_id, now) for i, rack in enumerate(racks)]
@@ -355,7 +394,8 @@ def main() -> None:
         racks = result["racks"]
         unassigned = sum(r["department"] == UNASSIGNED for r in racks)
         no_aisle = sum(r["aisle_id"] is None for r in racks)
-        print(f"{store_dir.name}: {len(racks)} racks ({unassigned} unassigned department, {no_aisle} without aisle) "
+        nearest = sum(r["aisle_source"] == "nearest" for r in racks)
+        print(f"{store_dir.name}: {len(racks)} racks ({unassigned} unassigned department, {nearest} aisle from nearest label, {no_aisle} by area name) "
               f"-> {path.relative_to(ROOT)} ({path.stat().st_size // 1024} KB)")
 
 
