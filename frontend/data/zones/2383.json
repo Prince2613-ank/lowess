@@ -13,10 +13,10 @@
     -76.986522,
     39.827146
    ],
-   "area_m2": 503,
+   "area_m2": 496,
    "size_m": [
-    22.8,
-    22.3
+    22.4,
+    22.2
    ],
    "rack_ids": [
     "R-1483",
@@ -68,30 +68,51 @@
    ],
    "polygon": [
     [
-     -76.986429238,
-     39.827251044
-    ],
-    [
-     -76.986388651,
-     39.827220421
-    ],
-    [
-     -76.986388651,
+     -76.986392616,
      39.827049
     ],
     [
-     -76.986655349,
+     -76.986392616,
+     39.827251553
+    ],
+    [
+     -76.986651763,
+     39.827251553
+    ],
+    [
+     -76.986651763,
      39.827049
     ],
     [
-     -76.986655349,
-     39.827250271
-    ],
-    [
-     -76.986429238,
-     39.827251044
+     -76.986392616,
+     39.827049
     ]
-   ]
+   ],
+   "door": {
+    "id": "DOOR-RCV-2383",
+    "name": "Dock door",
+    "source": "inferred",
+    "note": "The store map marks only the customer entrances at the front, so this door is placed on the area's outside wall.",
+    "width_m": 3.0,
+    "position": [
+     -76.986522,
+     39.827251553
+    ],
+    "opening": [
+     [
+      -76.986504454,
+      39.827251553
+     ],
+     [
+      -76.986539546,
+      39.827251553
+     ]
+    ],
+    "outside": [
+     -76.986522,
+     39.827269641
+    ]
+   }
   },
   {
    "id": "DSP-2383",
@@ -100,13 +121,84 @@
    "source": "map_marker",
    "note": "Pick carts start and finish here; orders are packed, staged and handed to the delivery driver. Laid out around the receiving desk marker on the store map. Back-of-house section (30% of the back room).",
    "anchor": [
-    -76.986722023,
-    39.827108141
+    -76.98632396,
+    39.827150065
    ],
-   "area_m2": 237,
+   "area_m2": 265,
    "size_m": [
-    24.4,
-    11.4
+    22.6,
+    11.7
+   ],
+   "rack_ids": [
+    "R-1395",
+    "R-1396",
+    "R-1485",
+    "R-1549",
+    "R-1550",
+    "R-1551"
+   ],
+   "polygon": [
+    [
+     -76.986255303,
+     39.827048086
+    ],
+    [
+     -76.986255303,
+     39.827252044
+    ],
+    [
+     -76.986392616,
+     39.827252044
+    ],
+    [
+     -76.986392616,
+     39.827048086
+    ],
+    [
+     -76.986255303,
+     39.827048086
+    ]
+   ],
+   "door": {
+    "id": "DOOR-DSP-2383",
+    "name": "Driver hand-off door",
+    "source": "inferred",
+    "note": "The store map marks only the customer entrances at the front, so this door is placed on the area's outside wall.",
+    "width_m": 2.4,
+    "position": [
+     -76.986255303,
+     39.827150065
+    ],
+    "opening": [
+     [
+      -76.986255303,
+      39.827139212
+     ],
+     [
+      -76.986255303,
+      39.827160917
+     ]
+    ],
+    "outside": [
+     -76.986231909,
+     39.827150065
+    ]
+   }
+  },
+  {
+   "id": "RTN-2383",
+   "type": "returns",
+   "name": "Returns Area",
+   "source": "map_marker",
+   "note": "Items brought back by delivery drivers wait here for inspection. Laid out around the receiving desk marker on the store map. Back-of-house section (20% of the back room).",
+   "anchor": [
+    -76.98672023,
+    39.827149685
+   ],
+   "area_m2": 261,
+   "size_m": [
+    22.3,
+    11.7
    ],
    "rack_ids": [
     "R-1486",
@@ -127,117 +219,31 @@
     "R-1538",
     "R-1544",
     "R-1545",
-    "R-1546",
-    "R-1558"
+    "R-1546"
    ],
    "polygon": [
     [
-     -76.986731004,
-     39.827250013
-    ],
-    [
-     -76.986655349,
-     39.827250271
-    ],
-    [
-     -76.986655349,
+     -76.986651763,
      39.827049
     ],
     [
-     -76.986698,
-     39.827049
+     -76.986651763,
+     39.82725037
     ],
     [
-     -76.986698,
-     39.827029956
-    ],
-    [
-     -76.98673,
-     39.827029956
-    ],
-    [
-     -76.98673,
-     39.827049
+     -76.986788697,
+     39.82725037
     ],
     [
      -76.986788697,
      39.827049
     ],
     [
-     -76.986788697,
-     39.827167283
-    ],
-    [
-     -76.986731004,
-     39.827250013
+     -76.986651763,
+     39.827049
     ]
-   ]
-  },
-  {
-   "id": "RTN-2383",
-   "type": "returns",
-   "name": "Returns Area",
-   "source": "map_marker",
-   "note": "Items brought back by delivery drivers wait here for inspection. Laid out around the receiving desk marker on the store map. Back-of-house section (20% of the back room).",
-   "anchor": [
-    -76.986355314,
-    39.827170116
    ],
-   "area_m2": 165,
-   "size_m": [
-    21.1,
-    11.4
-   ],
-   "rack_ids": [
-    "R-1392",
-    "R-1395",
-    "R-1396",
-    "R-1549",
-    "R-1550",
-    "R-1551"
-   ],
-   "polygon": [
-    [
-     -76.986255303,
-     39.827119811
-    ],
-    [
-     -76.986255303,
-     39.827119811
-    ],
-    [
-     -76.986255987,
-     39.827049
-    ],
-    [
-     -76.986268,
-     39.827049
-    ],
-    [
-     -76.986268,
-     39.827029956
-    ],
-    [
-     -76.98634,
-     39.827029956
-    ],
-    [
-     -76.98634,
-     39.827049
-    ],
-    [
-     -76.986388651,
-     39.827049
-    ],
-    [
-     -76.986388651,
-     39.827220421
-    ],
-    [
-     -76.986255303,
-     39.827119811
-    ]
-   ]
+   "door": null
   }
  ]
 }

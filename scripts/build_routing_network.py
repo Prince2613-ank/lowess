@@ -230,8 +230,7 @@ def build(store_dir: Path) -> dict | None:
         cell = grid.nearest(centre, 40.0, component=0)
         if cell is not None and not area.buffer(POI_ACCESS_RADIUS).contains(Point(grid.cx.flat[cell], grid.cy.flat[cell])):
             cell = None
-        dispatch = {"name": zone["name"], "zone_id": zone["id"], "source": [lon, lat], "cell": cell,
-                    "estimated": zone["source"] == "inferred"}
+        dispatch = {"name": zone["name"], "zone_id": zone["id"], "source": [lon, lat], "cell": cell}
 
     part_to_rack = {(r["geometry_ref"]["feature"], r["geometry_ref"]["part"]): r["rack_id"]
                     for r in json.loads(inventory_path.read_text(encoding="utf-8"))["racks"]}

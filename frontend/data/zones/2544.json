@@ -13,12 +13,13 @@
     -76.986296,
     39.827184
    ],
-   "area_m2": 427,
+   "area_m2": 448,
    "size_m": [
-    30.4,
-    14.0
+    31.7,
+    14.1
    ],
    "rack_ids": [
+    "R-1527",
     "R-1529",
     "R-1530",
     "R-1531",
@@ -64,26 +65,51 @@
    ],
    "polygon": [
     [
-     -76.986118401,
-     39.827251044
-    ],
-    [
-     -76.986118401,
+     -76.986110229,
      39.827124
     ],
     [
-     -76.986473599,
+     -76.986110229,
+     39.827251801
+    ],
+    [
+     -76.986481403,
+     39.827251801
+    ],
+    [
+     -76.986481403,
      39.827124
     ],
     [
-     -76.986473599,
-     39.827251044
-    ],
-    [
-     -76.986118401,
-     39.827251044
+     -76.986110229,
+     39.827124
     ]
-   ]
+   ],
+   "door": {
+    "id": "DOOR-RCV-2544",
+    "name": "Dock door",
+    "source": "inferred",
+    "note": "The store map marks only the customer entrances at the front, so this door is placed on the area's outside wall.",
+    "width_m": 3.0,
+    "position": [
+     -76.986296,
+     39.827251801
+    ],
+    "opening": [
+     [
+      -76.986278454,
+      39.827251801
+     ],
+     [
+      -76.986313546,
+      39.827251801
+     ]
+    ],
+    "outside": [
+     -76.986296,
+     39.827269888
+    ]
+   }
   },
   {
    "id": "DSP-2544",
@@ -92,13 +118,85 @@
    "source": "map_marker",
    "note": "Pick carts start and finish here; orders are packed, staged and handed to the delivery driver. Laid out around the receiving desk marker on the store map. Back-of-house section (30% of the back room).",
    "anchor": [
-    -76.986016445,
-    39.827207802
+    -76.98658305,
+    39.827188022
    ],
-   "area_m2": 226,
+   "area_m2": 246,
    "size_m": [
-    17.6,
-    14.0
+    17.4,
+    14.2
+   ],
+   "rack_ids": [
+    "R-1526",
+    "R-1528",
+    "R-1587",
+    "R-1588",
+    "R-1589",
+    "R-1590",
+    "R-1591"
+   ],
+   "polygon": [
+    [
+     -76.986481403,
+     39.827124
+    ],
+    [
+     -76.986481403,
+     39.827252044
+    ],
+    [
+     -76.986684697,
+     39.827252044
+    ],
+    [
+     -76.986684697,
+     39.827124
+    ],
+    [
+     -76.986481403,
+     39.827124
+    ]
+   ],
+   "door": {
+    "id": "DOOR-DSP-2544",
+    "name": "Driver hand-off door",
+    "source": "inferred",
+    "note": "The store map marks only the customer entrances at the front, so this door is placed on the area's outside wall.",
+    "width_m": 2.4,
+    "position": [
+     -76.98658305,
+     39.827252044
+    ],
+    "opening": [
+     [
+      -76.986569014,
+      39.827252044
+     ],
+     [
+      -76.986597087,
+      39.827252044
+     ]
+    ],
+    "outside": [
+     -76.98658305,
+     39.827270131
+    ]
+   }
+  },
+  {
+   "id": "RTN-2544",
+   "type": "returns",
+   "name": "Returns Area",
+   "source": "map_marker",
+   "note": "Items brought back by delivery drivers wait here for inspection. Laid out around the receiving desk marker on the store map. Back-of-house section (20% of the back room).",
+   "anchor": [
+    -76.986011266,
+    39.827187648
+   ],
+   "area_m2": 238,
+   "size_m": [
+    16.9,
+    14.1
    ],
    "rack_ids": [
     "R-1540",
@@ -123,87 +221,26 @@
    "polygon": [
     [
      -76.985912303,
-     39.827251044
-    ],
-    [
-     -76.985916674,
-     39.827164561
-    ],
-    [
-     -76.986009513,
      39.827124
-    ],
-    [
-     -76.986118401,
-     39.827124
-    ],
-    [
-     -76.986118401,
-     39.827251044
     ],
     [
      -76.985912303,
-     39.827251044
-    ]
-   ]
-  },
-  {
-   "id": "RTN-2544",
-   "type": "returns",
-   "name": "Returns Area",
-   "source": "map_marker",
-   "note": "Items brought back by delivery drivers wait here for inspection. Laid out around the receiving desk marker on the store map. Back-of-house section (20% of the back room).",
-   "anchor": [
-    -76.986525105,
-    39.827193305
-   ],
-   "area_m2": 130,
-   "size_m": [
-    15.0,
-    12.7
-   ],
-   "rack_ids": [
-    "R-1526",
-    "R-1527",
-    "R-1588",
-    "R-1589",
-    "R-1590",
-    "R-1591"
-   ],
-   "polygon": [
-    [
-     -76.986530527,
-     39.827251044
+     39.827251296
     ],
     [
-     -76.986473599,
-     39.827251044
+     -76.986110229,
+     39.827251296
     ],
     [
-     -76.986473599,
+     -76.986110229,
      39.827124
     ],
     [
-     -76.986612,
+     -76.985912303,
      39.827124
-    ],
-    [
-     -76.986612,
-     39.827114956
-    ],
-    [
-     -76.986622697,
-     39.827114956
-    ],
-    [
-     -76.986622697,
-     39.827135566
-    ],
-    [
-     -76.986530527,
-     39.827251044
     ]
-   ]
+   ],
+   "door": null
   }
  ]
 }

@@ -245,7 +245,6 @@ html, body {
     color: var(--inv-text);
     font-size: 13px;
 }
-#inventory-panel[hidden] { display: none; }
 body.inventory-open #map { right: var(--inv-panel-width); }
 body.inventory-open #layer-panel { right: calc(var(--inv-panel-width) + 12px); }
 
@@ -397,14 +396,6 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .inventory-footer { margin-top: 16px; }
 .inventory-footer button { width: 100%; color: #b91c1c; border-color: #f3c4c4; }
 #inventory-storage-note { color: #9b3d17; font-size: 12px; }
-
-#inventory-open-tab {
-    position: absolute; top: 50%; right: 0; z-index: 950; transform: translateY(-50%);
-    writing-mode: vertical-rl; padding: 14px 7px; border: 1px solid #becbda; border-right: 0; border-radius: 8px 0 0 8px;
-    background: var(--inv-surface); color: var(--inv-navy); font: inherit; font-size: 12px; font-weight: 700;
-    letter-spacing: 0.04em; box-shadow: -2px 2px 8px rgba(15, 23, 42, 0.15); cursor: pointer;
-}
-#inventory-open-tab[hidden] { display: none; }
 
 .layer-row-divider { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5eaf1; }
 
@@ -592,13 +583,12 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .picking-popup li.done { color: var(--inv-muted); text-decoration: line-through; }
 
 @media (max-width: 1100px) {
-    /* The panel overlays the map instead of narrowing it. */
-    body.inventory-open #map { right: 0; }
-    #inventory-panel { box-shadow: -6px 0 18px rgba(15, 23, 42, 0.18); }
+    /* Narrower docked panel so the map keeps room beside it. */
+    :root { --inv-panel-width: 360px; }
 }
 @media (max-width: 800px) {
     body.inventory-open #map { left: 230px; }
-    #inventory-panel { width: min(var(--inv-panel-width), calc(100vw - 230px)); }
+    :root { --inv-panel-width: 300px; }
 }
 @media (max-width: 520px) {
     body.inventory-open #map { left: 0; }
@@ -618,6 +608,18 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .store-zone-label.dispatch { background: #b45309; }
 .store-zone-label.returns { background: #be185d; }
 .store-zone-label span { font-weight: 600; text-transform: none; opacity: 0.9; }
+.store-door {
+    display: flex; align-items: center; gap: 4px; height: 26px; min-width: 26px; padding: 0 5px; box-sizing: border-box;
+    border: 2px solid #fff; border-radius: 6px; color: #fff; font: inherit; font-size: 11px; font-weight: 800;
+    white-space: nowrap; cursor: pointer; box-shadow: 0 1px 5px rgba(15, 23, 42, 0.45);
+}
+.store-door svg { flex: none; }
+.store-door-text { display: none; }
+.doors-named .store-door-text { display: inline; }
+.store-door.receiving { background: #0f766e; }
+.store-door.dispatch { background: #b45309; }
+.store-door.returns { background: #be185d; }
+.store-door:focus-visible { outline: 2px solid #063b71; outline-offset: 2px; }
 .zone-popup { font-size: 12px; line-height: 1.45; }
 .zone-popup-title { font-weight: 800; color: var(--inv-navy); margin-bottom: 2px; }
 .zone-popup-note { margin-top: 4px; color: var(--inv-muted); }

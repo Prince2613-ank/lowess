@@ -581,10 +581,15 @@ the truck yard, so it stands in for the dock. `python scripts/build_store_zones.
 writes `frontend/data/zones/<store_id>.json`:
 
 * **Back-of-house block** - the back-room rack group the receiving desk sits in
-  (racks outside the sales-floor departments, chained at gaps up to 4 m),
-  outlined with the desk and kept off the sales floor.
-* The block is divided along its length, each section keeping its racks as
-  that area's shelving (`rack_ids`; Rack Details shows the "Storage area"):
+  (racks outside the sales-floor departments, chained at gaps up to 4 m). The
+  maps draw no back-room walls, so the room's edge is taken from what stands
+  along it: the block is outlined around that group, the desk and every other
+  back-room rack, fixture and drawn shape within 10 m of it, kept off the sales
+  floor (and out of gaps under 6 m between its departments).
+* The block is divided along its length by floor area, and each area is the
+  largest rectangle, square to the building, in its stretch that keeps off the
+  sales floor. Each keeps its racks as that area's shelving (`rack_ids`; Rack
+  Details shows the "Storage area"):
   * **Receiving** (~50 %), centred on the receiving desk - supplier deliveries
     are checked in and put away;
   * **Pack & Dispatch** (~30 %), next to Receiving - carts start and finish
@@ -593,10 +598,26 @@ writes `frontend/data/zones/<store_id>.json`:
     delivery drivers wait for inspection.
 * **No receiving desk** (Bloomfield) - the position is taken from the store
   with the most similar building (Southington #2910) and the nearest back-room
-  rack group is used; the areas are labelled "estimated" (`source: "inferred"`).
+  rack group is used (`source: "inferred"`).
+* **Doors** - the only door markers in the maps (`entrance_exit`) are the
+  customer entrances at the front, 55-130 m away. So Receiving and Pack &
+  Dispatch each get an inferred outside door (`door`) on their own stretch of
+  the building's outer wall (the outline of everything mapped, gaps under 6 m
+  closed), on a straight piece of wall long enough for it (or, if none of
+  the area's sides is on it, the side nearest it that faces neither the sales
+  floor nor another area):
+  * **Dock door** (3.0 m) for Receiving, on the wall nearest the receiving
+    desk - supplier trucks unload here;
+  * **Driver hand-off door** (2.4 m) for Pack & Dispatch, mid-way along its
+    longest outer wall - packed orders go out to the delivery driver, and
+    drivers bring returned items back in through it to Returns next door.
 
-`frontend/store-zones.js` draws them (Layers: "Back-of-house areas"); click an
-area for its size and how it was placed. Check: `tests/test_store_zones.py`.
+  Returns has no outside door of its own (`door: null`).
+
+`frontend/store-zones.js` draws them (Layers: "Back-of-house areas"): each door
+is a thick gap in the area colour on the wall with a door icon just outside;
+click an area or a door for what it is and how it was placed. Check:
+`tests/test_store_zones.py`.
 
 ## Hosted site (Vercel)
 

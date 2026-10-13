@@ -13,6 +13,7 @@ from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+from build_store_zones import outer_wall, store_layout  # noqa: E402
 from generate_inventory import StoreGeometry, load  # noqa: E402
 
 DATA = ROOT / "frontend" / "data"
@@ -36,6 +37,7 @@ def reachable(network: dict, start: int) -> set[int]:
 def test_every_store_has_back_of_house_areas_and_routes_from_pack_and_dispatch():
     stores = sorted(p for p in (ROOT / "stores").iterdir() if (p / "rack.geojson").is_file())
     assert stores
+    walls_total = [0, 0]  # doors on the outer wall, all doors
     for store_dir in stores:
         sid = store_dir.name
         zones = {z["type"]: z for z in json.loads((DATA / "zones" / f"{sid}.json").read_text(encoding="utf-8"))["zones"]}
@@ -62,6 +64,32 @@ def test_every_store_has_back_of_house_areas_and_routes_from_pack_and_dispatch()
         if desk is not None:
             assert areas["receiving"].distance(desk) <= 3.0, sid  # built at the map's receiving desk
         assert zones["receiving"]["rack_ids"], sid
+
+        # Receiving and Pack & Dispatch have an outside door on the building's outer wall, at the
+        # back; Returns has none (drivers use the driver door next to it).
+        assert zones["returns"]["door"] is None, sid
+        building = outer_wall(store_layout(store_dir), list(areas.values()))
+        customer = [Point(proj.xy(*f["geometry"]["coordinates"][:2])) for f in load(store_dir, "department")
+                    if (f.get("properties") or {}).get("icon_id") == "entrance_exit"]
+        doors, on_wall = {}, []
+        for kind in ("receiving", "dispatch"):
+            door = zones[kind]["door"]
+            assert door and door["width_m"] > 0, (sid, kind)
+            centre = Point(proj.xy(*door["position"]))
+            opening = LineString([proj.xy(*p) for p in door["opening"]])
+            assert abs(opening.length - door["width_m"]) < 0.05, (sid, kind)
+            assert areas[kind].exterior.distance(centre) < 0.5, (sid, kind)       # on the area's own edge
+            outside = Point(proj.xy(*door["outside"]))
+            assert not any(area.contains(outside) for area in areas.values()), (sid, kind)  # opens out of the areas
+            assert not sales_floor.contains(outside), (sid, kind)                 # never onto the sales floor
+            if building.exterior.distance(centre) < 0.5:                          # on the outer wall: opens outside
+                assert not building.contains(outside), (sid, kind)
+                on_wall.append(kind)
+            assert min(c.distance(centre) for c in customer) > 40, (sid, kind)    # not the customer front
+            doors[kind] = centre
+        assert min(a.distance(b) for a in doors.values() for b in doors.values() if a is not b) > 4, sid
+        walls_total[0] += len(on_wall)
+        walls_total[1] += len(doors)
 
         # Carts start and finish at Pack & Dispatch, on the main store floor.
         network = json.loads((DATA / "routing" / f"{sid}.json").read_text(encoding="utf-8"))
@@ -92,3 +120,5 @@ def test_every_store_has_back_of_house_areas_and_routes_from_pack_and_dispatch()
             assert rack.distance(spot) <= 2.0, (sid, rack_id)
             assert not any(all_racks[i] is not rack and all_racks[i].intersection(sight).length > 0.05
                            for i in tree.query(sight, predicate="intersects")), (sid, rack_id)
+    # Almost every door is on the building's outer wall; the rest face away from the floor and areas.
+    assert walls_total[0] >= 0.9 * walls_total[1], walls_total

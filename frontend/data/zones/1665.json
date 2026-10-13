@@ -10,13 +10,13 @@
    "source": "inferred",
    "note": "Supplier deliveries are checked in here and put away to the racks. No receiving desk marker in this store's map; position taken from store #2910, the most similar building (152 x 92 m). Back-of-house section (50% of the back room).",
    "anchor": [
-    -76.985601235,
-    39.827121362
+    -76.985597785,
+    39.827131779
    ],
-   "area_m2": 274,
+   "area_m2": 414,
    "size_m": [
-    20.2,
-    14.9
+    22.0,
+    18.9
    ],
    "rack_ids": [
     "R-1785",
@@ -25,49 +25,78 @@
     "R-1788",
     "R-1789",
     "R-1790",
+    "R-1791",
     "R-1799",
     "R-1800",
+    "R-1801",
     "R-1806",
     "R-1807",
     "R-1808",
+    "R-1809",
     "R-1813",
+    "R-1815",
     "R-1816",
     "R-1817",
     "R-1818",
     "R-1819",
     "R-1820",
+    "R-1821",
+    "R-1825",
     "R-1827",
     "R-1828",
     "R-1829",
     "R-1830",
-    "R-1831"
+    "R-1831",
+    "R-1832",
+    "R-1838"
    ],
    "polygon": [
     [
-     -76.985513886,
-     39.827117993
-    ],
-    [
-     -76.985513886,
+     -76.985484843,
      39.826942
     ],
     [
-     -76.985648393,
+     -76.985484843,
+     39.827140662
+    ],
+    [
+     -76.985705434,
+     39.827140662
+    ],
+    [
+     -76.985705434,
      39.826942
     ],
     [
-     -76.985688583,
-     39.827060005
-    ],
-    [
-     -76.985688583,
-     39.827124731
-    ],
-    [
-     -76.985513886,
-     39.827117993
+     -76.985484843,
+     39.826942
     ]
-   ]
+   ],
+   "door": {
+    "id": "DOOR-RCV-1665",
+    "name": "Dock door",
+    "source": "inferred",
+    "note": "The store map marks only the customer entrances at the front, so this door is placed on the area's outside wall.",
+    "width_m": 3.0,
+    "position": [
+     -76.985595138,
+     39.827140662
+    ],
+    "opening": [
+     [
+      -76.985577593,
+      39.827140662
+     ],
+     [
+      -76.985612684,
+      39.827140662
+     ]
+    ],
+    "outside": [
+     -76.985595138,
+     39.82715875
+    ]
+   }
   },
   {
    "id": "DSP-1665",
@@ -76,53 +105,80 @@
    "source": "inferred",
    "note": "Pick carts start and finish here; orders are packed, staged and handed to the delivery driver. No receiving desk marker in this store's map; position taken from store #2910, the most similar building (152 x 92 m). Back-of-house section (30% of the back room).",
    "anchor": [
-    -76.985461477,
-    39.827027975
+    -76.985416073,
+    39.82703223
    ],
-   "area_m2": 172,
+   "area_m2": 235,
    "size_m": [
-    19.5,
-    9.0
+    20.0,
+    11.8
    ],
    "rack_ids": [
-    "R-1791",
     "R-1792",
     "R-1793",
-    "R-1801",
+    "R-1794",
+    "R-1795",
+    "R-1797",
     "R-1802",
     "R-1803",
-    "R-1809",
+    "R-1804",
     "R-1810",
     "R-1811",
-    "R-1821",
+    "R-1812",
     "R-1822",
     "R-1823",
-    "R-1832",
+    "R-1824",
     "R-1833",
-    "R-1834"
+    "R-1834",
+    "R-1835"
    ],
    "polygon": [
     [
-     -76.985409068,
-     39.82711395
-    ],
-    [
-     -76.985409068,
+     -76.985347303,
      39.826942
     ],
     [
-     -76.985513886,
+     -76.985347303,
+     39.827122459
+    ],
+    [
+     -76.985484843,
+     39.827122459
+    ],
+    [
+     -76.985484843,
      39.826942
     ],
     [
-     -76.985513886,
-     39.827117993
-    ],
-    [
-     -76.985409068,
-     39.82711395
+     -76.985347303,
+     39.826942
     ]
-   ]
+   ],
+   "door": {
+    "id": "DOOR-DSP-1665",
+    "name": "Driver hand-off door",
+    "source": "inferred",
+    "note": "The store map marks only the customer entrances at the front, so this door is placed on the area's outside wall.",
+    "width_m": 2.4,
+    "position": [
+     -76.985347303,
+     39.82703223
+    ],
+    "opening": [
+     [
+      -76.985347303,
+      39.827021377
+     ],
+     [
+      -76.985347303,
+      39.827043082
+     ]
+    ],
+    "outside": [
+     -76.985323909,
+     39.82703223
+    ]
+   }
   },
   {
    "id": "RTN-1665",
@@ -131,49 +187,42 @@
    "source": "inferred",
    "note": "Items brought back by delivery drivers wait here for inspection. No receiving desk marker in this store's map; position taken from store #2910, the most similar building (152 x 92 m). Back-of-house section (20% of the back room).",
    "anchor": [
-    -76.985387966,
-    39.827012521
+    -76.985756217,
+    39.827045522
    ],
-   "area_m2": 74,
+   "area_m2": 199,
    "size_m": [
-    19.0,
-    5.3
+    22.9,
+    8.7
    ],
    "rack_ids": [
-    "R-1794",
-    "R-1795",
-    "R-1797",
-    "R-1804",
-    "R-1812",
-    "R-1824",
-    "R-1835"
+    "R-1784",
+    "R-1796",
+    "R-1837"
    ],
    "polygon": [
     [
-     -76.985347303,
-     39.827111568
-    ],
-    [
-     -76.985347303,
-     39.827083041
-    ],
-    [
-     -76.985386424,
+     -76.985705434,
      39.826942
     ],
     [
-     -76.985409068,
+     -76.985705434,
+     39.827149044
+    ],
+    [
+     -76.985807,
+     39.827149044
+    ],
+    [
+     -76.985807,
      39.826942
     ],
     [
-     -76.985409068,
-     39.82711395
-    ],
-    [
-     -76.985347303,
-     39.827111568
+     -76.985705434,
+     39.826942
     ]
-   ]
+   ],
+   "door": null
   }
  ]
 }

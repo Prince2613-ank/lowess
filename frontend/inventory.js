@@ -286,7 +286,7 @@ function updateRackLabels() {
     inventory.labels.setVisible(true);
     requestAnimationFrame(() => {
         const container = state.map.getCanvasContainer();
-        const taken = [...container.querySelectorAll(".dept-label, .aisle-label, .rack-label, .marker-icon, .store-zone-label")]
+        const taken = [...container.querySelectorAll(".dept-label, .aisle-label, .rack-label, .marker-icon, .store-zone-label, .store-door")]
             .filter((node) => !node.closest(".label-hidden"))
             .map((node) => node.getBoundingClientRect())
             .filter((rect) => rect.width && rect.height);
@@ -620,19 +620,10 @@ function refreshAfterEdit() {
 /* Sidebar wiring                                                          */
 /* ---------------------------------------------------------------------- */
 
-function setInventoryPanelOpen(open) {
-    document.body.classList.toggle("inventory-open", open);
-    inv$("inventory-panel").hidden = !open;
-    inv$("inventory-open-tab").hidden = open;
-    inv$("inventory-collapse").setAttribute("aria-expanded", String(open));
-    if (state.map) window.setTimeout(() => { state.map.resize(); updateRackLabels(); }, 50);
-}
-
 function wireInventoryPanel() {
-    // The panel always starts open; collapsing only lasts until the next page load.
-    setInventoryPanelOpen(true);
-    inv$("inventory-collapse").addEventListener("click", () => setInventoryPanelOpen(false));
-    inv$("inventory-open-tab").addEventListener("click", () => setInventoryPanelOpen(true));
+    // The panel is permanently docked on the right; the map fills the space beside it.
+    document.body.classList.add("inventory-open");
+    if (state.map) window.setTimeout(() => { state.map.resize(); updateRackLabels(); }, 50);
 
     const search = inv$("inventory-search");
     search.addEventListener("input", renderSearchResults);

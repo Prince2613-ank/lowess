@@ -538,7 +538,7 @@ function declutterLabels() {
         return { left: r.left - origin.left, right: r.right - origin.left, top: r.top - origin.top, bottom: r.bottom - origin.top };
     };
     const hits = (rect, others) => others.some((o) => rect.left < o.right && rect.right > o.left && rect.top < o.bottom && rect.bottom > o.top);
-    const placed = [...map.getCanvasContainer().querySelectorAll(".picking-marker")].map(box);
+    const placed = [...map.getCanvasContainer().querySelectorAll(".picking-marker, .store-door")].map(box);
     // Area names give way only to each other when zoomed out: Pack & Dispatch first.
     const zoneRank = (node) => (node.classList.contains("dispatch") ? 0 : node.classList.contains("receiving") ? 1 : 2);
     for (const node of [...map.getCanvasContainer().querySelectorAll(".store-zone-label")].sort((x, y) => zoneRank(x) - zoneRank(y))) {
