@@ -12,7 +12,7 @@
  * ========================================================================== */
 
 const IndoorRouting = (() => {
-    const EXACT_STOP_LIMIT = 8;       // exhaustive stop ordering up to this many stops
+    const EXACT_STOP_LIMIT = 15;      // guaranteed-best stop order (Held-Karp) up to this many stops
     const DENSIFY_METERS = 3;         // keeps drawn legs on the floor under non-linear alignment
     const TURN_COST = 1;              // m added per 90 degrees of turning: fewer, cleaner corners
     const CENTRE_WEIGHT = 0.4;        // extra step cost = weight / cells from the nearest shelving or wall
@@ -318,25 +318,41 @@ const IndoorRouting = (() => {
         return cost;
     }
 
+    // Best visiting order by dynamic programming over subsets (Held-Karp):
+    // cost[set][j] = cheapest walk from the start through every stop in `set`,
+    // ending at stop j. Guaranteed optimal; fast up to EXACT_STOP_LIMIT stops.
     function exactOrder(matrix, stops, end) {
-        let best = null, bestCost = Infinity;
-        const current = [], used = new Array(stops.length).fill(false);
-        const visit = (cost, at) => {
-            if (cost >= bestCost) return;
-            if (current.length === stops.length) {
-                const total = end != null ? cost + matrix[at][end] : cost;
-                if (total < bestCost) { bestCost = total; best = current.slice(); }
-                return;
+        const n = stops.length;
+        if (!n) return [];
+        const full = (1 << n) - 1;
+        const cost = new Float64Array((full + 1) * n).fill(Infinity);
+        const parent = new Int8Array((full + 1) * n).fill(-1);
+        for (let j = 0; j < n; j += 1) cost[(1 << j) * n + j] = matrix[0][stops[j]];
+        for (let set = 1; set <= full; set += 1) {
+            for (let j = 0; j < n; j += 1) {
+                const here = cost[set * n + j];
+                if (!(set & (1 << j)) || here === Infinity) continue;
+                for (let k = 0; k < n; k += 1) {
+                    if (set & (1 << k)) continue;
+                    const next = set | (1 << k), candidate = here + matrix[stops[j]][stops[k]];
+                    if (candidate < cost[next * n + k]) { cost[next * n + k] = candidate; parent[next * n + k] = j; }
+                }
             }
-            stops.forEach((stop, i) => {
-                if (used[i]) return;
-                used[i] = true; current.push(stop);
-                visit(cost + matrix[at][stop], stop);
-                current.pop(); used[i] = false;
-            });
-        };
-        visit(0, 0);
-        return best || [];
+        }
+        let last = -1, bestCost = Infinity;
+        for (let j = 0; j < n; j += 1) {
+            const total = cost[full * n + j] + (end != null ? matrix[stops[j]][end] : 0);
+            if (total < bestCost) { bestCost = total; last = j; }
+        }
+        if (last < 0) return [];
+        const order = [];
+        for (let set = full, j = last; j >= 0; ) {
+            order.push(stops[j]);
+            const previous = parent[set * n + j];
+            set &= ~(1 << j);
+            j = previous;
+        }
+        return order.reverse();
     }
 
     function heuristicOrder(matrix, stops, end) {

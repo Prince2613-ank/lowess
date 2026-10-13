@@ -93,12 +93,12 @@ def test_order_picking_routes_picks_and_persists():
                 !inventory.racks.has(l.rack_id) || !inventory.model.get(l.rack_id).products.some(p => p.sku === l.sku)).length""")
             assert missing == 0
 
-            # 8. Selected cart's route: one stop per rack, starts/ends at Pack & Dispatch, exact order for <= 8 stops.
+            # 8. Selected cart's route: one stop per rack, starts/ends at Pack & Dispatch, exact (best) order up to IndoorRouting.EXACT_STOP_LIMIT stops.
             plan = await page.evaluate("""() => { const p = planFor('CART-01'); const racks = new Set(picking.store.stops('CART-01').map(s => s.rack_id));
                 return { order: p.order, racks: [...racks], method: p.method, distance: p.distance, unreachable: p.unreachable, legs: p.coords.length }; }""")
             assert sorted(plan['order']) == sorted(plan['racks']) and len(plan['order']) == len(set(plan['order']))
             assert plan['unreachable'] == [] and plan['distance'] > 0
-            assert plan['method'] == ('exact' if len(plan['order']) <= 8 else 'heuristic')
+            assert plan['method'] == ('exact' if len(plan['order']) <= await page.evaluate('IndoorRouting.EXACT_STOP_LIMIT') else 'heuristic')
             assert await page.locator('.picking-marker.current').count() == 1
             assert await page.locator('.picking-marker.end').count() == 1
             assert await page.locator('.picking-marker.end').inner_text() == 'D'

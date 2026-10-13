@@ -7,7 +7,8 @@ from collections import deque
 from pathlib import Path
 
 import numpy as np
-from shapely.geometry import Point, Polygon
+from shapely import STRtree
+from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,3 +76,19 @@ def test_every_store_has_back_of_house_areas_and_routes_from_pack_and_dispatch()
         assert sum(1 for c in access.values() if c in connected) >= 0.9 * len(rack_ids), sid
         orders = json.loads((DATA / "orders" / f"{sid}.json").read_text(encoding="utf-8"))["orders"]
         assert all(access[line["rack_id"]] in connected for order in orders for line in order["lines"]), sid
+
+        # Every picking point faces its rack: a clear straight line to the shelf, never through another rack.
+        by_id = {r["rack_id"]: r for r in json.loads((DATA / "inventory" / f"{sid}.json").read_text(encoding="utf-8"))["racks"]}
+        polys = {(r["feature"], r["part"]): r["poly"] for r in geometry.racks}
+        tree = STRtree([r["poly"] for r in geometry.racks])
+        all_racks = [r["poly"] for r in geometry.racks]
+        grid = network["grid"]
+        for rack_id in {line["rack_id"] for order in orders for line in order["lines"]}:
+            ref = by_id[rack_id]["geometry_ref"]
+            rack = polys[(ref["feature"], ref["part"])]
+            c = access[rack_id]
+            spot = Point(grid["x0"] + (c % grid["cols"] + 0.5) * grid["cell"], grid["y0"] + (c // grid["cols"] + 0.5) * grid["cell"])
+            sight = LineString([spot, rack.boundary.interpolate(rack.boundary.project(spot))])
+            assert rack.distance(spot) <= 2.0, (sid, rack_id)
+            assert not any(all_racks[i] is not rack and all_racks[i].intersection(sight).length > 0.05
+                           for i in tree.query(sight, predicate="intersects")), (sid, rack_id)

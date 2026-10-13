@@ -544,8 +544,11 @@ Build order: `generate_inventory.py` -> `build_store_zones.py` ->
   markers), the back-of-house block and corridors narrower than 10 m between
   them, minus every rack, fixture and drawn outline grown by a 0.35 m cart
   clearance. Also stores each rack's picking access cell (racks with no
-  walkable cell within 2 m are listed for review, not routed) and the **Pack &
-  Dispatch** point (`dispatch`), where carts start and finish.
+  walkable cell within 2 m with a clear line to the shelf face - never through
+  another rack - are listed for review, not routed) and the **Pack & Dispatch**
+  point (`dispatch`), where carts start and finish. Drawn outlines that enclose
+  racks with floor around them (display pads, zone boxes) are area markings,
+  not obstacles; closed outlines with no rack inside (counters, seating) are.
 * `python scripts/generate_sample_orders.py` - 15 orders and the starting cart
   assignments per store in `frontend/data/orders/<store_id>.json`. Every line
   reuses an inventory SKU and its rack; only racks reachable from Pack &
@@ -557,8 +560,9 @@ Build order: `generate_inventory.py` -> `build_store_zones.py` ->
   cost per turn (1 m per 90 degrees), and a light cost for hugging shelving so
   routes keep to corridor centre lines. Parallel stretches of a cart's legs within 2 m share one drawn
   line, so walking out and back along a corridor is a single line. Stop order
-  is exhaustive for up to 8 stops, nearest-neighbour + 2-opt above that (shown
-  as a heuristic in the UI). Distances and times are measured on the drawn line.
+  is guaranteed best (Held-Karp dynamic programming) for up to 15 stops,
+  nearest-neighbour + 2-opt above that (shown as a heuristic in the UI).
+  Distances and times are measured on the drawn line.
 * `frontend/order-management.js` - orders, carts, picks, packing, hand-over and
   the stock ledger (picks deduct from the Rack Inventory model once; undo and
   Reset Orders give the stock back). State is saved per store in `localStorage`.
