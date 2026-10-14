@@ -445,7 +445,6 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .picking-toolbar button:hover:not(:disabled), .picking-actions button:hover:not(:disabled),
 .picking-row-actions button:hover:not(:disabled), .picking-assign button:hover:not(:disabled), .picking-line button:hover:not(:disabled) { background: #edf6ff; }
 .picking-tab button:disabled, #picking-tab button:disabled { opacity: 0.5; cursor: not-allowed; }
-.picking-toolbar .picking-reset { color: #b91c1c; border-color: #f3c4c4; }
 .picking-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .picking-stats .inventory-stat { padding: 8px 7px; }
 .picking-stats .inventory-stat-value { font-size: 17px; }
@@ -484,6 +483,8 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 }
 .picking-handover:hover:not(:disabled) { background: #ffedd5; }
 .picking-handover:disabled { opacity: 0.55; cursor: not-allowed; }
+/* A new online order: green for its first minute in the queue. */
+#picking-order-body tr.is-new { background: #ecfdf5; box-shadow: inset 3px 0 0 #16a34a; }
 .picking-status.status-idle { background: #f1f5f9; color: #64748b; }
 .picking-status.status-returning { background: #fef3c7; color: #854d0e; }
 .picking-priority.priority-high { background: #fee2e2; color: #991b1b; }

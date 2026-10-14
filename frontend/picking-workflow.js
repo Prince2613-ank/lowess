@@ -12,10 +12,10 @@
 const PICKING_ROUTE_SOURCE = "picking-routes";
 const PICKING_TARGET_SOURCE = "picking-target";
 const PICKING_LAYERS = ["picking-target-fill", "picking-target-halo", "picking-target-outline", "picking-route-casing", "picking-route-line", "picking-route-arrows"];
-const PICKING_LABELS = {
-    generate: "Create Order",
-    reset: "Reset Orders",
-};
+// Online orders arrive on their own while a store is open, as from the web shop:
+// one every 2-5 minutes, at random.
+const ORDER_FEED_MINUTES = [2, 5];
+const NEW_ORDER_HIGHLIGHT_MS = 60000;
 
 const picking = {
     storeId: null,
@@ -36,6 +36,10 @@ const picking = {
     message: { text: "", error: false },
     subscribedModel: null,
     unsubscribe: null,
+    newOrders: new Set(),  // order ids received in the last minute (highlighted)
+    feedTimer: null,
+    feedStopped: false,
+    resetDone: new Set(),  // stores reset by ?reset=1 on this page load
 };
 
 const pk$ = (id) => document.getElementById(id);
@@ -315,6 +319,8 @@ async function onPickingInventoryReady(store, alignedData, sourceData) {
         Object.assign(picking, { storeId: store.store_id, store: null, network: null, loading: true, error: "", detailsOrderId: null });
         picking.selectedOrders.clear();
         picking.plans.clear();
+        picking.newOrders.clear();
+        stopOrderFeedTimer();
         renderPickingPanel();
         try {
             const [orders, network] = await Promise.all([OrderManagement.load(store.store_id), IndoorRouting.load(store.store_id)]);
@@ -326,6 +332,13 @@ async function onPickingInventoryReady(store, alignedData, sourceData) {
         }
         if (generation !== picking.generation) return;
         picking.loading = false;
+        subscribePickingInventory();
+        // Testing aid, off the staff screen: ?reset=1 restores the starting orders once per page load.
+        if (picking.store && new URLSearchParams(window.location.search).has("reset") && !picking.resetDone.has(store.store_id)) {
+            picking.resetDone.add(store.store_id);
+            resetPickingData();
+        }
+        scheduleOrderFeed();
     }
     subscribePickingInventory();
     refreshPicking();
@@ -338,9 +351,11 @@ function clearPickingLayers() {
     state.map.getSource(PICKING_TARGET_SOURCE)?.setData(emptyCollection());
     if (picking.storeId && picking.storeId !== state.currentStoreId) {
         ++picking.generation;
+        stopOrderFeedTimer();
         Object.assign(picking, { storeId: null, store: null, network: null, loading: false, error: "", detailsOrderId: null });
         picking.selectedOrders.clear();
         picking.plans.clear();
+        picking.newOrders.clear();
         renderPickingPanel();
     }
 }
@@ -356,6 +371,45 @@ function refreshPicking() {
 
 function setPickingMessage(result) {
     picking.message = { text: result?.message || "", error: result ? !result.ok : false };
+}
+
+/* Incoming online orders ------------------------------------------------ */
+
+function stopOrderFeedTimer() {
+    window.clearTimeout(picking.feedTimer);
+    picking.feedTimer = null;
+}
+
+function scheduleOrderFeed() {
+    stopOrderFeedTimer();
+    if (!picking.store || picking.feedStopped) return;
+    const [low, high] = ORDER_FEED_MINUTES;
+    picking.feedTimer = window.setTimeout(receiveOnlineOrder, (low + Math.random() * (high - low)) * 60000);
+}
+
+// A new order from the web shop lands in the queue as Pending.
+function receiveOnlineOrder() {
+    if (!picking.store) return null;
+    const result = picking.store.generateOrder();
+    if (result.ok) {
+        const id = result.order.order_id;
+        picking.newOrders.add(id);
+        window.setTimeout(() => { if (picking.newOrders.delete(id)) renderOrderQueue(); }, NEW_ORDER_HIGHLIGHT_MS);
+        setPickingMessage({ ok: true, message: `New online order ${id} received · ${result.order.lines.length} items.` });
+        refreshPicking();
+    }
+    scheduleOrderFeed();
+    return result.ok ? result.order.order_id : null;
+}
+
+// Starting orders back and picked stock returned (testing aid; see ?reset=1).
+function resetPickingData() {
+    if (!picking.store) return;
+    picking.selectedOrders.clear();
+    picking.detailsOrderId = null;
+    picking.plans.clear();
+    picking.newOrders.clear();
+    afterStockChange(picking.store.reset(inventory.model));
 }
 
 function afterStockChange(result) {
@@ -612,13 +666,14 @@ function renderOrderQueue() {
         const cart = store.cartOf(order.order_id);
         const progress = store.progress(order);
         const completed = store.isCompleted(order.order_id);
-        return h("tr", { className: picking.detailsOrderId === order.order_id ? "selected" : "", dataset: { orderId: order.order_id } },
+        const isNew = picking.newOrders.has(order.order_id);
+        return h("tr", { className: [picking.detailsOrderId === order.order_id ? "selected" : "", isNew ? "is-new" : ""].join(" ").trim(), dataset: { orderId: order.order_id } },
             h("td", { className: "picking-check" }, h("input", {
                 type: "checkbox", "aria-label": `Select ${order.order_id}`, disabled: completed,
                 ...(picking.selectedOrders.has(order.order_id) ? { checked: true } : {}),
                 onChange: (event) => { event.target.checked ? picking.selectedOrders.add(order.order_id) : picking.selectedOrders.delete(order.order_id); renderOrderQueue(); },
             })),
-            h("td", { className: "rack" }, order.order_id),
+            h("td", { className: "rack", title: isNew ? "New online order" : null }, order.order_id),
             h("td", { title: `${progress.total} units` }, `${order.lines.length}`),
             h("td", {}, priorityBadge(order.priority)),
             h("td", {}, cart ? h("span", { className: "picking-cart-label" }, cartDot(cart), cart.name.replace("Cart ", "C")) : "—"),
@@ -685,8 +740,6 @@ function setOpsTab(tab) {
 }
 
 function wirePickingPanel() {
-    pk$("picking-generate").textContent = PICKING_LABELS.generate;
-    pk$("picking-reset").textContent = PICKING_LABELS.reset;
     pk$("ops-tab-inventory").addEventListener("click", () => setOpsTab("inventory"));
     pk$("ops-tab-picking").addEventListener("click", () => setOpsTab("picking"));
     for (const tab of document.querySelectorAll(".ops-tabs [role=tab]")) {
@@ -699,21 +752,6 @@ function wirePickingPanel() {
     }
 
     pk$("picking-dispatch-all").addEventListener("click", () => { if (picking.store) handToDriver(); });
-    pk$("picking-generate").addEventListener("click", () => {
-        if (!picking.store) return;
-        const result = picking.store.generateOrder();
-        setPickingMessage(result);
-        if (result.ok) picking.detailsOrderId = result.order.order_id;
-        refreshPicking();
-    });
-    pk$("picking-reset").addEventListener("click", () => {
-        if (!picking.store) return;
-        if (!window.confirm("Reset all online orders, carts and picks? Picked stock is returned to the racks.")) return;
-        picking.selectedOrders.clear();
-        picking.detailsOrderId = null;
-        picking.plans.clear();
-        afterStockChange(picking.store.reset(inventory.model));
-    });
     pk$("picking-show-all").addEventListener("change", (event) => {
         if (!picking.store) return;
         picking.store.settings.showAllRoutes = event.target.checked;

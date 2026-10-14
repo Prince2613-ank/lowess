@@ -565,9 +565,13 @@ Build order: `generate_inventory.py` -> `build_store_zones.py` ->
   Distances and times are measured on the drawn line.
 * `frontend/order-management.js` - orders, carts, picks, packing, hand-over and
   the stock ledger (picks deduct from the Rack Inventory model once; undo and
-  Reset Orders give the stock back). State is saved per store in `localStorage`.
+  a reset give the stock back). State is saved per store in `localStorage`.
 * `frontend/picking-workflow.js` - map layers (`picking-routes`,
-  `picking-target`) and the Order Picking tab.
+  `picking-target`) and the Order Picking tab. New online orders arrive on
+  their own while a store is open (one every 2-5 minutes, at random), land in
+  the queue as Pending and are highlighted green for a minute - there is no
+  manual Create / Reset on the staff screen. For testing, open the page with
+  `?reset=1` to restore the starting orders (and return picked stock).
 
 Browser checks: `tests/test_order_picking_browser.py`.
 

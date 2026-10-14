@@ -80,7 +80,10 @@ def test_order_picking_routes_picks_and_persists():
             assert await page.evaluate("state.map.getLayoutProperty('picking-route-line', 'visibility')") == 'none'
             await page.locator('#ops-tab-picking').click()
             assert await page.locator('#picking-tab').is_visible() and await page.locator('#inventory-tab').is_hidden()
-            assert await page.locator('#picking-generate').inner_text() == 'Create Order'
+            # Staff screen: no Create Order / Reset Orders buttons; orders arrive on their own.
+            assert await page.locator('#picking-generate').count() == 0 and await page.locator('#picking-reset').count() == 0
+            assert await page.evaluate("picking.feedTimer !== null")
+            await page.evaluate("picking.feedStopped = true; stopOrderFeedTimer()")  # deterministic from here on
 
             # 3/4/5. Fifteen orders, three carts, Cart 01 batches several orders.
             assert await page.evaluate("picking.store.orders.length") == 15
@@ -206,11 +209,11 @@ def test_order_picking_routes_picks_and_persists():
             assert await page.evaluate("planFor('CART-01').order.length") <= remaining
             assert await page.locator('#picking-recalculate').count() == 0
 
-            # Generate an order: lands in the queue as Pending with real rack locations.
-            await page.locator('#picking-generate').click()
-            new_id = await page.evaluate("picking.store.orders[picking.store.orders.length - 1].order_id")
+            # An incoming online order lands in the queue as Pending with real rack locations, marked New.
+            new_id = await page.evaluate("receiveOnlineOrder()")
             assert new_id == 'ORD-1016'
             assert await page.evaluate(f"picking.store.status(picking.store.order('{new_id}'))") == 'Pending'
+            assert await page.locator(f'#picking-order-body tr[data-order-id="{new_id}"].is-new').count() == 1
 
             # 12. Refresh keeps orders, carts and picks.
             snapshot = await page.evaluate("JSON.stringify([picking.store.state.picks, picking.store.state.carts, picking.store.orders.length])")
@@ -219,8 +222,8 @@ def test_order_picking_routes_picks_and_persists():
             assert await page.evaluate("JSON.stringify([picking.store.state.picks, picking.store.state.carts, picking.store.orders.length])") == snapshot
             assert await page.locator('#picking-tab').is_visible()
 
-            # 14. Reset Orders restores the sample orders and returns picked stock.
-            await page.locator('#picking-reset').click()
+            # 14. Reset (testing aid, ?reset=1) restores the sample orders and returns picked stock.
+            await page.evaluate("resetPickingData()")
             await page.wait_for_function("Object.keys(picking.store.state.picks).length === 0")
             assert await page.evaluate("picking.store.orders.length") == 15
             assert await page.evaluate("picking.store.carts.map(c => c.orders)") == [c['orders'] for c in sample['carts']]
