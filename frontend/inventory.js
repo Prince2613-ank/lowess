@@ -1,7 +1,7 @@
 /* ==========================================================================
  * Rack & Inventory Management dashboard (simulated stock).
  *
- * Links InventoryModel records to existing Lowes_rack bays, draws occupancy
+ * Links InventoryModel records to existing rack bays, draws occupancy
  * colours as an overlay above the untouched rack layers and drives the
  * Inventory sidebar. Hooks used by the base app:
  *   onInventoryMapRendered(store, alignedData, sourceData)  - directory.js
@@ -44,6 +44,11 @@ const inv$ = (id) => document.getElementById(id);
 
 // Small DOM builder; all text goes through textContent, so data and user
 // input are never parsed as HTML.
+// replaceChildren() prints null as the text "null"; skip empty sections instead.
+function setChildren(node, ...children) {
+    node.replaceChildren(...children.flat().filter((child) => child != null && child !== false));
+}
+
 function h(tag, attrs = {}, ...children) {
     const node = document.createElement(tag);
     for (const [key, value] of Object.entries(attrs)) {
@@ -525,7 +530,7 @@ function renderDetails() {
     };
     const units = () => Number(quantityInput.value);
 
-    panel.replaceChildren(
+    setChildren(panel,
         h("div", { className: "inventory-details-header" },
             h("div", {},
                 h("div", { className: "inventory-details-kicker" }, "Rack details"),

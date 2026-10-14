@@ -368,7 +368,7 @@ def generate(store_dir: Path) -> dict | None:
     store = json.loads((store_dir / "store.json").read_text(encoding="utf-8")) if (store_dir / "store.json").is_file() else {}
     return {
         "simulated": True,
-        "notice": "Simulated stock - not connected to any live Lowe's inventory system.",
+        "notice": "Simulated stock - not connected to any live inventory system.",
         "store_id": store_id,
         "store_name": store.get("name"),
         "generated_at": now.isoformat().replace("+00:00", "Z"),

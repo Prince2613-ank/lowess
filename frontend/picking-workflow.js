@@ -184,6 +184,7 @@ function ensurePickingLayers() {
             "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-rotation-alignment": "map",
         },
     }, before);
+    for (const id of PICKING_LAYERS) map.setLayerZoomRange(id, ZOOM.STORE_OVERLAYS, 24);
     picking.layersReady = true;
 }
 
@@ -515,7 +516,7 @@ function renderCartDetail() {
     const flagged = (plan?.unreachable || []).map((id) => stopsById.get(id)).filter(Boolean);
     const done = (plan?.stops || []).filter((stop) => stop.done);
 
-    panel.replaceChildren(
+    setChildren(panel,
         h("div", { className: "picking-cart-head", style: { "--cart": cart.color } },
             h("div", {}, h("h3", {}, cartDot(cart), cart.name), h("div", { className: "picking-cart-picker" }, `Picker: ${cart.picker}`)),
             statusBadge(summary.status)),
@@ -532,8 +533,7 @@ function renderCartDetail() {
             : h("p", { className: "picking-empty" }, "No orders on this cart. Select orders in the queue below and assign them here."),
         h("div", { className: "picking-actions" },
             h("button", { type: "button", id: "picking-start", disabled: !cart.orders.length || cart.started, onClick: () => { setPickingMessage(picking.store.startPicking(cart.cart_id)); refreshPicking(); } }, cart.started ? "Picking started" : "Start Picking"),
-            h("button", { type: "button", id: "picking-pick-next", className: "primary", disabled: !remainingStops, onClick: pickNextItem }, "Mark Item Picked"),
-            h("button", { type: "button", id: "picking-recalculate", disabled: !cart.orders.length, onClick: () => { planFor(cart.cart_id, { force: true }); setPickingMessage({ ok: true, message: `Route recalculated for ${cart.name}.` }); refreshPicking(); } }, "Recalculate Route")),
+            h("button", { type: "button", id: "picking-pick-next", className: "primary", disabled: !remainingStops, onClick: pickNextItem }, "Mark Item Picked")),
         cart.orders.length ? h("div", { className: "picking-cart-orders" },
             h("h4", {}, "Orders on this cart"),
             ...summary.orders.map((order) => {
@@ -638,7 +638,7 @@ function renderOrderDetails(scroll = false) {
     const status = store.status(order);
     const cart = store.cartOf(order.order_id);
     const progress = store.progress(order);
-    panel.replaceChildren(
+    setChildren(panel,
         h("div", { className: "inventory-details-header" },
             h("div", {}, h("div", { className: "inventory-details-kicker" }, "Online order"), h("h3", { id: "picking-details-title" }, order.order_id)),
             h("div", { className: "inventory-details-chips" }, priorityBadge(order.priority), statusBadge(status)),

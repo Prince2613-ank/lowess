@@ -1,5 +1,5 @@
 """
-Central configuration for the Lowe's Map System backend.
+Central configuration for the Store Map System backend.
 
 Keeping all filesystem paths in one place makes it easy to reason about
 what the API is allowed to touch, which matters because layout files are

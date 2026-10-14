@@ -1,6 +1,6 @@
-# Lowe's Map System
+# Store Map System
 
-> This folder is the Lowe's app only. **Menards** is a separate app in
+> This folder is the store map app only. **Menards** is a separate app in
 > [`../menards/`](../menards/README.md). Run every command below from this
 > `lowes/` folder. The shared virtual environment is at the repository root
 > (`..\.venv`).
@@ -93,9 +93,9 @@ shared Bloomfield fallback is applied.
 tests, and a real Chrome integration against a local synthetic directory.
 The integration tests two states, multiple stores in one city, complete map
 capture, missing/malformed maps, resume, and forced refresh. Local fixture
-results are not counted as downloaded Lowe's maps.
+results are not counted as downloaded store maps.
 
-The live nationwide run on 2026-09-15 received HTTP 403 from Lowe's State
+The live nationwide run on 2026-09-15 received HTTP 403 from the retailer's State
 Directory in both direct HTTP and fresh Chrome. Consequently, nationwide live
 discovery and multi-state real map extraction could not be verified. The
 official Bloomfield (CT) and Alabaster (AL) store pages also returned HTTP 403
@@ -109,7 +109,7 @@ the official site permits access; no fabricated stores or maps are inserted.
 
 ---
 
-Associates an interactive Lowe's-style store floor layout (which lives in
+Associates an interactive store floor layout (which lives in
 its own **local coordinate system**) with the store's real-world
 **latitude/longitude**, via a configurable transformation layer, and
 renders the result as an interactive Leaflet map over OpenStreetMap tiles.
@@ -155,7 +155,7 @@ lowes-map-system/
                              calibration panel + control-point editor
         app.js               Rendering, zoom-based level-of-detail, calibration,
                               building overlay, auto-align, control points
-        styles.css           Lowe's-style department/label/marker styling
+        styles.css           Department/label/marker styling
     scripts/
         validate_layout.py   Validate layouts, buildings, and georeference files
         convert_layout.py    Dump a store's layout as standalone GeoJSON files
@@ -210,7 +210,7 @@ start if anything is invalid.
 ```json
 {
     "store_id": "1665",
-    "name": "Lowe's Bloomfield",
+    "name": "Bloomfield Store",
     "address": "325 Cottage Grove Road, Bloomfield, CT 06002",
     "latitude": 41.8140843218019,
     "longitude": -72.71526758866406,
@@ -329,8 +329,8 @@ data/buildings/{store_id}.geojson       real building footprint (WGS84 polygon)
 data/georeference/{store_id}.json       floor<->geo control points
 ```
 
-`data/buildings/1665.geojson` is the actual OpenStreetMap building for Lowe's
-\#1665 (way `146204404`, tagged `ref=1665`, `brand=Lowe's`), fetched from the
+`data/buildings/1665.geojson` is the actual OpenStreetMap building for store
+\#1665 (way `146204404`, tagged `ref=1665`), fetched from the
 OSM API - not a synthesized rectangle. Its `metadata` block records the exact
 source (`osm_way_id`, retrieval date, ODbL license).
 
@@ -382,7 +382,7 @@ Plain Leaflet.js + vanilla JS (`frontend/app.js`), OpenStreetMap tiles
 
 - Initially centers on the store #1665 anchor (41.8140843218019,
   -72.71526758866406) and loads its layout automatically.
-- Renders department polygons in the Lowe's palette
+- Renders department polygons in the store palette
   (`stroke #BCDDF4`, `fill #9BCBEB`, `fill-opacity 0.20`).
 - Renders aisle lines, rack polygons, and category-colored marker icons
   for every basic-information and store-service marker type.
@@ -500,12 +500,12 @@ they're requested.
 ## Rack & inventory management (simulated stock)
 
 The map includes a Rack & Inventory Management sidebar. **All inventory is
-simulated**; nothing connects to a real Lowe's inventory system.
+simulated**; nothing connects to a real inventory system.
 
 * `frontend/data/inventory/<store_id>.json` - one record for every shelf bay
   in the store (about 1,700-2,100 per store; slivers under 0.05 m2 skipped),
   built by `python scripts/generate_inventory.py [--stores 1665,2544]`.
-  Each rack points at an existing bay in the store's `Lowes_rack`
+  Each rack points at an existing bay in the store's rack layer
   MultiPolygon (`geometry_ref`: feature + part index, plus the bay's source
   centroid, which the browser re-checks before linking). Map GeoJSON is never
   modified.
@@ -529,7 +529,7 @@ The inventory sidebar has an **Order Picking** tab next to **Rack Inventory**.
 It is a staff tool: store staff pick online orders with carts, pack them at
 **Pack & Dispatch** in back-of-house and hand them to the delivery driver.
 Orders are sample data generated for each store; nothing connects to a real
-Lowe's order system.
+order system.
 
 Order steps: Pending -> Assigned -> Picking -> **Picked** -> **Packed** (Mark
 Packed, at Pack & Dispatch) -> **Handed to driver** (Hand to Driver, per order

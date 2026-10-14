@@ -1,5 +1,5 @@
 /* ==========================================================================
- * Rack inventory model (simulated stock - not connected to any live Lowe's
+ * Rack inventory model (simulated stock - not connected to any live
  * inventory system).
  *
  * Loads frontend/data/inventory/<store>.json, applies the visitor's local

@@ -1,8 +1,8 @@
 /* ==========================================================================
- * Lowe's Interactive Store Map - frontend application logic.
+ * Interactive Store Map - frontend application logic.
  *
  * Talks to the FastAPI backend for the store directory and renders the raw
- * Lowes_*.geojson floor plan on a MapLibre map over Esri satellite imagery
+ * store's aisle/department/rack GeoJSON floor plan on a MapLibre map over Esri satellite imagery
  * (or OpenStreetMap tiles).
  * ========================================================================== */
 
@@ -17,6 +17,7 @@ const OVERVIEW_ZOOM = 3;
 // Zoom thresholds driving progressive level-of-detail (see spec).
 const ZOOM = {
     STORE_LEVEL: 17,
+    STORE_OVERLAYS: 15,    // back-of-house areas and cart routes drawn from here in
     DEPT_LABELS: 17,
     DEPT_LABELS_ALL: 19,
     AISLE_LABELS: 17,
@@ -368,6 +369,11 @@ function initMap() {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
 
     map.on("zoomend", updateZoomVisibility);
+    // Store details (doors, area names, route stops) only once the store fills the view,
+    // like the store's own icons; zoomed out, only the store pin remains.
+    const storeDetail = () => map.getContainer().classList.toggle("store-zoomed-out", map.getZoom() < ZOOM.STORE_LEVEL);
+    map.on("zoom", storeDetail);
+    storeDetail();
     map.on("moveend", declutterLabels);
     map.on("click", showFeaturePopup);
     map.on("mousemove", (event) => {
@@ -538,10 +544,11 @@ function declutterLabels() {
         return { left: r.left - origin.left, right: r.right - origin.left, top: r.top - origin.top, bottom: r.bottom - origin.top };
     };
     const hits = (rect, others) => others.some((o) => rect.left < o.right && rect.right > o.left && rect.top < o.bottom && rect.bottom > o.top);
-    const placed = [...map.getCanvasContainer().querySelectorAll(".picking-marker, .store-door")].map(box);
+    const shown = (node) => node.offsetWidth > 0;  // hidden when zoomed out
+    const placed = [...map.getCanvasContainer().querySelectorAll(".picking-marker, .store-door")].filter(shown).map(box);
     // Area names give way only to each other when zoomed out: Pack & Dispatch first.
     const zoneRank = (node) => (node.classList.contains("dispatch") ? 0 : node.classList.contains("receiving") ? 1 : 2);
-    for (const node of [...map.getCanvasContainer().querySelectorAll(".store-zone-label")].sort((x, y) => zoneRank(x) - zoneRank(y))) {
+    for (const node of [...map.getCanvasContainer().querySelectorAll(".store-zone-label")].filter(shown).sort((x, y) => zoneRank(x) - zoneRank(y))) {
         const rect = box(node);
         const hidden = hits(rect, placed);
         node.classList.toggle("label-hidden", hidden);

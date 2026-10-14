@@ -127,7 +127,7 @@ def generate(store_id: str) -> dict | None:
         })
     return {
         "simulated": True,
-        "notice": "Sample online orders - not from any live Lowe's order system.",
+        "notice": "Sample online orders - not from any live order system.",
         "store_id": store_id,
         "generated_at": "2026-10-09T12:00:00Z",
         "product_pool": pool,

@@ -71,6 +71,7 @@ function ensureZoneLayers() {
     doorText();
     map.on("mouseenter", "store-zones-fill", () => { map.getCanvas().style.cursor = "pointer"; });
     map.on("mouseleave", "store-zones-fill", () => { map.getCanvas().style.cursor = ""; });
+    for (const id of ZONE_LAYERS) map.setLayerZoomRange(id, ZOOM.STORE_OVERLAYS, 24);
     storeZones.layersReady = true;
 }
 

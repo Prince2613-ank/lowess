@@ -1,6 +1,6 @@
 {
  "simulated": true,
- "notice": "Sample online orders - not from any live Lowe's order system.",
+ "notice": "Sample online orders - not from any live order system.",
  "store_id": "0593",
  "generated_at": "2026-10-09T12:00:00Z",
  "product_pool": [

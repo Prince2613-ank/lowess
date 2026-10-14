@@ -1,4 +1,4 @@
-"""Cached Lowe's directory discovery and compatibility access for the UI."""
+"""Cached store directory discovery and compatibility access for the UI."""
 from __future__ import annotations
 
 import json
@@ -108,7 +108,30 @@ def load_states() -> list[dict[str, str]]:
     return _legacy_fallback()[0]
 
 
+_BRAND = re.compile(r"\s*\bLowe['’]?s\b\s*", re.I)
+
+
+def display_name(name: str, city: str = "") -> str:
+    """Store name without the retailer's brand: "Cromwell Lowe's" -> "Cromwell Store"."""
+    rest = re.sub(r"\s+", " ", _BRAND.sub(" ", name or "")).strip()
+    rest = re.sub(r"^(?:of|at)\s+|\s+(?:of|at)$", "", rest, flags=re.I)  # "Lowe's of Hartford"
+    if not rest or rest.casefold() == (city or "").casefold():
+        return f"{city} Store".strip()
+    if rest.casefold().endswith("store"):
+        return rest
+    if city and city.casefold() in rest.casefold():
+        extra = re.sub(re.escape(city), "", rest, flags=re.I).strip()
+        return re.sub(r"\s+", " ", f"{city} {extra} Store")
+    return f"{rest} Store"
+
+
 def load_directory_stores() -> list[dict[str, Any]]:
+    """Directory entries, named without the retailer's brand (also after a live refresh)."""
+    return [{**item, "name": display_name(item.get("name", ""), item.get("city", ""))} if item.get("name") else item
+            for item in _load_directory_stores()]
+
+
+def _load_directory_stores() -> list[dict[str, Any]]:
     restored = []
     stores_root = STORES_DIR
     if stores_root.exists():

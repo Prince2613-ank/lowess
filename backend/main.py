@@ -1,5 +1,5 @@
 """
-FastAPI application for the Lowe's Map System.
+FastAPI application for the Store Map System.
 
 Wires the store directory, floor-layout data, and transformation engine
 together behind a small, read-mostly JSON API, and serves the static
@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("lowes_map_system")
 
 app = FastAPI(
-    title="Lowe's Map System API",
+    title="Store Map System API",
     description=(
         "Associates an interactive store floor layout (local coordinates) "
         "with a real-world geographic location, via a configurable "

@@ -200,11 +200,11 @@ def test_order_picking_routes_picks_and_persists():
             assert await page.evaluate("[picking.store.stats().packed, picking.store.stats().dispatched]") == [0, 1]
             assert not await page.locator('#picking-dispatch-all').is_enabled()
 
-            # Mark Item Picked follows the route; recalculation keeps the same remaining stops.
+            # Mark Item Picked follows the route, and the route re-plans on its own (no manual button).
             remaining = await page.evaluate("planFor('CART-01').order.length")
             await page.locator('#picking-pick-next').click()
-            await page.locator('#picking-recalculate').click()
             assert await page.evaluate("planFor('CART-01').order.length") <= remaining
+            assert await page.locator('#picking-recalculate').count() == 0
 
             # Generate an order: lands in the queue as Pending with real rack locations.
             await page.locator('#picking-generate').click()
