@@ -359,9 +359,9 @@ function initMap() {
         center: DEFAULT_CENTER,
         zoom: OVERVIEW_ZOOM,
         maxZoom: ZOOM.MAX_DETAIL,
-        // Leaflet maps are always north-up and flat.
+        // North-up and flat; the 3D store view (store-3d.js) turns rotate and tilt on.
         dragRotate: false,
-        pitchWithRotate: false,
+        pitchWithRotate: true,
         touchPitch: false,
     });
     map.touchZoomRotate.disableRotation();

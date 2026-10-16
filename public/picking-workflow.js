@@ -216,8 +216,12 @@ function addMarker(lngLat, className, text, popupContent, title) {
     return marker;
 }
 
+// Flat highlights the 3D view replaces with rack caps and a moving cart.
+const FLAT_ONLY_PICKING_LAYERS = new Set(["picking-target-fill", "picking-target-halo", "picking-target-outline", "picking-route-arrows"]);
+
 function renderPickingMap() {
     drawPickingMap();
+    if (typeof onPickingMapDrawn === "function") onPickingMapDrawn();
     // Route stops are placed first; map labels under them step aside.
     if (typeof declutterLabels === "function") declutterLabels();
 }
@@ -228,7 +232,8 @@ function drawPickingMap() {
     const routes = state.map.getSource(PICKING_ROUTE_SOURCE);
     const target = state.map.getSource(PICKING_TARGET_SOURCE);
     const visible = picking.tab === "picking" && picking.store && picking.network && picking.toMap;
-    for (const id of PICKING_LAYERS) state.map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+    const in3d = typeof store3dActive === "function" && store3dActive();
+    for (const id of PICKING_LAYERS) state.map.setLayoutProperty(id, "visibility", visible && !(in3d && FLAT_ONLY_PICKING_LAYERS.has(id)) ? "visible" : "none");
     if (!visible) {
         routes?.setData(emptyCollection());
         target?.setData(emptyCollection());

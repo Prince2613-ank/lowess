@@ -9,12 +9,15 @@
         rel="stylesheet"
         href="vendor/maplibre-gl/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="styles.css?v=inventory-25" />
+    <link rel="stylesheet" href="styles.css?v=inventory-27" />
 </head>
 <body>
     <div id="topbar">
         <div class="brand">Store Maps <span class="brand-region">Connecticut</span></div>
-        <span>Store directory</span>
+        <nav class="topnav" aria-label="Pages">
+            <a href="./" aria-current="page">Store map</a>
+            <a href="compare.html">Store comparison</a>
+        </nav>
     </div>
 
     <aside id="directory" aria-label="Store directory">
@@ -199,13 +202,14 @@
     <script
         src="vendor/maplibre-gl/maplibre-gl.js"
     ></script>
-    <script src="app.js?v=maplibre-19"></script>
-    <script src="directory.js?v=maplibre-10"></script>
+    <script src="app.js?v=maplibre-20"></script>
+    <script src="directory.js?v=maplibre-11"></script>
     <script src="inventory-data.js?v=inventory-12"></script>
-    <script src="inventory.js?v=inventory-20"></script>
+    <script src="inventory.js?v=inventory-21"></script>
     <script src="indoor-routing.js?v=picking-8"></script>
     <script src="order-management.js?v=picking-3"></script>
-    <script src="picking-workflow.js?v=picking-13"></script>
+    <script src="picking-workflow.js?v=picking-14"></script>
     <script src="store-zones.js?v=zones-11"></script>
+    <script src="store-3d.js?v=store3d-2"></script>
 </body>
 </html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Store Comparison · Connecticut</title>
+    <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css" />
+    <link rel="stylesheet" href="compare.css?v=compare-2" />
+</head>
+<body>
+    <header id="topbar">
+        <div class="brand">Store Maps <span class="brand-region">Connecticut</span></div>
+        <nav class="topnav" aria-label="Pages">
+            <a href="./">Store map</a>
+            <a href="compare.html" aria-current="page">Store comparison</a>
+        </nav>
+    </header>
+
+    <main class="cmp">
+        <div class="cmp-head">
+            <div>
+                <h1>Store Comparison</h1>
+                <p class="cmp-sub" id="cmp-sub">Online order volume, picking productivity, stockouts and fulfillment across stores</p>
+            </div>
+            <p class="cmp-notice" id="cmp-notice"></p>
+        </div>
+
+        <div class="cmp-filters" role="group" aria-label="Filters">
+            <div class="cmp-period" role="group" aria-label="Period">
+                <button type="button" data-days="7">Last 7 days</button>
+                <button type="button" data-days="30">Last 30 days</button>
+                <button type="button" data-days="90">Last 90 days</button>
+            </div>
+            <label class="cmp-focus">Focus store
+                <select id="cmp-focus"><option value="">All stores</option></select>
+            </label>
+            <span class="cmp-range" id="cmp-range"></span>
+        </div>
+
+        <p class="cmp-message" id="cmp-message" role="status" hidden></p>
+
+        <section class="cmp-kpis" id="cmp-kpis" aria-label="Network totals"></section>
+
+        <div class="cmp-grid">
+            <figure class="cmp-card span-7" id="card-orders">
+                <figcaption><h2>Order volume by store</h2><p>Online orders received in the period</p></figcaption>
+                <div class="cmp-bars" id="chart-orders"></div>
+            </figure>
+            <figure class="cmp-card span-5" id="card-map">
+                <figcaption><h2>Store locations</h2><p>Circle size shows order volume · click a store to focus it</p></figcaption>
+                <div class="cmp-map" id="cmp-map" role="img" aria-label="Map of the stores, sized by order volume"></div>
+            </figure>
+
+            <figure class="cmp-card span-6" id="card-productivity">
+                <figcaption><h2>Picking productivity</h2><p>Units picked per labour hour · line = network average. Longer walks from Pack &amp; Dispatch to the racks cost time.</p></figcaption>
+                <div class="cmp-bars" id="chart-productivity"></div>
+            </figure>
+            <figure class="cmp-card span-6" id="card-fulfillment">
+                <figcaption><h2>Fulfillment rate vs network</h2><p>Share of orders shipped complete, in percentage points above or below the network rate</p></figcaption>
+                <div class="cmp-bars diverging" id="chart-fulfillment"></div>
+                <div class="cmp-legend"><span><i class="key pos"></i>Above network</span><span><i class="key neg"></i>Below network</span></div>
+            </figure>
+
+            <figure class="cmp-card span-6" id="card-stockouts">
+                <figcaption><h2>Stockouts</h2><p>SKUs out of stock and at or below their reorder point, today</p></figcaption>
+                <div class="cmp-bars" id="chart-stockouts"></div>
+                <div class="cmp-legend"><span><i class="key critical"></i>Out of stock</span><span><i class="key warning"></i>Low stock</span></div>
+            </figure>
+            <figure class="cmp-card span-6" id="card-trend">
+                <figcaption><h2>Orders per day</h2><p id="trend-sub">Average store</p></figcaption>
+                <div class="cmp-line" id="chart-trend"></div>
+                <div class="cmp-legend" id="trend-legend"></div>
+            </figure>
+
+            <figure class="cmp-card span-12" id="card-table">
+                <figcaption><h2>All stores</h2><p>Every figure on this page · click a heading to sort</p></figcaption>
+                <div class="cmp-table-wrap">
+                    <table class="cmp-table" id="cmp-table">
+                        <thead><tr></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </figure>
+        </div>
+    </main>
+
+    <div class="cmp-tooltip" id="cmp-tooltip" role="tooltip" hidden></div>
+
+    <script src="vendor/maplibre-gl/maplibre-gl.js"></script>
+    <script src="compare.js?v=compare-2"></script>
+</body>
+</html>

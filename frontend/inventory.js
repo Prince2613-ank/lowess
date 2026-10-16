@@ -185,9 +185,12 @@ function ensureInventoryLayers() {
     }, before);
 
     inventory.hoverPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 14, className: "inventory-hover" });
-    map.on("mousemove", "inventory-rack-fill", onRackHover);
-    map.on("mouseleave", "inventory-rack-fill", clearRackHover);
+    // In the 3D view the extruded racks take the pointer (store-3d.js).
+    const flat = () => !(typeof store3dActive === "function" && store3dActive());
+    map.on("mousemove", "inventory-rack-fill", (event) => { if (flat()) onRackHover(event); });
+    map.on("mouseleave", "inventory-rack-fill", () => { if (flat()) clearRackHover(); });
     map.on("click", "inventory-rack-fill", (event) => {
+        if (!flat()) return;
         const id = event.features?.[0]?.properties?.rack_id;
         if (id) selectRack(id, { zoom: false, scroll: true });
     });
@@ -375,6 +378,7 @@ async function onInventoryMapRendered(store, alignedData, sourceData) {
     }
     if (typeof onPickingInventoryReady === "function") onPickingInventoryReady(store, alignedData, sourceData);
     if (typeof onStoreZonesReady === "function") onStoreZonesReady(store, alignedData, sourceData);
+    if (typeof onStore3dReady === "function") onStore3dReady();
 }
 
 function clearInventoryLayer() {

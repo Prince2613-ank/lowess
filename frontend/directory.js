@@ -363,7 +363,10 @@ async function loadStores() {
         const report = await fetchJSON('/api/catalog/report');
         el('catalog-status').textContent = report.discovery_error ? 'Nationwide discovery is incomplete. Showing saved stores.' : response.message || '';
     } catch (error) { console.warn(error); }
-    if (state.stores.length) await loadStore(state.stores[0].store_id);
+    // ?store=<id> (e.g. from Store comparison) opens that store; otherwise the first one.
+    const wanted = new URLSearchParams(window.location.search).get('store');
+    const first = state.stores.find(s => s.store_id === wanted) || state.stores[0];
+    if (first) await loadStore(first.store_id);
 };
 
 function showStorePin(store) {

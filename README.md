@@ -623,6 +623,51 @@ is a thick gap in the area colour on the wall with a door icon just outside;
 click an area or a door for what it is and how it was placed. Check:
 `tests/test_store_zones.py`.
 
+## Store comparison
+
+**Store comparison** in the header (`frontend/compare.html`, `compare.js`,
+`compare.css`) compares all stores side by side. One filter row - period (last
+7 / 30 / 90 days) and a focus store - scopes everything below it:
+
+* headline tiles: online orders, units picked, picking productivity (units per
+  labour hour), fulfillment rate (orders shipped complete), each against the
+  previous period, and out-of-stock SKUs today;
+* order volume by store; picking productivity against the network average;
+  fulfillment rate in percentage points above / below the network; stockouts
+  (out of stock and low stock); orders per day (average store, plus the focus
+  store);
+* a map of the stores sized by order volume (click one to focus it);
+* a sortable table with every figure, each row linking to that store's map
+  (`./?store=<id>` opens the map page on that store).
+
+`python scripts/build_store_metrics.py` writes `frontend/data/metrics/stores.json`
+(run after the inventory, routing and order data). Inventory figures (racks,
+SKUs, out-of-stock = 0 units, low stock = at or below the reorder point) and the
+walking distance from Pack & Dispatch to every rack (on the store's walking
+network) are measured from each store's data. The 180-day order history is
+**simulated** from those measurements: volume scales with store size, short
+picks follow the out-of-stock share, and labour time per order follows the
+walking distance. Checks: `tests/test_store_compare_browser.py`.
+
+## 3D store view
+
+The **3D** button under the zoom controls (`frontend/store-3d.js`) tilts the
+map and turns the store into extruded geometry, built from the same sources as
+the flat view:
+
+* the sales floor (department areas) as a raised floor, fixtures (aisle
+  polygons) at counter height;
+* every rack as a glass shell 2.4 m tall, filled to its stock level in its
+  occupancy colour (the legend's green / yellow / red / grey); click a rack
+  for its details;
+* racks on the shown carts' routes capped in the cart's colour (grey once
+  picked);
+* the selected cart's route animated: dashes flowing in walking direction and
+  a cart moving along it (still when the viewer prefers reduced motion).
+
+Right-drag (or two fingers) rotates and tilts while 3D is on; turning it off
+returns to the flat, north-up map. Check: `tests/test_store_3d_browser.py`.
+
 ## Hosted site (Vercel)
 
 Vercel serves `public/` from its CDN ahead of the FastAPI app, so

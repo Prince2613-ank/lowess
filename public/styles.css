@@ -40,6 +40,11 @@ html, body {
     white-space: nowrap;
 }
 
+#topbar .topnav { display: flex; gap: 4px; margin-left: 8px; }
+#topbar .topnav a { color: rgba(255, 255, 255, 0.85); text-decoration: none; padding: 6px 10px; border-radius: 6px; font-size: 14px; white-space: nowrap; }
+#topbar .topnav a:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+#topbar .topnav a[aria-current="page"] { background: rgba(255, 255, 255, 0.18); color: #fff; font-weight: 600; }
+
 #topbar .brand-region {
     margin-left: 6px;
     padding-left: 10px;
@@ -616,6 +621,11 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .store-zone-label.dispatch { background: #b45309; }
 .store-zone-label.returns { background: #be185d; }
 .store-zone-label span { font-weight: 600; text-transform: none; opacity: 0.9; }
+/* 3D store view toggle (store-3d.js). */
+.store-3d-control .store-3d-toggle { width: 29px; height: 29px; font: 800 11px/1 system-ui, sans-serif; letter-spacing: 0.02em; color: #063b71; }
+.store-3d-control .store-3d-toggle.active { background: #063b71; color: #fff; }
+.store-3d-control .store-3d-toggle.active:hover { background: #0b4f94; }
+
 /* Zoomed out past store level: only the store pin, no in-store markers. */
 #map.store-zoomed-out .store-door,
 #map.store-zoomed-out .store-zone-label,
