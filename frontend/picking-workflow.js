@@ -658,7 +658,7 @@ function renderOrderQueue() {
     all.disabled = !selectable.length;
     const body = pk$("picking-order-body");
     if (!orders.length) {
-        body.replaceChildren(h("tr", {}, h("td", { colspan: "7", className: "empty" }, "No orders match the current filters")));
+        body.replaceChildren(h("tr", {}, h("td", { colspan: "6", className: "empty" }, "No orders match the current filters")));
         return;
     }
     body.replaceChildren(...orders.map((order) => {
@@ -673,14 +673,15 @@ function renderOrderQueue() {
                 ...(picking.selectedOrders.has(order.order_id) ? { checked: true } : {}),
                 onChange: (event) => { event.target.checked ? picking.selectedOrders.add(order.order_id) : picking.selectedOrders.delete(order.order_id); renderOrderQueue(); },
             })),
-            h("td", { className: "rack", title: isNew ? "New online order" : null }, order.order_id),
+            // The order number opens its details (hand-over to the driver is there and in the toolbar).
+            h("td", { className: "rack", title: isNew ? "New online order" : null }, h("button", {
+                type: "button", className: "inventory-link-button picking-order-link", "aria-label": `Open ${order.order_id} details`,
+                onClick: () => { picking.detailsOrderId = order.order_id; renderOrderQueue(); renderOrderDetails(true); },
+            }, order.order_id)),
             h("td", { title: `${progress.total} units` }, `${order.lines.length}`),
             h("td", {}, priorityBadge(order.priority)),
             h("td", {}, cart ? h("span", { className: "picking-cart-label" }, cartDot(cart), cart.name.replace("Cart ", "C")) : "—"),
-            h("td", {}, statusBadge(status)),
-            h("td", {}, status === "Packed"
-                ? h("button", { type: "button", className: "picking-handover", onClick: () => handToDriver(order.order_id) }, "Hand to Driver")
-                : h("button", { type: "button", className: "inventory-link-button", onClick: () => { picking.detailsOrderId = order.order_id; renderOrderQueue(); renderOrderDetails(true); } }, "Details")));
+            h("td", {}, statusBadge(status)));
     }));
 }
 

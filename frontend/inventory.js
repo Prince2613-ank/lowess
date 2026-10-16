@@ -593,7 +593,7 @@ function renderRackTable() {
     }
     const body = inv$("inventory-table-body");
     if (!racks.length) {
-        body.replaceChildren(h("tr", {}, h("td", { colspan: "6", className: "empty" }, "No racks match the current filters")));
+        body.replaceChildren(h("tr", {}, h("td", { colspan: "5", className: "empty" }, "No racks match the current filters")));
         inv$("inventory-more").hidden = true;
         return;
     }
@@ -611,7 +611,6 @@ function renderRackTable() {
     h("td", { className: "rack" }, rack.rack_id),
     h("td", {}, aisleCell(rack)),
     h("td", { title: rack.department }, rack.department),
-    h("td", { title: rack.product_category }, rack.product_category),
     h("td", { className: "occupancy" }, h("span", {}, `${rack.occupancy_percentage}%`), progressBar(rack, true)),
     h("td", {}, statusChip(rack)))));
 }

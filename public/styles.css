@@ -371,13 +371,14 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 }
 .inventory-table th:nth-child(1) { width: 50px; }
 .inventory-table th:nth-child(2) { width: 34px; }
-.inventory-table th:nth-child(5) { width: 68px; }
-.inventory-table th:nth-child(6) { width: 62px; }
+.inventory-table th:nth-child(4) { width: 84px; }
+.inventory-table th:nth-child(5) { width: 70px; }
 .inventory-table th button { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
 .inventory-table th button:hover { color: var(--inv-blue); }
 .sort-indicator { font-size: 8px; }
 .inventory-table td { padding: 6px 5px; border-bottom: 1px solid #eef2f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.inventory-table td:nth-child(3), .inventory-table td:nth-child(4) { white-space: normal; overflow-wrap: break-word; line-height: 1.25; }
+/* Department wraps between words only, never mid-word. */
+.inventory-table td:nth-child(3) { white-space: normal; overflow-wrap: normal; word-break: normal; line-height: 1.25; }
 .inventory-table td.rack { font-weight: 700; color: var(--inv-navy); }
 .inventory-table td.occupancy { font-variant-numeric: tabular-nums; }
 .inventory-table td.empty { text-align: center; color: var(--inv-muted); padding: 14px; }
@@ -551,15 +552,21 @@ label.inventory-edit-row { grid-template-columns: 92px 1fr; }
 .picking-assign { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; margin: 8px 0; font-size: 12px; color: var(--inv-muted); }
 .picking-assign select { padding: 6px 8px; border: 1px solid #becbda; border-radius: 6px; background: var(--inv-surface); font: inherit; font-size: 12px; min-width: 0; }
 .picking-assign button:not(:disabled) { background: var(--inv-blue); border-color: var(--inv-blue); color: #fff; }
-.picking-table th:nth-child(1) { width: 26px; }
-.picking-table th:nth-child(2) { width: 72px; }
-.picking-table th:nth-child(3) { width: 38px; }
-.picking-table th:nth-child(4) { width: 62px; }
-.picking-table th:nth-child(5) { width: 50px; }
-.picking-table th:nth-child(7) { width: 54px; }
+.picking-table th:nth-child(1) { width: 22px; }
+.picking-table th:nth-child(2) { width: 66px; }
+.picking-table th:nth-child(3) { width: 34px; }
+.picking-table th:nth-child(4) { width: 56px; }
+.picking-table th:nth-child(5) { width: 42px; }
+.picking-table th:nth-child(6) { width: auto; min-width: 78px; }
+@media (max-width: 1100px) {
+    /* Narrower panel: drop the item count (it is in the order details) so Status keeps room. */
+    .picking-table th:nth-child(3), .picking-table td:nth-child(3) { display: none; }
+}
 .picking-table td.picking-check, .picking-table th.picking-check { padding-left: 7px; padding-right: 0; }
 .picking-table tbody tr { cursor: default; }
 .picking-table .inventory-link-button { margin: 0; }
+.picking-table .picking-order-link { padding: 0; font-weight: 700; color: var(--inv-navy); text-decoration: none; }
+.picking-table .picking-order-link:hover { color: var(--inv-blue); text-decoration: underline; }
 .picking-order-details { margin-top: 10px; }
 .picking-order-details .sku { color: var(--inv-muted); font-family: ui-monospace, Consolas, monospace; font-size: 10.5px; }
 
