@@ -733,26 +733,38 @@ function renderOrderDetails(scroll = false) {
 /* Tabs and wiring                                                         */
 /* ---------------------------------------------------------------------- */
 
+const OPS_TABS = {
+    inventory: { button: "ops-tab-inventory", panel: "inventory-tab", title: "Inventory Management" },
+    picking: { button: "ops-tab-picking", panel: "picking-tab", title: "Online Order Picking" },
+    forecast: { button: "ops-tab-forecast", panel: "forecast-tab", title: "Demand Forecast" },
+    activity: { button: "ops-tab-activity", panel: "activity-tab", title: "Picking Activity" },
+};
+
 function setOpsTab(tab) {
-    picking.tab = tab === "picking" ? "picking" : "inventory";
-    const isPicking = picking.tab === "picking";
-    pk$("ops-tab-inventory").setAttribute("aria-selected", String(!isPicking));
-    pk$("ops-tab-picking").setAttribute("aria-selected", String(isPicking));
-    pk$("inventory-tab").hidden = isPicking;
-    pk$("picking-tab").hidden = !isPicking;
-    pk$("inventory-title").textContent = isPicking ? "Online Order Picking" : "Inventory Management";
+    picking.tab = OPS_TABS[tab] ? tab : "inventory";
+    for (const [key, ids] of Object.entries(OPS_TABS)) {
+        pk$(ids.button)?.setAttribute("aria-selected", String(key === picking.tab));
+        if (pk$(ids.panel)) pk$(ids.panel).hidden = key !== picking.tab;
+    }
+    pk$("inventory-title").textContent = OPS_TABS[picking.tab].title;
     try { sessionStorage.setItem("ops-panel:tab", picking.tab); } catch (error) { /* per-tab preference only */ }
     refreshPicking();
+    if (typeof onOpsTabChanged === "function") onOpsTabChanged(picking.tab);
+    if (typeof onActivityTabChanged === "function") onActivityTabChanged(picking.tab);
 }
 
 function wirePickingPanel() {
     pk$("ops-tab-inventory").addEventListener("click", () => setOpsTab("inventory"));
     pk$("ops-tab-picking").addEventListener("click", () => setOpsTab("picking"));
+    pk$("ops-tab-forecast")?.addEventListener("click", () => setOpsTab("forecast"));
+    pk$("ops-tab-activity")?.addEventListener("click", () => setOpsTab("activity"));
+    const order = Object.keys(OPS_TABS);
     for (const tab of document.querySelectorAll(".ops-tabs [role=tab]")) {
         tab.addEventListener("keydown", (event) => {
             if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-                setOpsTab(picking.tab === "picking" ? "inventory" : "picking");
-                pk$(picking.tab === "picking" ? "ops-tab-picking" : "ops-tab-inventory").focus();
+                const step = event.key === "ArrowRight" ? 1 : order.length - 1;
+                setOpsTab(order[(order.indexOf(picking.tab) + step) % order.length]);
+                pk$(OPS_TABS[picking.tab].button).focus();
             }
         });
     }

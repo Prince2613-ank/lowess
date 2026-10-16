@@ -315,7 +315,8 @@ function updateRackLabels() {
 function applyInventoryEnabled() {
     if (!inventory.layersReady) return;
     for (const id of INVENTORY_LAYERS) state.map.setLayoutProperty(id, "visibility", inventory.enabled ? "visible" : "none");
-    inventory.legend?.setVisible(inventory.enabled);
+    const ownLegend = (typeof forecastActive === "function" && forecastActive()) || (typeof activityActive === "function" && activityActive());
+    inventory.legend?.setVisible(inventory.enabled && !ownLegend);
     if (!inventory.enabled) clearRackHover();
     updateRackLabels();
 }
@@ -379,6 +380,8 @@ async function onInventoryMapRendered(store, alignedData, sourceData) {
     if (typeof onPickingInventoryReady === "function") onPickingInventoryReady(store, alignedData, sourceData);
     if (typeof onStoreZonesReady === "function") onStoreZonesReady(store, alignedData, sourceData);
     if (typeof onStore3dReady === "function") onStore3dReady();
+    if (typeof onForecastStoreReady === "function") onForecastStoreReady();
+    if (typeof onActivityStoreReady === "function") onActivityStoreReady(store, alignedData, sourceData);
 }
 
 function clearInventoryLayer() {

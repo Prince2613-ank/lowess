@@ -623,6 +623,57 @@ is a thick gap in the area colour on the wall with a door icon just outside;
 click an area or a door for what it is and how it was placed. Check:
 `tests/test_store_zones.py`.
 
+## Picking activity heatmap
+
+The **Activity** tab (`frontend/activity.js`) highlights where picking happens,
+for the last week, 4 weeks or 12 weeks:
+
+* **Rack picks** - racks coloured by pick lines in the period, in five classes
+  of a one-hue blue scale (quintiles of the picked racks; unpicked racks stay
+  neutral);
+* **Cart traffic** - a heat layer (green -> light green -> yellow -> orange -> red,
+  square-root scale) of cart
+  passes per week along the aisles;
+* the busiest aisles (pick lines per aisle or area) and racks - click one to
+  zoom to it - plus pick lines, the busiest aisle, cart trips and distance walked
+  per week.
+
+`python scripts/build_picking_activity.py` writes
+`frontend/data/activity/<store_id>.json` (run after `build_demand_forecast.py`;
+about 40 s per store). Rack picks are each SKU's weekly sales x the online share,
+in lines of ~1.27 units. Cart traffic comes from 400 simulated cart trips per
+store on its walking network: 3 orders per cart, lines drawn by rack pick
+frequency, stops visited nearest-first from Pack & Dispatch and back, each leg
+the shortest walk (A* on the grid, 8-way, a small cost for hugging shelving as
+the live routes use). Visits are pooled into 1 m cells and scaled to cart passes
+per week from the store's order volume. Checks: `tests/test_activity_browser.py`.
+
+## Demand forecast
+
+The **Forecast** tab in the store panel (`frontend/forecast.js`) lists the SKUs
+that may run out in the next **7, 14 or 30 days**, ordered by run-out date, and
+colours racks on the map by their worst SKU (likely to run out / at risk / out
+now / OK). Click a product for its stock, run-out date, demand and chance of
+running out at each horizon, and its last 12 weeks of sales; its rack is
+selected on the map.
+
+`python scripts/build_demand_forecast.py` writes
+`frontend/data/forecast/<store_id>.json` (run after
+`build_store_metrics.py`). The 90-day sales history per SKU is **simulated**: a
+store's daily unit sales (its online units from the order history, which are
+about 10% of all units) spread over its SKUs by popularity, which follows each
+SKU's stock with log-normal variation, plus a per-SKU drift and a seasonal
+decline for lawn & garden. The forecast is fitted per SKU: the store's weekly
+pattern x an exponentially weighted level (14-day half-life) x a damped trend
+shrunk towards the department's, with the residual spread for uncertainty. A
+backtest (refit without the last 14 days, forecast them) is stored with the data
+and shown in the tab: about 22-26% weighted absolute error.
+
+In the browser each SKU's forecast meets its **current** stock (picks and edits
+included): demand over the horizon, the first day cumulative demand reaches the
+stock, and the chance demand exceeds stock (normal approximation). Likely to run
+out = 70%+ chance, at risk = 30-70%. Checks: `tests/test_forecast_browser.py`.
+
 ## Store comparison
 
 **Store comparison** in the header (`frontend/compare.html`, `compare.js`,

@@ -9,7 +9,7 @@
         rel="stylesheet"
         href="vendor/maplibre-gl/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="styles.css?v=inventory-27" />
+    <link rel="stylesheet" href="styles.css?v=inventory-30" />
 </head>
 <body>
     <div id="topbar">
@@ -40,8 +40,10 @@
             </div>
         </header>
         <div class="ops-tabs" role="tablist" aria-label="Store operations">
-            <button type="button" role="tab" id="ops-tab-inventory" aria-controls="inventory-tab" aria-selected="true">Rack Inventory</button>
-            <button type="button" role="tab" id="ops-tab-picking" aria-controls="picking-tab" aria-selected="false">Order Picking</button>
+            <button type="button" role="tab" id="ops-tab-inventory" aria-controls="inventory-tab" aria-selected="true" title="Rack inventory">Inventory</button>
+            <button type="button" role="tab" id="ops-tab-picking" aria-controls="picking-tab" aria-selected="false" title="Online order picking">Picking</button>
+            <button type="button" role="tab" id="ops-tab-forecast" aria-controls="forecast-tab" aria-selected="false" title="SKU demand forecast">Forecast</button>
+            <button type="button" role="tab" id="ops-tab-activity" aria-controls="activity-tab" aria-selected="false" title="Picking activity heatmap">Activity</button>
         </div>
         <div id="inventory-tab" role="tabpanel" aria-labelledby="ops-tab-inventory">
         <p id="inventory-message" class="inventory-message" role="status"></p>
@@ -166,6 +168,68 @@
                 <p id="picking-storage-note" class="picking-warning" hidden>This browser is blocking local storage, so order progress will be lost on refresh.</p>
             </div>
         </div>
+        <div id="forecast-tab" role="tabpanel" aria-labelledby="ops-tab-forecast" hidden>
+            <p id="forecast-message" class="inventory-message" role="status" hidden></p>
+            <div id="forecast-content" hidden>
+                <div class="forecast-horizon" id="forecast-horizon" role="group" aria-label="Forecast horizon">
+                    <span>Next</span>
+                    <button type="button" data-days="7">7 days</button>
+                    <button type="button" data-days="14">14 days</button>
+                    <button type="button" data-days="30">30 days</button>
+                </div>
+                <section class="forecast-stats" id="forecast-stats" aria-label="Stock-out outlook"></section>
+                <p class="forecast-model" id="forecast-model"></p>
+                <div class="forecast-map-key" aria-label="Map colours">
+                    <span><i class="risk-high"></i>Likely to run out</span><span><i class="risk-medium"></i>At risk</span><span><i class="risk-out"></i>Out now</span><span><i class="risk-low"></i>OK</span>
+                </div>
+                <section id="forecast-details" class="inventory-details forecast-details" aria-label="Selected product" hidden></section>
+                <div class="forecast-filters">
+                    <input id="forecast-search" type="search" class="picking-input" placeholder="Search product, SKU or rack" aria-label="Search forecast" />
+                    <select id="forecast-risk-filter" aria-label="Risk">
+                        <option value="atrisk">Likely + at risk</option>
+                        <option value="high">Likely to run out</option>
+                        <option value="out">Out of stock now</option>
+                        <option value="all">All SKUs</option>
+                    </select>
+                    <select id="forecast-department" aria-label="Department"><option value="">All departments</option></select>
+                </div>
+                <div class="forecast-list-head"><h3>Products by run-out date</h3><span id="forecast-count"></span></div>
+                <div class="inventory-table-wrap">
+                    <table class="inventory-table forecast-table">
+                        <thead><tr><th>Product</th><th class="num">Stock</th><th class="num" id="forecast-demand-head">Demand</th><th>Runs out</th></tr></thead>
+                        <tbody id="forecast-table-body"></tbody>
+                    </table>
+                </div>
+                <button type="button" id="forecast-more" class="inventory-more" hidden>Show more</button>
+            </div>
+        </div>
+        <div id="activity-tab" role="tabpanel" aria-labelledby="ops-tab-activity" hidden>
+            <p id="activity-message" class="inventory-message" role="status" hidden></p>
+            <div id="activity-content" hidden>
+                <div class="forecast-horizon" id="activity-period" role="group" aria-label="Period">
+                    <span>Last</span>
+                    <button type="button" data-weeks="1">week</button>
+                    <button type="button" data-weeks="4">4 weeks</button>
+                    <button type="button" data-weeks="12">12 weeks</button>
+                </div>
+                <section class="activity-stats" id="activity-stats" aria-label="Picking activity"></section>
+                <div class="activity-toggles" role="group" aria-label="Map layers">
+                    <label><input type="checkbox" id="activity-show-racks" checked /> Rack picks</label>
+                    <label><input type="checkbox" id="activity-show-traffic" checked /> Cart traffic</label>
+                </div>
+                <div class="activity-legend" id="activity-legend"></div>
+                <h3 class="activity-heading">Busiest aisles</h3>
+                <div class="activity-bars" id="activity-aisles"></div>
+                <h3 class="activity-heading">Busiest racks</h3>
+                <div class="inventory-table-wrap">
+                    <table class="inventory-table activity-table">
+                        <thead><tr><th>Rack</th><th>Where</th><th class="num">Lines</th><th class="num">Share</th></tr></thead>
+                        <tbody id="activity-racks"></tbody>
+                    </table>
+                </div>
+                <p class="forecast-model" id="activity-note"></p>
+            </div>
+        </div>
     </aside>
 
     <section id="selection-info" class="collapsible-panel" aria-live="polite" hidden>
@@ -205,11 +269,13 @@
     <script src="app.js?v=maplibre-20"></script>
     <script src="directory.js?v=maplibre-11"></script>
     <script src="inventory-data.js?v=inventory-12"></script>
-    <script src="inventory.js?v=inventory-21"></script>
+    <script src="inventory.js?v=inventory-23"></script>
     <script src="indoor-routing.js?v=picking-8"></script>
     <script src="order-management.js?v=picking-3"></script>
-    <script src="picking-workflow.js?v=picking-14"></script>
+    <script src="picking-workflow.js?v=picking-16"></script>
     <script src="store-zones.js?v=zones-11"></script>
     <script src="store-3d.js?v=store3d-2"></script>
+    <script src="forecast.js?v=forecast-3"></script>
+    <script src="activity.js?v=activity-5"></script>
 </body>
 </html>
