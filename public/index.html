@@ -9,7 +9,7 @@
         rel="stylesheet"
         href="vendor/maplibre-gl/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="styles.css?v=inventory-30" />
+    <link rel="stylesheet" href="styles.css?v=inventory-31" />
 </head>
 <body>
     <div id="topbar">
@@ -44,6 +44,7 @@
             <button type="button" role="tab" id="ops-tab-picking" aria-controls="picking-tab" aria-selected="false" title="Online order picking">Picking</button>
             <button type="button" role="tab" id="ops-tab-forecast" aria-controls="forecast-tab" aria-selected="false" title="SKU demand forecast">Forecast</button>
             <button type="button" role="tab" id="ops-tab-activity" aria-controls="activity-tab" aria-selected="false" title="Picking activity heatmap">Activity</button>
+            <button type="button" role="tab" id="ops-tab-tracking" aria-controls="tracking-tab" aria-selected="false" title="Live BLE beacon tracking of carts and staff">Tracking</button>
         </div>
         <div id="inventory-tab" role="tabpanel" aria-labelledby="ops-tab-inventory">
         <p id="inventory-message" class="inventory-message" role="status"></p>
@@ -230,6 +231,63 @@
                 <p class="forecast-model" id="activity-note"></p>
             </div>
         </div>
+        <div id="tracking-tab" role="tabpanel" aria-labelledby="ops-tab-tracking" hidden>
+            <p id="tracking-message" class="inventory-message" role="status" hidden></p>
+            <div id="tracking-content" hidden>
+                <p class="tracking-sim-note"><strong>Simulated BLE beacons.</strong> Positions are estimated from signal strength, not GPS: each circle shows how sure the estimate is.</p>
+                <div class="tracking-controls">
+                    <button type="button" id="tracking-play" class="tracking-play" aria-pressed="false">Pause</button>
+                    <div class="forecast-horizon" id="tracking-speed" role="group" aria-label="Simulation speed">
+                        <button type="button" data-speed="1">1×</button>
+                        <button type="button" data-speed="4">4×</button>
+                        <button type="button" data-speed="10">10×</button>
+                    </div>
+                    <span class="tracking-clock" id="tracking-clock"></span>
+                </div>
+                <section class="activity-stats" id="tracking-stats" aria-label="Tracking summary"></section>
+                <div class="tracking-toggles" role="group" aria-label="Tracking options">
+                    <label><input type="checkbox" id="tracking-show-beacons" checked /> Beacons</label>
+                    <label><input type="checkbox" id="tracking-show-range" /> Beacon range</label>
+                    <label><input type="checkbox" id="tracking-show-truth" checked /> True position (simulation)</label>
+                    <label><input type="checkbox" id="tracking-calibrated" checked /> Calibrated radio map</label>
+                    <label><input type="checkbox" id="tracking-auto-scan" /> Auto-confirm scans (simulated pickers)</label>
+                </div>
+                <div class="tracking-legend" aria-label="Map key">
+                    <span><i class="tracking-key-tag"></i>Beacon position</span>
+                    <span><i class="tracking-key-circle"></i>Accuracy (68%)</span>
+                    <span><i class="tracking-key-circle low"></i>Low confidence</span>
+                    <span><i class="tracking-key-truth"></i>True position</span>
+                    <span><i class="tracking-key-beacon"></i>Beacon</span>
+                    <span><i class="tracking-key-signal"></i>Signals heard (selected)</span>
+                </div>
+                <h3 class="activity-heading" id="tracking-scans-head" hidden>Scan confirmations</h3>
+                <div id="tracking-scans" class="tracking-scans"></div>
+                <h3 class="activity-heading">Carts and staff</h3>
+                <div id="tracking-tags" class="tracking-tags"></div>
+                <section id="tracking-tag-detail" class="inventory-details tracking-detail" aria-label="Selected tag" hidden></section>
+                <div class="forecast-list-head tracking-events-head">
+                    <h3>Proximity events</h3>
+                    <span id="tracking-event-count"></span>
+                </div>
+                <div class="forecast-horizon tracking-event-filter" id="tracking-event-filter" role="group" aria-label="Event type">
+                    <button type="button" data-filter="all">All</button>
+                    <button type="button" data-filter="zone">Zones</button>
+                    <button type="button" data-filter="rack">Racks &amp; scans</button>
+                    <button type="button" data-filter="signal">Signal</button>
+                </div>
+                <ol id="tracking-events" class="tracking-events"></ol>
+                <h3 class="activity-heading">Time by zone</h3>
+                <div class="activity-bars" id="tracking-zones"></div>
+                <h3 class="activity-heading">Beacons</h3>
+                <div class="inventory-table-wrap">
+                    <table class="inventory-table tracking-beacon-table">
+                        <thead><tr><th>Beacon</th><th>Where</th><th class="num">Battery</th><th class="num" title="Carts and staff hearing it well enough to position">Heard by</th></tr></thead>
+                        <tbody id="tracking-beacon-body"></tbody>
+                    </table>
+                </div>
+                <p class="forecast-model" id="tracking-note"></p>
+            </div>
+        </div>
     </aside>
 
     <section id="selection-info" class="collapsible-panel" aria-live="polite" hidden>
@@ -266,16 +324,18 @@
     <script
         src="vendor/maplibre-gl/maplibre-gl.js"
     ></script>
-    <script src="app.js?v=maplibre-20"></script>
+    <script src="app.js?v=maplibre-21"></script>
     <script src="directory.js?v=maplibre-11"></script>
     <script src="inventory-data.js?v=inventory-12"></script>
-    <script src="inventory.js?v=inventory-23"></script>
+    <script src="inventory.js?v=inventory-24"></script>
     <script src="indoor-routing.js?v=picking-8"></script>
     <script src="order-management.js?v=picking-3"></script>
-    <script src="picking-workflow.js?v=picking-16"></script>
+    <script src="picking-workflow.js?v=picking-17"></script>
     <script src="store-zones.js?v=zones-11"></script>
     <script src="store-3d.js?v=store3d-2"></script>
     <script src="forecast.js?v=forecast-3"></script>
     <script src="activity.js?v=activity-5"></script>
+    <script src="beacon-sim.js?v=beacons-1"></script>
+    <script src="beacon-tracking.js?v=beacons-1"></script>
 </body>
 </html>

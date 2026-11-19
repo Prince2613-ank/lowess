@@ -612,6 +612,7 @@ function clearFeatureLayers() {
     if (typeof clearInventoryLayer === "function") clearInventoryLayer();
     if (typeof clearPickingLayers === "function") clearPickingLayers();
     if (typeof clearStoreZones === "function") clearStoreZones();
+    if (typeof clearBeaconTracking === "function") clearBeaconTracking();
 }
 
 function renderGeoJsonFloorplanData(data) {

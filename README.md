@@ -648,6 +648,52 @@ the shortest walk (A* on the grid, 8-way, a small cost for hugging shelving as
 the live routes use). Visits are pooled into 1 m cells and scaled to cart passes
 per week from the store's order volume. Checks: `tests/test_activity_browser.py`.
 
+## Live BLE tracking (simulated beacons)
+
+The **Tracking** tab (`frontend/beacon-tracking.js`, engine in
+`frontend/beacon-sim.js`) shows the picking carts and four staff members moving
+on the indoor map, positioned from Bluetooth beacon signal strength (RSSI),
+not GPS. It is a simulation (Stage 1) wired into the store's real operations
+(Stage 2); a hardware pilot (Stage 3) would replace the simulated readings.
+
+* **Beacons** - 10 to 15 per store (one per ~1,000 m2 of footprint): one in each
+  back-of-house area, the rest spread over the sales floor (k-means on the
+  walkable floor), ceiling-mounted. Click one for its power and battery;
+  *Beacon range* draws where each is heard at -80 dBm or stronger.
+* **Signals** - every second each cart and badge hears the beacons: path loss
+  over the 3D distance, attenuation through shelving below rack height, a
+  +/-2 dB spread in each beacon's actual power, slow shadowing and scan noise.
+* **Positioning** - a particle filter on the walking grid uses only those
+  readings. The *calibrated radio map* (the expected signal per spot, as a
+  site survey measures it) gives a median error of 3-4 m. Turning it off leaves
+  nominal path loss only (no survey), and the error is 5-8 m.
+  Each position has an accuracy circle (true position inside it ~68% of the
+  time) and a confidence class: high, medium, low (dashed) or no signal.
+  *True position (simulation)* draws the simulated truth and the error line.
+* **Events** - zone entry/exit (back-of-house areas, departments - each
+  walkable spot takes the department of the nearest rack within 5 m - and main
+  aisles; a new zone must hold for 3 s), cart arrival at / departure from its
+  next stop (beacon fix within 6 m / beyond 10 m), staff near a Low or Out of
+  Stock rack (restock opportunity), and lost / regained signal. Click an
+  event to zoom to it. Time per zone builds up as it runs.
+* **Scan confirmation** - carts walk their real picking routes. At a stop
+  the cart waits for the picker's scan: the card shows whether the beacon
+  position confirms the cart is at the rack, and *Confirm scan* picks the stop's
+  items through the picking workflow (stock deducted as usual).
+  *Auto-confirm scans* lets simulated pickers start, scan and finish routes on
+  their own.
+* **Pick verification** - every pick, from this tab or the Picking tab, is
+  checked against the cart's beacon position: *Location verified* or *Location
+  not verified* in the picking checklist. The Picking tab also shows each cart's
+  live beacon position. Verifications last for the page session.
+
+`python scripts/build_beacons.py` writes `frontend/data/beacons/<store_id>.json`
+(beacons, signal model, run-length zone grid and floor coverage; run after the
+routing, zones and inventory builders). Beacon positions are illustrative, not
+a surveyed installation. The simulation is seeded per store, so it repeats,
+and it runs only while the Tracking or Picking tab is open (1x, 4x or 10x speed).
+Checks: `tests/test_beacon_tracking_browser.py`.
+
 ## Demand forecast
 
 The **Forecast** tab in the store panel (`frontend/forecast.js`) lists the SKUs

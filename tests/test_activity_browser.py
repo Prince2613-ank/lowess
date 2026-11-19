@@ -90,8 +90,8 @@ def test_activity_tab_heatmap_and_rankings():
             await page.goto(url)
             await page.wait_for_function("inventory.model && inventory.racks.size > 0")
 
-            # Fourth tab; loads on demand, last 4 weeks by default, both layers on.
-            assert await page.locator(".ops-tabs [role=tab]").count() == 4
+            # Fourth of five tabs; loads on demand, last 4 weeks by default, both layers on.
+            assert await page.locator(".ops-tabs [role=tab]").count() == 5
             await page.locator("#ops-tab-activity").click()
             await page.wait_for_function("activity.data && activity.rackTotals.size > 0")
             assert await page.locator("#inventory-title").inner_text() == "Picking Activity"

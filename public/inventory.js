@@ -382,6 +382,7 @@ async function onInventoryMapRendered(store, alignedData, sourceData) {
     if (typeof onStore3dReady === "function") onStore3dReady();
     if (typeof onForecastStoreReady === "function") onForecastStoreReady();
     if (typeof onActivityStoreReady === "function") onActivityStoreReady(store, alignedData, sourceData);
+    if (typeof onBeaconStoreReady === "function") onBeaconStoreReady(store, alignedData, sourceData);
 }
 
 function clearInventoryLayer() {

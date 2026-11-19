@@ -1,9 +1,15 @@
 import sys
+from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
+
+# The browser tests serve the page from a ThreadingHTTPServer. Its default
+# listen backlog of 5 refuses connections when the page requests its scripts
+# and data files in parallel, so a page could come up without directory.js.
+ThreadingHTTPServer.request_queue_size = 128
 
 
 @pytest.fixture(autouse=True)

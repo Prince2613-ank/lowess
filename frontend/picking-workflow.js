@@ -7,6 +7,8 @@
  * for aligned rack geometry). Hooks used by the existing app:
  *   onPickingInventoryReady(store, alignedData, sourceData) - inventory.js
  *   clearPickingLayers()                                     - app.js
+ * picking.loadingPromise settles once a store's orders and walking network
+ * are loaded (beacon-tracking.js waits on it).
  * ========================================================================== */
 
 const PICKING_ROUTE_SOURCE = "picking-routes";
@@ -328,7 +330,8 @@ async function onPickingInventoryReady(store, alignedData, sourceData) {
         stopOrderFeedTimer();
         renderPickingPanel();
         try {
-            const [orders, network] = await Promise.all([OrderManagement.load(store.store_id), IndoorRouting.load(store.store_id)]);
+            picking.loadingPromise = Promise.all([OrderManagement.load(store.store_id), IndoorRouting.load(store.store_id)]);
+            const [orders, network] = await picking.loadingPromise;
             if (generation !== picking.generation) return;
             Object.assign(picking, { store: orders, network });
         } catch (error) {
@@ -434,7 +437,10 @@ function selectCart(cartId) {
 }
 
 function pickLine(orderId, lineNo) {
-    afterStockChange(picking.store.pickLine(orderId, lineNo, inventory.model));
+    const result = picking.store.pickLine(orderId, lineNo, inventory.model);
+    // Checked against the cart's beacon position before the checklist redraws.
+    if (result.ok && typeof onBeaconPick === "function") onBeaconPick(orderId, lineNo);
+    afterStockChange(result);
 }
 
 function undoLine(orderId, lineNo) {
@@ -588,6 +594,7 @@ function renderCartDetail() {
             h("label", { className: "picking-speed" }, "Walking speed ", speedInput, " m/s (with cart)"),
             methodText ? h("p", { className: "picking-method" }, methodText) : null,
             h("p", { className: "picking-location" }, h("strong", {}, "Current location: "), plan?.startLabel || "—"),
+            typeof beaconCartFixNode === "function" ? beaconCartFixNode(cart.cart_id) : null,
             ...(plan?.warnings || []).map((text) => h("p", { className: "picking-warning" }, text)))
             : h("p", { className: "picking-empty" }, "No orders on this cart. Select orders in the queue below and assign them here."),
         h("div", { className: "picking-actions" },
@@ -642,6 +649,7 @@ function checklistLine(entry, kind) {
                 : !picked ? h("span", { className: "picking-muted" }, `${stock} on shelf`) : null),
         picked
             ? h("div", { className: "picking-line-actions" }, h("span", { className: "picking-picked" }, "✓ Picked"),
+                typeof beaconPickBadge === "function" ? beaconPickBadge(orderId, line.line_no) : null,
                 h("button", { type: "button", className: "picking-undo", disabled: picking.store.isCompleted(orderId), onClick: () => undoLine(orderId, line.line_no) }, "Undo"))
             : h("button", { type: "button", className: "picking-pick", disabled: short || kind === "flagged", onClick: () => pickLine(orderId, line.line_no) }, "Mark as Picked"));
 }
@@ -738,6 +746,7 @@ const OPS_TABS = {
     picking: { button: "ops-tab-picking", panel: "picking-tab", title: "Online Order Picking" },
     forecast: { button: "ops-tab-forecast", panel: "forecast-tab", title: "Demand Forecast" },
     activity: { button: "ops-tab-activity", panel: "activity-tab", title: "Picking Activity" },
+    tracking: { button: "ops-tab-tracking", panel: "tracking-tab", title: "Live Tracking" },
 };
 
 function setOpsTab(tab) {
@@ -751,6 +760,7 @@ function setOpsTab(tab) {
     refreshPicking();
     if (typeof onOpsTabChanged === "function") onOpsTabChanged(picking.tab);
     if (typeof onActivityTabChanged === "function") onActivityTabChanged(picking.tab);
+    if (typeof onTrackingTabChanged === "function") onTrackingTabChanged(picking.tab);
 }
 
 function wirePickingPanel() {
@@ -758,6 +768,7 @@ function wirePickingPanel() {
     pk$("ops-tab-picking").addEventListener("click", () => setOpsTab("picking"));
     pk$("ops-tab-forecast")?.addEventListener("click", () => setOpsTab("forecast"));
     pk$("ops-tab-activity")?.addEventListener("click", () => setOpsTab("activity"));
+    pk$("ops-tab-tracking")?.addEventListener("click", () => setOpsTab("tracking"));
     const order = Object.keys(OPS_TABS);
     for (const tab of document.querySelectorAll(".ops-tabs [role=tab]")) {
         tab.addEventListener("keydown", (event) => {
