@@ -36,7 +36,7 @@
 const TRACKING_SOURCE = "tracking-tags";
 const TRACKING_RANGE_SOURCE = "tracking-ranges";
 const TRACKING_LAYERS = ["tracking-range-fill", "tracking-range-outline", "tracking-path", "tracking-trail", "tracking-accuracy-fill",
-    "tracking-accuracy-outline", "tracking-signals", "tracking-error", "tracking-truth"];
+    "tracking-accuracy-casing", "tracking-accuracy-outline", "tracking-signals", "tracking-error", "tracking-truth"];
 const TRACKING_SPEEDS = [1, 4, 10];
 const TRACKING_STEP_S = 0.25;      // s of simulated time per movement step
 const ZONE_DWELL_S = 3;            // a new zone must hold this long before entry/exit is reported
@@ -51,6 +51,7 @@ const MAX_EVENTS = 300;
 const EVENT_LIST = 80;
 const STRONG_SIGNAL_DBM = -80;     // range circles: where a beacon is heard this strongly (free space)
 const STAFF_SPEED_MPS = 1.2;
+const TAG_FOCUS_ZOOM = 19.5;       // close enough that a few-metre accuracy circle is wider than the badge
 const SCAN_SECONDS_PER_LINE = 5;   // simulated pickers: time to pick and scan each item
 const STAFF = [
     { id: "STAFF-1", name: "A. Lee", short: "AL", role: "Receiving", mode: "receiving" },
@@ -73,7 +74,7 @@ const tracking = {
     toMap: null,
     layersReady: false,
     running: true,
-    speed: 4,
+    speed: 1,              // real time; 4x and 10x fast-forward a demo
     simTime: 0,
     nextScan: 0,
     clockBase: Date.now(),
@@ -116,11 +117,18 @@ function trackingToMap(x, y) {
     return tracking.toMap ? tracking.toMap(point) : point;
 }
 
+// A round circle on the map around grid point (x, y). The store map's alignment can
+// stretch one axis a little, so the radius is the mean of the two stretched radii
+// (same area) rather than an oval drawn in grid metres.
 function circleRing(x, y, radius, points = 40) {
+    const [lng, lat] = trackingToMap(x, y);
+    const kx = 111320 * Math.cos((lat * Math.PI) / 180), ky = 110574;
+    const along = ([lng2, lat2]) => Math.hypot((lng2 - lng) * kx, (lat2 - lat) * ky);
+    const r = Math.sqrt(along(trackingToMap(x + radius, y)) * along(trackingToMap(x, y + radius)));
     const ring = [];
     for (let i = 0; i <= points; i += 1) {
         const angle = (i / points) * 2 * Math.PI;
-        ring.push(trackingToMap(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius));
+        ring.push([lng + (Math.cos(angle) * r) / kx, lat + (Math.sin(angle) * r) / ky]);
     }
     return ring;
 }
@@ -416,6 +424,8 @@ function trackingLoop(now) {
     const dt = Math.min(0.25, (now - (tracking.lastFrame || now)) / 1000);
     tracking.lastFrame = now;
     if (tracking.running) advanceTracking(dt * tracking.speed);
+    // In real time the clock is the actual time of day (it catches up after a pause or fast-forward).
+    if (tracking.running && tracking.speed === 1) tracking.clockBase = Date.now() - tracking.simTime * 1000;
     if (now - tracking.renderAt > 100) { tracking.renderAt = now; if (trackingActive()) renderTrackingMap(); }
     if (now - tracking.panelAt > 500) { tracking.panelAt = now; renderTrackingLive(); }
 }
@@ -443,7 +453,8 @@ function trackingAdvance(seconds) {
     renderTrackingLive(true);
 }
 
-const simClock = (t = tracking.simTime) => new Date(tracking.clockBase + t * 1000).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const clockTime = (ms) => new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const simClock = (t = tracking.simTime) => clockTime(tracking.clockBase + t * 1000);
 
 /* ---------------------------------------------------------------------- */
 /* Events                                                                  */
@@ -451,7 +462,8 @@ const simClock = (t = tracking.simTime) => new Date(tracking.clockBase + t * 100
 
 function addEvent(kind, tag, text, detail = "", level = "info", rackId = null) {
     const at = tag?.est ? [tag.est.x, tag.est.y] : tag ? [tag.x, tag.y] : null;
-    tracking.events.unshift({ id: ++tracking.eventId, t: tracking.simTime, kind, tagId: tag?.id || null, color: tag?.color, text, detail, level, at, rackId });
+    // Each event keeps the clock time it happened at.
+    tracking.events.unshift({ id: ++tracking.eventId, t: tracking.simTime, clock: tracking.clockBase + tracking.simTime * 1000, kind, tagId: tag?.id || null, color: tag?.color, text, detail, level, at, rackId });
     if (tracking.events.length > MAX_EVENTS) tracking.events.length = MAX_EVENTS;
 }
 
@@ -550,11 +562,16 @@ function ensureTrackingLayers() {
         paint: { "line-color": ["get", "color"], "line-width": 2, "line-opacity": 0.55, "line-dasharray": [1.5, 1.5] } });
     map.addLayer({ id: "tracking-trail", type: "line", source: TRACKING_SOURCE, filter: kind("trail"), layout: { ...hidden, "line-join": "round", "line-cap": "round" },
         paint: { "line-color": ["get", "color"], "line-width": 2.5, "line-opacity": 0.35 } });
+    // Accuracy circle: a tinted disc with a white-cased outline so it reads over the rack colours;
+    // dashed when the confidence is low (or the signal is lost), as the map key says.
+    const weak = ["match", ["get", "confidence"], ["low", "lost"], true, false];
     map.addLayer({ id: "tracking-accuracy-fill", type: "fill", source: TRACKING_SOURCE, filter: kind("accuracy"), layout: hidden,
-        paint: { "fill-color": ["get", "color"], "fill-opacity": ["case", ["get", "selected"], 0.2, 0.11] } });
+        paint: { "fill-color": ["get", "color"], "fill-opacity": ["case", ["get", "selected"], 0.3, 0.2] } });
+    map.addLayer({ id: "tracking-accuracy-casing", type: "line", source: TRACKING_SOURCE, filter: kind("accuracy"), layout: hidden,
+        paint: { "line-color": "#ffffff", "line-width": ["case", ["get", "selected"], 6, 4.5], "line-opacity": 0.9 } });
     map.addLayer({ id: "tracking-accuracy-outline", type: "line", source: TRACKING_SOURCE, filter: kind("accuracy"), layout: hidden,
-        paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "selected"], 2, 1.2], "line-opacity": 0.8,
-            "line-dasharray": ["case", ["==", ["get", "confidence"], "high"], ["literal", [1, 0]], ["literal", [2, 2]]] } });
+        paint: { "line-color": ["get", "color"], "line-width": ["case", ["get", "selected"], 3, 2.2],
+            "line-dasharray": ["case", weak, ["literal", [2, 1.5]], ["literal", [1, 0]]] } });
     map.addLayer({ id: "tracking-signals", type: "line", source: TRACKING_SOURCE, filter: kind("signal"), layout: { ...hidden, "line-cap": "round" },
         paint: { "line-color": ["interpolate", ["linear"], ["get", "strength"], 0, "#94a3b8", 0.5, "#38bdf8", 1, "#0369a1"],
             "line-width": ["interpolate", ["linear"], ["get", "strength"], 0, 1, 1, 4], "line-opacity": 0.85 } });
@@ -562,7 +579,8 @@ function ensureTrackingLayers() {
         paint: { "line-color": "#0f172a", "line-width": 1.2, "line-opacity": 0.55, "line-dasharray": [1, 1.5] } });
     map.addLayer({ id: "tracking-truth", type: "circle", source: TRACKING_SOURCE, filter: kind("truth"), layout: hidden,
         paint: { "circle-radius": 5, "circle-color": "#ffffff", "circle-opacity": 0.5, "circle-stroke-color": "#0f172a", "circle-stroke-width": 2, "circle-stroke-opacity": 0.75 } });
-    for (const id of TRACKING_LAYERS) map.setLayerZoomRange(id, ZOOM.STORE_OVERLAYS, 24);
+    // Shown from store level in, like the cart and staff badges (hidden further out).
+    for (const id of TRACKING_LAYERS) map.setLayerZoomRange(id, ZOOM.STORE_LEVEL, 24);
     tracking.layersReady = true;
 }
 
@@ -840,7 +858,7 @@ function renderEvents(force = false) {
     if (!events.length) { list.replaceChildren(h("li", { className: "empty" }, "No events yet. They appear as carts and staff move between zones and racks.")); return; }
     list.replaceChildren(...events.map((event) => h("li", { className: `tracking-event ${event.kind} ${event.level}`, style: { "--tag": event.color || "#64748b" } },
         h("button", { type: "button", onClick: () => focusEvent(event) },
-            h("span", { className: "tracking-event-time" }, simClock(event.t)),
+            h("span", { className: "tracking-event-time" }, clockTime(event.clock)),
             h("span", { className: "tracking-event-body" }, h("strong", {}, event.text), event.detail ? h("span", {}, event.detail) : null)))));
 }
 
@@ -899,7 +917,8 @@ function renderTrackingLive(force = false) {
     const fix = tr$("picking-beacon-fix");
     if (fix && trackingReady()) fix.lastElementChild.textContent = cartFixText(fix.dataset.cartId) || "waiting for the first scan…";
     if (!trackingActive() || !trackingReady()) return;
-    tr$("tracking-clock").textContent = `${simClock()} · ${tracking.running ? `${tracking.speed}× speed` : "paused"}`;
+    tr$("tracking-clock").textContent = !tracking.running ? `Paused · ${simClock()}`
+        : tracking.speed === 1 ? `Real time · ${simClock()}` : `Fast-forward ${tracking.speed}× · ${simClock()}`;
     renderTrackingStats();
     updateTagRows();
     renderTagDetail();
@@ -940,7 +959,7 @@ function selectTag(tagId) {
     if (tag?.est && state.map) {
         const center = trackingToMap(tag.est.x, tag.est.y);
         const bounds = state.map.getBounds();
-        if (!bounds.contains(center) || state.map.getZoom() < 18.5) state.map.easeTo({ center, zoom: Math.max(state.map.getZoom(), 19), duration: 500 });
+        if (!bounds.contains(center) || state.map.getZoom() < TAG_FOCUS_ZOOM - 0.5) state.map.easeTo({ center, zoom: Math.max(state.map.getZoom(), TAG_FOCUS_ZOOM), duration: 600 });
     }
     renderTrackingMap();
     renderTrackingLive(true);
@@ -1066,6 +1085,14 @@ function onTrackingTabChanged(tab) {
 
 function wireTrackingPanel() {
     tr$("tracking-play").addEventListener("click", () => { tracking.running = !tracking.running; renderTrackingPanel(); });
+    // Map key: zoom in on the selected person, else the staff member with the widest circle (easiest to see).
+    tr$("tracking-zoom-person").addEventListener("click", () => {
+        const staff = tracking.tags.filter((tag) => tag.kind === "staff" && tag.est).sort((a, b) => b.est.accuracy - a.est.accuracy);
+        const tag = tracking.tags.find((t) => t.id === tracking.selectedTagId) || staff[0] || tracking.tags[0];
+        if (!tag) return;
+        tracking.selectedTagId = null;
+        selectTag(tag.id);
+    });
     for (const button of document.querySelectorAll("#tracking-speed button")) {
         button.addEventListener("click", () => { tracking.speed = Number(button.dataset.speed); renderTrackingPanel(); });
     }

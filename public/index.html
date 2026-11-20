@@ -9,7 +9,7 @@
         rel="stylesheet"
         href="vendor/maplibre-gl/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="styles.css?v=inventory-31" />
+    <link rel="stylesheet" href="styles.css?v=inventory-34" />
 </head>
 <body>
     <div id="topbar">
@@ -235,57 +235,107 @@
             <p id="tracking-message" class="inventory-message" role="status" hidden></p>
             <div id="tracking-content" hidden>
                 <p class="tracking-sim-note"><strong>Simulated BLE beacons.</strong> Positions are estimated from signal strength, not GPS: each circle shows how sure the estimate is.</p>
-                <div class="tracking-controls">
-                    <button type="button" id="tracking-play" class="tracking-play" aria-pressed="false">Pause</button>
-                    <div class="forecast-horizon" id="tracking-speed" role="group" aria-label="Simulation speed">
-                        <button type="button" data-speed="1">1×</button>
-                        <button type="button" data-speed="4">4×</button>
-                        <button type="button" data-speed="10">10×</button>
+
+                <section class="tracking-section" aria-labelledby="tracking-sim-title">
+                    <h3 class="tracking-title" id="tracking-sim-title">Simulation</h3>
+                    <p class="tracking-hint">Runs in real time. Fast-forward to see more happen in a demo; Pause freezes everyone.</p>
+                    <div class="tracking-controls">
+                        <button type="button" id="tracking-play" class="tracking-play" aria-pressed="false">Pause</button>
+                        <div class="forecast-horizon" id="tracking-speed" role="group" aria-label="Simulation speed">
+                            <button type="button" data-speed="1">Real time</button>
+                            <button type="button" data-speed="4" title="Fast-forward: 4 times faster than real time">4×</button>
+                            <button type="button" data-speed="10" title="Fast-forward: 10 times faster than real time">10×</button>
+                        </div>
+                        <span class="tracking-clock" id="tracking-clock"></span>
                     </div>
-                    <span class="tracking-clock" id="tracking-clock"></span>
-                </div>
-                <section class="activity-stats" id="tracking-stats" aria-label="Tracking summary"></section>
-                <div class="tracking-toggles" role="group" aria-label="Tracking options">
-                    <label><input type="checkbox" id="tracking-show-beacons" checked /> Beacons</label>
-                    <label><input type="checkbox" id="tracking-show-range" /> Beacon range</label>
-                    <label><input type="checkbox" id="tracking-show-truth" checked /> True position (simulation)</label>
-                    <label><input type="checkbox" id="tracking-calibrated" checked /> Calibrated radio map</label>
-                    <label><input type="checkbox" id="tracking-auto-scan" /> Auto-confirm scans (simulated pickers)</label>
-                </div>
-                <div class="tracking-legend" aria-label="Map key">
-                    <span><i class="tracking-key-tag"></i>Beacon position</span>
-                    <span><i class="tracking-key-circle"></i>Accuracy (68%)</span>
-                    <span><i class="tracking-key-circle low"></i>Low confidence</span>
-                    <span><i class="tracking-key-truth"></i>True position</span>
-                    <span><i class="tracking-key-beacon"></i>Beacon</span>
-                    <span><i class="tracking-key-signal"></i>Signals heard (selected)</span>
-                </div>
-                <h3 class="activity-heading" id="tracking-scans-head" hidden>Scan confirmations</h3>
-                <div id="tracking-scans" class="tracking-scans"></div>
-                <h3 class="activity-heading">Carts and staff</h3>
-                <div id="tracking-tags" class="tracking-tags"></div>
-                <section id="tracking-tag-detail" class="inventory-details tracking-detail" aria-label="Selected tag" hidden></section>
-                <div class="forecast-list-head tracking-events-head">
-                    <h3>Proximity events</h3>
-                    <span id="tracking-event-count"></span>
-                </div>
-                <div class="forecast-horizon tracking-event-filter" id="tracking-event-filter" role="group" aria-label="Event type">
-                    <button type="button" data-filter="all">All</button>
-                    <button type="button" data-filter="zone">Zones</button>
-                    <button type="button" data-filter="rack">Racks &amp; scans</button>
-                    <button type="button" data-filter="signal">Signal</button>
-                </div>
-                <ol id="tracking-events" class="tracking-events"></ol>
-                <h3 class="activity-heading">Time by zone</h3>
-                <div class="activity-bars" id="tracking-zones"></div>
-                <h3 class="activity-heading">Beacons</h3>
-                <div class="inventory-table-wrap">
-                    <table class="inventory-table tracking-beacon-table">
-                        <thead><tr><th>Beacon</th><th>Where</th><th class="num">Battery</th><th class="num" title="Carts and staff hearing it well enough to position">Heard by</th></tr></thead>
-                        <tbody id="tracking-beacon-body"></tbody>
-                    </table>
-                </div>
-                <p class="forecast-model" id="tracking-note"></p>
+                </section>
+
+                <section class="tracking-section" aria-labelledby="tracking-glance-title">
+                    <h3 class="tracking-title" id="tracking-glance-title">At a glance</h3>
+                    <p class="tracking-hint">How many are tracked and how accurate the beacon positions are right now.</p>
+                    <div class="activity-stats" id="tracking-stats"></div>
+                </section>
+
+                <section class="tracking-section" aria-labelledby="tracking-map-title">
+                    <h3 class="tracking-title" id="tracking-map-title">Show on map</h3>
+                    <p class="tracking-hint">Choose what is drawn on the store map.</p>
+                    <div class="tracking-options">
+                        <label><input type="checkbox" id="tracking-show-beacons" checked /><span><strong>Beacons</strong><small>Where the beacons are mounted.</small></span></label>
+                        <label><input type="checkbox" id="tracking-show-range" /><span><strong>Beacon range</strong><small>The area each beacon covers with a strong signal.</small></span></label>
+                        <label><input type="checkbox" id="tracking-show-truth" checked /><span><strong>True position</strong><small>Simulation only: where they really are, to compare with the estimate.</small></span></label>
+                    </div>
+                    <h4 class="tracking-subtitle">Map key</h4>
+                    <ul class="tracking-key" aria-label="Map key">
+                        <li><i class="tracking-key-cart">C1</i><span><strong>Cart</strong> - estimated position, in the cart's colour</span></li>
+                        <li><i class="tracking-key-staff">JK</i><span><strong>Staff member</strong> - estimated position (initials)</span></li>
+                        <li><i class="tracking-key-circle"></i><span><strong>Accuracy circle</strong> - they are most likely inside it; smaller is better</span></li>
+                        <li><i class="tracking-key-circle low"></i><span><strong>Dashed circle</strong> - low confidence: few beacons heard there</span></li>
+                        <li><i class="tracking-key-truth"></i><span><strong>Ring</strong> - true position (simulation only)</span></li>
+                        <li><i class="tracking-key-beacon"></i><span><strong>Beacon</strong> - B01, B02 and so on</span></li>
+                        <li><i class="tracking-key-signal"></i><span><strong>Lines</strong> - beacons the selected person hears</span></li>
+                    </ul>
+                    <p class="tracking-hint">Circles are only a few metres wide, so they hide under the badges until you zoom in. Click a person in <em>Carts and staff</em>, or:</p>
+                    <button type="button" id="tracking-zoom-person" class="tracking-zoom-person">Zoom in on a person</button>
+                </section>
+
+                <section class="tracking-section" aria-labelledby="tracking-settings-title">
+                    <h3 class="tracking-title" id="tracking-settings-title">Settings</h3>
+                    <p class="tracking-hint">Change how positions are worked out and how carts are picked.</p>
+                    <div class="tracking-options">
+                        <label><input type="checkbox" id="tracking-calibrated" checked /><span><strong>Calibrated radio map</strong><small>Use a site survey of signal strength: about 3-4 m accuracy instead of 5-8 m.</small></span></label>
+                        <label><input type="checkbox" id="tracking-auto-scan" /><span><strong>Auto-confirm scans</strong><small>Simulated pickers start routes and scan items on their own.</small></span></label>
+                    </div>
+                </section>
+
+                <section class="tracking-section" id="tracking-scans-head" aria-labelledby="tracking-scans-title" hidden>
+                    <h3 class="tracking-title" id="tracking-scans-title">Scan confirmations</h3>
+                    <p class="tracking-hint">Carts waiting at a rack for the picker's scan. The beacon check shows whether the cart is really there.</p>
+                    <div id="tracking-scans" class="tracking-scans"></div>
+                </section>
+
+                <section class="tracking-section" aria-labelledby="tracking-tags-title">
+                    <h3 class="tracking-title" id="tracking-tags-title">Carts and staff</h3>
+                    <p class="tracking-hint">Everyone being tracked, what they are doing and how accurate their position is. Click one to see the beacons it hears.</p>
+                    <div id="tracking-tags" class="tracking-tags"></div>
+                    <section id="tracking-tag-detail" class="inventory-details tracking-detail" aria-label="Selected tag" hidden></section>
+                </section>
+
+                <section class="tracking-section" aria-labelledby="tracking-events-title">
+                    <div class="forecast-list-head tracking-events-head">
+                        <h3 class="tracking-title" id="tracking-events-title">Proximity events</h3>
+                        <span id="tracking-event-count"></span>
+                    </div>
+                    <p class="tracking-hint">What happened, newest first: zone changes, rack arrivals, pick checks and signal alerts. Click one to see it on the map.</p>
+                    <div class="forecast-horizon tracking-event-filter" id="tracking-event-filter" role="group" aria-label="Event type">
+                        <button type="button" data-filter="all">All</button>
+                        <button type="button" data-filter="zone">Zones</button>
+                        <button type="button" data-filter="rack">Racks &amp; scans</button>
+                        <button type="button" data-filter="signal">Signal</button>
+                    </div>
+                    <ol id="tracking-events" class="tracking-events"></ol>
+                </section>
+
+                <section class="tracking-section" aria-labelledby="tracking-zones-title">
+                    <h3 class="tracking-title" id="tracking-zones-title">Time by zone</h3>
+                    <p class="tracking-hint">Share of tracked time spent in each area of the store.</p>
+                    <div class="activity-bars" id="tracking-zones"></div>
+                </section>
+
+                <section class="tracking-section" aria-labelledby="tracking-beacons-title">
+                    <h3 class="tracking-title" id="tracking-beacons-title">Beacons</h3>
+                    <p class="tracking-hint">Every beacon in this store, its battery and how many carts and staff hear it. Click one to find it on the map.</p>
+                    <div class="inventory-table-wrap">
+                        <table class="inventory-table tracking-beacon-table">
+                            <thead><tr><th>Beacon</th><th>Where</th><th class="num">Battery</th><th class="num" title="Carts and staff hearing it well enough to position">Heard by</th></tr></thead>
+                            <tbody id="tracking-beacon-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <details class="tracking-about">
+                    <summary>How this works</summary>
+                    <p class="forecast-model" id="tracking-note"></p>
+                </details>
             </div>
         </div>
     </aside>
@@ -336,6 +386,6 @@
     <script src="forecast.js?v=forecast-3"></script>
     <script src="activity.js?v=activity-5"></script>
     <script src="beacon-sim.js?v=beacons-1"></script>
-    <script src="beacon-tracking.js?v=beacons-1"></script>
+    <script src="beacon-tracking.js?v=beacons-4"></script>
 </body>
 </html>

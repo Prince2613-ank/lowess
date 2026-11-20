@@ -691,7 +691,8 @@ not GPS. It is a simulation (Stage 1) wired into the store's real operations
 (beacons, signal model, run-length zone grid and floor coverage; run after the
 routing, zones and inventory builders). Beacon positions are illustrative, not
 a surveyed installation. The simulation is seeded per store, so it repeats,
-and it runs only while the Tracking or Picking tab is open (1x, 4x or 10x speed).
+and it runs only while the Tracking or Picking tab is open: in real time (the
+clock is the time of day), or fast-forwarded 4x or 10x for a demo.
 Checks: `tests/test_beacon_tracking_browser.py`.
 
 ## Demand forecast
