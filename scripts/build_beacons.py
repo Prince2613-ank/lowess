@@ -4,13 +4,18 @@ Stage 1 of indoor positioning: a simulated beacon installation, so the store
 map can show carts and staff positioned from Bluetooth signal strength (RSSI)
 instead of GPS-like perfect positions. Per store:
 
-* Beacons - 10 to 15, one per ~1,000 m2 of the building's footprint:
+* Beacons - 20 to 35, one per ~460 m2 of the building's footprint (about
+  20 m apart; ~30 in a typical store - enough for ~2 m positioning, see below):
     one in each back-of-house area (Receiving, Pack & Dispatch, Returns),
     ceiling-mounted over open floor nearest the area's centre;
     the rest spread over the sales floor by k-means on the walkable floor
     (fixed back-of-house beacons as seeds), each moved onto the walkable cell
     nearest its cluster centre with at least 1 m of clearance - so every
     part of the floor has a beacon close by.
+* Rack beacons - a small low-power beacon on the face of every rack carts can
+  reach, just behind its pick point (the walkable cell in front of the rack).
+  Heard strongly only from close by, they give a rack-level fix (under 1 m)
+  wherever a cart or person stands at a rack; the ceiling beacons cover the rest.
 * Zones for entry/exit events - every walkable cell of the store's walking
   grid labelled with the back-of-house area it lies in, else the department
   of the nearest rack within 5 m, else "Main aisles" (run-length encoded).
@@ -50,8 +55,11 @@ from generate_inventory import OUTPUT_DIR as INVENTORY_DIR, ROOT
 ROUTING_DIR = ROOT / "frontend" / "data" / "routing"
 ZONES_DIR = ROOT / "frontend" / "data" / "zones"
 OUTPUT_DIR = ROOT / "frontend" / "data" / "beacons"
-M2_PER_BEACON = 1000
-MIN_BEACONS, MAX_BEACONS = 10, 15
+# Density: with one beacon per ~1,000 m2 (10-15 a store) the median error was
+# 3.5-4 m; one per ~460 m2 (~30) brings it to ~2 m, close enough to tell racks
+# apart (measured on the stores' walking networks, calibrated radio map).
+M2_PER_BEACON = 460
+MIN_BEACONS, MAX_BEACONS = 20, 35
 MIN_CLEARANCE = 2          # cells (1 m) from shelving for a ceiling beacon over open floor
 RACK_ZONE_M = 5.0          # m: cells this close to a rack take its department as their zone
 KMEANS_ROUNDS = 30
@@ -71,6 +79,20 @@ MODEL = {
     "advertising_interval_ms": 200,
     "scan_interval_s": 1.0,
 }
+# Rack beacons: low transmit power, mounted at cart height on the rack face.
+RACK_MODEL = {
+    "tx_power_dbm": -72,            # measured power at 1 m (proximity setting)
+    "path_loss_exponent": 2.0,
+    "shelving_db_per_m": 2.5,       # through the racks themselves, at shelf height
+    "shelving_cap_db": 20,
+    "shadowing_sigma_db": 1.5,      # short range, mostly line of sight
+    "noise_sigma_db": 2.5,
+    "advertising_interval_ms": 100,
+    "heard_within_m": 10,           # weaker than this is ignored
+    "fix_dbm": -79,                 # a rack beacon this strong: the receiver is at that rack (about 2 m or closer)
+    "group_db": 4,                  # rack beacons within this of the strongest share the fix
+}
+RACK_MOUNT_M = 0.45                 # beacon behind the pick point, towards the rack
 ZONE_NAMES = {"receiving": "Receiving Area", "dispatch": "Pack & Dispatch", "returns": "Returns Area"}
 FALLBACK_ZONE = "Main aisles"
 NO_DEPARTMENT = {"", "Unassigned"}      # racks the maps give no department: not a zone name
@@ -250,6 +272,21 @@ def place_beacons(grid: Grid, zones: list[dict], floor: np.ndarray, clearance: n
     return beacons
 
 
+def rack_beacons(grid: Grid, network: dict, inventory: dict, floor: np.ndarray) -> list[list]:
+    """[rack_id, x, y] (grid metres) for every rack with a pick point on the main floor."""
+    centroids = {r["rack_id"]: grid.xy(*r["geometry_ref"]["source_centroid"]) for r in inventory["racks"] if r.get("geometry_ref", {}).get("source_centroid")}
+    out = []
+    for rack_id, cell in sorted(network["rack_access"].items()):
+        if cell is None or not floor[cell] or rack_id not in centroids:
+            continue
+        ax, ay = float(grid.cx[cell]), float(grid.cy[cell])
+        cx, cy = centroids[rack_id]
+        d = math.hypot(cx - ax, cy - ay) or 1.0
+        step = min(RACK_MOUNT_M, d)
+        out.append([rack_id, round(ax + (cx - ax) / d * step, 2), round(ay + (cy - ay) / d * step, 2)])
+    return out
+
+
 def describe(grid: Grid, beacon: dict, racks: list[dict], points: np.ndarray) -> str:
     if beacon["zone"]:
         return ZONE_NAMES[beacon["zone"]["type"]]
@@ -309,6 +346,7 @@ def build(store_id: str) -> dict | None:
         del beacon["_xy"]
 
     labels, index = zone_grid(grid, zones, racks)
+    racks_beacons = rack_beacons(grid, network, inventory, floor)
     return {
         "version": 1,
         "store_id": store_id,
@@ -316,6 +354,8 @@ def build(store_id: str) -> dict | None:
         "notice": "Illustrative beacon layout and simulated signals, not a surveyed installation.",
         "model": MODEL,
         "beacons": beacons,
+        "rack_model": RACK_MODEL,
+        "rack_beacons": racks_beacons,
         "zones": {"labels": labels, "cells": rle(index), "boh": {ZONE_NAMES[k]: k for k in ZONE_NAMES}},
         "coverage": {
             "floor_m2": round(float(floor.sum()) * grid.cell ** 2),
@@ -344,7 +384,7 @@ def main() -> None:
         out = OUTPUT_DIR / f"{sid}.json"
         out.write_text(json.dumps(result, separators=(",", ":")) + "\n", encoding="utf-8")
         c = result["coverage"]
-        print(f"{sid}: {len(result['beacons'])} beacons over {c['footprint_m'][0]} x {c['footprint_m'][1]} m, "
+        print(f"{sid}: {len(result['beacons'])} ceiling + {len(result['rack_beacons'])} rack beacons over {c['footprint_m'][0]} x {c['footprint_m'][1]} m, "
               f"{c['share_3plus']:.0%} of the floor hears 3+ (mean {c['mean_heard']}), "
               f"{len(result['zones']['labels'])} zones -> {out.relative_to(ROOT)} ({out.stat().st_size // 1024} KB)")
 

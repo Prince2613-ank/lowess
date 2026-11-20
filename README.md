@@ -656,7 +656,12 @@ on the indoor map, positioned from Bluetooth beacon signal strength (RSSI),
 not GPS. It is a simulation (Stage 1) wired into the store's real operations
 (Stage 2); a hardware pilot (Stage 3) would replace the simulated readings.
 
-* **Beacons** - 10 to 15 per store (one per ~1,000 m2 of footprint): one in each
+* **Rack beacons** - a small low-power beacon on the face of every rack carts
+  reach (about 1,700-2,100 a store), heard strongly only within a couple of
+  metres. The close ones weigh in the position and name the rack someone is at;
+  they show on the map when zoomed in close, lit when the selected person hears them.
+* **Ceiling beacons** - 20 to 35 per store (one per ~460 m2 of footprint, about 20 m
+  apart; ~30 in a typical store): one in each
   back-of-house area, the rest spread over the sales floor (k-means on the
   walkable floor), ceiling-mounted. Click one for its power and battery;
   *Beacon range* draws where each is heard at -80 dBm or stronger.
@@ -664,31 +669,36 @@ not GPS. It is a simulation (Stage 1) wired into the store's real operations
   over the 3D distance, attenuation through shelving below rack height, a
   +/-2 dB spread in each beacon's actual power, slow shadowing and scan noise.
 * **Positioning** - a particle filter on the walking grid uses only those
-  readings. The *calibrated radio map* (the expected signal per spot, as a
-  site survey measures it) gives a median error of 3-4 m. Turning it off leaves
-  nominal path loss only (no survey), and the error is 5-8 m.
+  readings, ceiling and rack beacons together, with a calibrated radio map
+  (the expected signal per spot, as a site survey measures it): the typical
+  error is about 0.3 m and 90-98% of positions are within 1 m (about 0.15 m
+  standing at a rack). Without the survey it would be about 0.45 m; ceiling
+  beacons alone gave about 2 m (30 a store) - 3.5-4 m with 10-15.
   Each position has an accuracy circle (true position inside it ~68% of the
-  time) and a confidence class: high, medium, low (dashed) or no signal.
+  time) and a confidence class: high (within 3 m: rack level), medium (6 m:
+  aisle level), low (dashed) or no signal.
   *True position (simulation)* draws the simulated truth and the error line.
 * **Events** - zone entry/exit (back-of-house areas, departments - each
   walkable spot takes the department of the nearest rack within 5 m - and main
   aisles; a new zone must hold for 3 s), cart arrival at / departure from its
-  next stop (beacon fix within 6 m / beyond 10 m), staff near a Low or Out of
+  next stop (its rack beacon heard, or a fix within 4 m / beyond 8 m), staff near a Low or Out of
   Stock rack (restock opportunity), and lost / regained signal. Click an
   event to zoom to it. Time per zone builds up as it runs.
-* **Scan confirmation** - carts walk their real picking routes. At a stop
-  the cart waits for the picker's scan: the card shows whether the beacon
-  position confirms the cart is at the rack, and *Confirm scan* picks the stop's
-  items through the picking workflow (stock deducted as usual).
-  *Auto-confirm scans* lets simulated pickers start, scan and finish routes on
-  their own.
+* **Simulated pickers** - carts with orders start their real picking routes on
+  their own, stop at each rack, scan its items after a few seconds (picked
+  through the picking workflow, stock deducted as usual) and return to Pack &
+  Dispatch with the orders ready to pack. They work while the Tracking tab is open; on
+  the Picking tab staff pick by hand (carts are still tracked and wait at their
+  stops for the picks there).
 * **Pick verification** - every pick, from this tab or the Picking tab, is
-  checked against the cart's beacon position: *Location verified* or *Location
-  not verified* in the picking checklist. The Picking tab also shows each cart's
+  checked against the cart's beacon position: *Location verified* when the cart
+  hears that rack's own beacon among the strongest, or the rack lies inside the
+  cart's 95% circle (twice its accuracy, between 4 and 8 m) from a fix that is
+  not low confidence; else *Location not verified*, in the picking checklist. The Picking tab also shows each cart's
   live beacon position. Verifications last for the page session.
 
 `python scripts/build_beacons.py` writes `frontend/data/beacons/<store_id>.json`
-(beacons, signal model, run-length zone grid and floor coverage; run after the
+(ceiling and rack beacons, signal models, run-length zone grid and floor coverage; run after the
 routing, zones and inventory builders). Beacon positions are illustrative, not
 a surveyed installation. The simulation is seeded per store, so it repeats,
 and it runs only while the Tracking or Picking tab is open: in real time (the

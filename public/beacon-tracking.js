@@ -3,9 +3,11 @@
  * positioned from signal strength, with proximity and zone events.
  *
  * Stage 1 (simulation): the store's illustrative beacons (BeaconSim, data from
- * scripts/build_beacons.py) are heard by every tracked cart and staff member
- * once a second; positions come from those readings alone (particle filter on
- * the walking grid), each with an accuracy circle and a confidence class.
+ * scripts/build_beacons.py) - ~30 on the ceiling and a small one on every rack -
+ * are heard by every tracked cart and staff member once a second; positions
+ * come from those readings alone (particle filter on the walking grid: about
+ * 0.3 m typical, close racks' own beacons naming the rack someone is at), each
+ * with an accuracy circle and a confidence class.
  * The simulated true position is drawn too, so the gap between beacon
  * positioning and a perfect GPS-like track stays visible.
  *
@@ -34,14 +36,20 @@
  * ========================================================================== */
 
 const TRACKING_SOURCE = "tracking-tags";
+const TRACKING_RACK_SOURCE = "tracking-rack-beacons";
 const TRACKING_RANGE_SOURCE = "tracking-ranges";
-const TRACKING_LAYERS = ["tracking-range-fill", "tracking-range-outline", "tracking-path", "tracking-trail", "tracking-accuracy-fill",
-    "tracking-accuracy-casing", "tracking-accuracy-outline", "tracking-signals", "tracking-error", "tracking-truth"];
+const TRACKING_LAYERS = ["tracking-range-fill", "tracking-range-outline", "tracking-rack-beacons", "tracking-path", "tracking-trail", "tracking-accuracy-fill",
+    "tracking-accuracy-casing", "tracking-accuracy-outline", "tracking-signals", "tracking-rack-heard", "tracking-error", "tracking-truth"];
+const RACK_BEACON_ZOOM = 19;       // rack beacons are drawn from this close in
 const TRACKING_SPEEDS = [1, 4, 10];
 const TRACKING_STEP_S = 0.25;      // s of simulated time per movement step
 const ZONE_DWELL_S = 3;            // a new zone must hold this long before entry/exit is reported
-const PROXIMITY_M = 6;             // beacon fix this close to a rack: at the rack
-const DEPART_M = 10;               // ...and this far: left it
+const PROXIMITY_M = 4;             // beacon fix this close to a rack: at the rack
+const DEPART_M = 8;                // ...and this far: left it
+// A pick is location-verified when the rack lies inside the cart's 95% circle (twice
+// the 68% accuracy), kept between these limits; never from a low-confidence fix.
+const VERIFY_MIN_M = 4;
+const VERIFY_MAX_M = 8;
 const RESTOCK_NEAR_M = 4;
 const RESTOCK_DWELL_S = 6;
 const RESTOCK_REPEAT_S = 900;      // the same person and rack are reported again after this long
@@ -90,7 +98,7 @@ const tracking = {
     eventFilter: "all",
     renderedEvents: null,
     show: { beacons: true, range: false, truth: true },
-    autoScan: false,
+    autoScan: true,            // simulated pickers start routes and scan items on their own
     beaconMarkers: [],
     rackPoints: [],
     zoneCells: {},
@@ -105,6 +113,9 @@ const tracking = {
 const tr$ = (id) => document.getElementById(id);
 const trackingActive = () => typeof picking !== "undefined" && picking.tab === "tracking";
 const trackingReady = () => Boolean(tracking.data && tracking.floor && tracking.tags.length);
+// Simulated pickers work while the Tracking tab is open; on the Picking tab staff pick
+// by hand (carts are still tracked and wait at their stops for the picks there).
+const autoPickers = () => tracking.autoScan && trackingActive();
 const metres = (value) => (value >= 10 ? `${Math.round(value)} m` : `${value.toFixed(1)} m`);
 const CONFIDENCE_TEXT = { high: "High", medium: "Medium", low: "Low", lost: "No signal" };
 
@@ -220,7 +231,7 @@ function cartTarget(tag) {
     const dispatch = dispatchCell();
     if (!cart || !cart.orders.length) return { kind: "dispatch", cell: dispatch, label: "Pack & Dispatch" };
     if (!cart.started) {
-        if (!tracking.autoScan) return { kind: "dispatch", cell: dispatch, label: "Pack & Dispatch", waiting: true };
+        if (!autoPickers()) return { kind: "dispatch", cell: dispatch, label: "Pack & Dispatch", waiting: true };
         picking.store.startPicking(cart.cart_id);
         addEvent("cart", tag, `${tag.name} started picking`, `${cart.orders.length} order${cart.orders.length === 1 ? "" : "s"} · simulated picker`);
         if (typeof refreshPicking === "function") refreshPicking();
@@ -273,7 +284,7 @@ function stopLines(tag) {
 function steer(tag) {
     if (tag.kind === "cart") {
         setTarget(tag, cartTarget(tag));
-        if (tag.state === "at-stop" && tracking.autoScan && tracking.simTime >= tag.scanAt) confirmScan(tag.id, { auto: true });
+        if (tag.state === "at-stop" && autoPickers() && tracking.simTime >= tag.scanAt) confirmScan(tag.id, { auto: true });
         return;
     }
     if (tag.state === "walking") return;
@@ -308,7 +319,11 @@ function scanTag(tag, interval) {
         tag.smoothed.set(beacon.id, previous == null ? rssi : previous + 0.35 * (rssi - previous));
     }
     for (const id of tag.smoothed.keys()) if (!readings.some((r) => r.beacon.id === id)) tag.smoothed.delete(id);
-    const est = tag.filter.update(readings, interval);
+    // Rack beacons: the close ones weigh in the position, and name the rack someone is at.
+    const rackReadings = tracking.signal.scanRacks(tag.radio, tag.x, tag.y);
+    tag.rackReadings = rackReadings;
+    tag.rackFix = tracking.signal.rackFix(rackReadings);
+    const est = tag.filter.update(readings, interval, rackReadings);
     tag.est = est;
     if (!est) return;
     if (est.confidence !== "lost") {
@@ -373,13 +388,14 @@ function rackEvents(tag, est) {
         return;
     }
     const d = distanceTo(target);
-    tag.nearCount = d <= PROXIMITY_M ? tag.nearCount + 1 : 0;
+    const atRack = Boolean(tag.rackFix?.racks.includes(target));
+    tag.nearCount = d <= PROXIMITY_M || atRack ? tag.nearCount + 1 : 0;
     if (tag.nearCount < 2) return;                    // two scans in a row
     tag.near = { rackId: target, since: tracking.simTime, distance: d, accuracy: est.accuracy, confidence: est.confidence };
     tag.nearCount = 0;
     const rack = inventory.model?.get(target);
     addEvent("rack", tag, `${tag.name} at ${target} (next stop)`,
-        `${rack ? rackPlace(rack) : "Rack"} · beacon fix ${metres(d)} from the rack, ±${metres(est.accuracy)} (${CONFIDENCE_TEXT[est.confidence].toLowerCase()})`);
+        `${rack ? rackPlace(rack) : "Rack"} · ${atRack ? "its rack beacon heard; " : ""}beacon fix ${metres(d)} from the pick point, ±${metres(est.accuracy)} (${CONFIDENCE_TEXT[est.confidence].toLowerCase()})`);
 }
 
 function restockEvents(tag, est) {
@@ -396,7 +412,7 @@ function restockEvents(tag, est) {
     if (tracking.simTime - tag.restockCandidate.since < RESTOCK_DWELL_S || (seen != null && tracking.simTime - seen < RESTOCK_REPEAT_S)) return;
     tag.restockSeen.set(best.rackId, tracking.simTime);
     addEvent("rack", tag, `${tag.name} near ${best.rackId} · ${record.inventory_status}`,
-        `${rackPlace(record)} · ${formatNumber(record.stock_quantity)} on the shelf - restock opportunity`, "warn", best.rackId);
+        `${rackPlace(record)} · ${formatNumber(record.stock_quantity)} on the shelf - restock opportunity`, "tip", best.rackId);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -508,11 +524,16 @@ function onBeaconPick(orderId, lineNo) {
     const xy = rackXY(line.rack_id);
     const est = tag.est && tag.est.confidence !== "lost" ? tag.est : null;
     const distance = est && xy ? Math.hypot(est.x - xy[0], est.y - xy[1]) : null;
-    const verified = distance != null && distance <= Math.max(PROXIMITY_M, est.accuracy);
-    tracking.verifications.set(`${orderId}#${lineNo}`, { verified, distance, accuracy: est?.accuracy ?? null, cart: tag.name });
+    // Verified by the rack's own beacon (the cart hears it among the strongest), or
+    // else by the position: the rack inside the cart's 95% circle.
+    const byRackBeacon = Boolean(est && tag.rackFix?.racks.includes(line.rack_id));
+    const radius = est ? Math.min(VERIFY_MAX_M, Math.max(VERIFY_MIN_M, 2 * est.accuracy)) : 0;
+    const verified = byRackBeacon || (distance != null && est.confidence !== "low" && distance <= radius);
+    tracking.verifications.set(`${orderId}#${lineNo}`, { verified, byRackBeacon, distance, accuracy: est?.accuracy ?? null, cart: tag.name });
     const scanned = tracking.confirming?.tagId === tag.id ? (tracking.confirming.auto ? "Scanned by the simulated picker" : "Scan confirmed") : "Marked picked";
     if (verified) {
-        addEvent("scan", tag, `Pick at ${line.rack_id} location-verified`, `${scanned} · ${line.product_name} (${orderId}) · beacon fix ${metres(distance)} from the rack (±${metres(est.accuracy)})`, "ok", line.rack_id);
+        addEvent("scan", tag, `Pick at ${line.rack_id} location-verified`, `${scanned} · ${line.product_name} (${orderId}) · `
+            + `${byRackBeacon ? `${line.rack_id}'s rack beacon heard, ` : ""}beacon fix ${metres(distance)} from the pick point (±${metres(est.accuracy)})`, "ok", line.rack_id);
     } else {
         addEvent("scan", tag, `Pick at ${line.rack_id} not location-verified`,
             distance == null ? `${scanned} · ${orderId} · no beacon fix for ${tag.name}` : `${scanned} · ${orderId} · ${tag.name} is ${metres(distance)} from the rack by beacon (±${metres(est.accuracy)}) - check the barcode scan`, "warn", line.rack_id);
@@ -524,7 +545,7 @@ function beaconPickBadge(orderId, lineNo) {
     const check = tracking.verifications.get(`${orderId}#${lineNo}`);
     if (!check) return null;
     return check.verified
-        ? h("span", { className: "tracking-verified ok", title: `Beacon fix ${metres(check.distance)} from the rack (±${metres(check.accuracy)})` }, "Location verified")
+        ? h("span", { className: "tracking-verified ok", title: `${check.byRackBeacon ? "The cart heard this rack's own beacon. " : ""}Beacon fix ${metres(check.distance)} from the pick point (±${metres(check.accuracy)})` }, "Location verified")
         : h("span", { className: "tracking-verified warn", title: check.distance == null ? "No beacon fix at the time of the pick" : `Cart ${metres(check.distance)} from the rack by beacon` }, "Location not verified");
 }
 
@@ -533,7 +554,17 @@ function cartFixText(cartId) {
     if (!tag?.est) return "";
     const est = tag.est;
     if (est.confidence === "lost") return `No beacon signal · last fix in ${tag.zone || "the store"}`;
-    return `${tag.zone || tracking.floor.zoneAt(est.x, est.y)} · ±${metres(est.accuracy)} (${CONFIDENCE_TEXT[est.confidence].toLowerCase()} confidence) · ${est.heard} beacons`;
+    const at = tag.rackFix ? `at ${tag.rackFix.rackId} · ` : "";
+    return `${at}${tag.zone || tracking.floor.zoneAt(est.x, est.y)} · ±${metres(est.accuracy)} (${CONFIDENCE_TEXT[est.confidence].toLowerCase()} confidence) · ${beaconsUsed(est)}`;
+}
+
+const beaconsUsed = (est) => `${est.heard} ceiling${est.racks ? ` + ${est.racks} rack` : ""} beacons`;
+
+function rackBeaconData() {
+    if (!tracking.signal) return emptyCollection();
+    return { type: "FeatureCollection", features: tracking.signal.rackBeacons.map((beacon) => ({
+        type: "Feature", properties: { rack: beacon.rackId }, geometry: { type: "Point", coordinates: trackingToMap(beacon.x, beacon.y) },
+    })) };
 }
 
 // Live line in the picking tab's cart detail.
@@ -553,11 +584,15 @@ function ensureTrackingLayers() {
     if (tracking.layersReady || !map || !map.getSource(INVENTORY_SOURCE)) return;
     map.addSource(TRACKING_RANGE_SOURCE, { type: "geojson", data: emptyCollection() });
     map.addSource(TRACKING_SOURCE, { type: "geojson", data: emptyCollection() });
+    map.addSource(TRACKING_RACK_SOURCE, { type: "geojson", data: emptyCollection() });
     const kind = (name) => ["==", ["get", "kind"], name];
     const hidden = { visibility: "none" };
     map.addLayer({ id: "tracking-range-fill", type: "fill", source: TRACKING_RANGE_SOURCE, layout: hidden, paint: { "fill-color": "#0e7490", "fill-opacity": 0.05 } });
     map.addLayer({ id: "tracking-range-outline", type: "line", source: TRACKING_RANGE_SOURCE, layout: hidden,
         paint: { "line-color": "#0e7490", "line-width": 1, "line-opacity": 0.45, "line-dasharray": [3, 3] } });
+    // Rack beacons: small dots on the rack faces (close in only); the ones the selected person hears light up.
+    map.addLayer({ id: "tracking-rack-beacons", type: "circle", source: TRACKING_RACK_SOURCE, layout: hidden,
+        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], RACK_BEACON_ZOOM, 1.5, 21, 3.5], "circle-color": "#0e7490", "circle-opacity": 0.65 } });
     map.addLayer({ id: "tracking-path", type: "line", source: TRACKING_SOURCE, filter: kind("path"), layout: { ...hidden, "line-join": "round" },
         paint: { "line-color": ["get", "color"], "line-width": 2, "line-opacity": 0.55, "line-dasharray": [1.5, 1.5] } });
     map.addLayer({ id: "tracking-trail", type: "line", source: TRACKING_SOURCE, filter: kind("trail"), layout: { ...hidden, "line-join": "round", "line-cap": "round" },
@@ -575,12 +610,14 @@ function ensureTrackingLayers() {
     map.addLayer({ id: "tracking-signals", type: "line", source: TRACKING_SOURCE, filter: kind("signal"), layout: { ...hidden, "line-cap": "round" },
         paint: { "line-color": ["interpolate", ["linear"], ["get", "strength"], 0, "#94a3b8", 0.5, "#38bdf8", 1, "#0369a1"],
             "line-width": ["interpolate", ["linear"], ["get", "strength"], 0, 1, 1, 4], "line-opacity": 0.85 } });
+    map.addLayer({ id: "tracking-rack-heard", type: "circle", source: TRACKING_SOURCE, filter: kind("rackheard"), layout: hidden,
+        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 17, 3, 21, 6], "circle-color": "#06b6d4", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5 } });
     map.addLayer({ id: "tracking-error", type: "line", source: TRACKING_SOURCE, filter: kind("error"), layout: hidden,
         paint: { "line-color": "#0f172a", "line-width": 1.2, "line-opacity": 0.55, "line-dasharray": [1, 1.5] } });
     map.addLayer({ id: "tracking-truth", type: "circle", source: TRACKING_SOURCE, filter: kind("truth"), layout: hidden,
         paint: { "circle-radius": 5, "circle-color": "#ffffff", "circle-opacity": 0.5, "circle-stroke-color": "#0f172a", "circle-stroke-width": 2, "circle-stroke-opacity": 0.75 } });
     // Shown from store level in, like the cart and staff badges (hidden further out).
-    for (const id of TRACKING_LAYERS) map.setLayerZoomRange(id, ZOOM.STORE_LEVEL, 24);
+    for (const id of TRACKING_LAYERS) map.setLayerZoomRange(id, id === "tracking-rack-beacons" ? RACK_BEACON_ZOOM : ZOOM.STORE_LEVEL, 24);
     tracking.layersReady = true;
 }
 
@@ -661,6 +698,10 @@ function tagFeatures() {
                 const strength = Math.max(0, Math.min(1, (rssi - m.usable_dbm) / (beacon.tx_power_dbm - 15 - m.usable_dbm)));
                 features.push({ type: "Feature", properties: { ...props, kind: "signal", strength }, geometry: { type: "LineString", coordinates: [trackingToMap(est.x, est.y), trackingToMap(beacon.x, beacon.y)] } });
             }
+            for (const rackId of tag.rackFix?.racks || []) {
+                const beacon = tracking.signal.rackBeacons.find((b) => b.rackId === rackId);
+                if (beacon) features.push({ type: "Feature", properties: { ...props, kind: "rackheard" }, geometry: { type: "Point", coordinates: trackingToMap(beacon.x, beacon.y) } });
+            }
         }
     }
     // Selected tag drawn last, on top.
@@ -676,7 +717,9 @@ function renderTrackingMap() {
     const show = trackingActive() && trackingReady();
     for (const id of TRACKING_LAYERS) {
         const range = id.startsWith("tracking-range");
-        map.setLayoutProperty(id, "visibility", show && (!range || tracking.show.range) && (id !== "tracking-truth" && id !== "tracking-error" || tracking.show.truth) ? "visible" : "none");
+        const rackBeacons = id === "tracking-rack-beacons" || id === "tracking-rack-heard";
+        const truth = id === "tracking-truth" || id === "tracking-error";
+        map.setLayoutProperty(id, "visibility", show && (!range || tracking.show.range) && (!truth || tracking.show.truth) && (!rackBeacons || tracking.show.beacons) ? "visible" : "none");
     }
     const place = (marker, visible) => {
         if (visible && !marker.shown) marker.addTo(map);
@@ -726,7 +769,7 @@ function tagStatus(tag) {
     const cart = tag.kind === "cart" ? picking.store?.cart(tag.cartId) : null;
     switch (tag.state) {
         case "walking": return tag.target?.kind === "rack" ? `Walking to ${tag.target.rackId}` : `Walking to ${tag.target?.label || "…"}`;
-        case "at-stop": return tracking.autoScan ? `Picking at ${tag.target?.rackId}` : `At ${tag.target?.rackId} · waiting for scan`;
+        case "at-stop": return autoPickers() ? `Picking at ${tag.target?.rackId}` : `At ${tag.target?.rackId} · waiting for scan`;
         case "dwell": return tag.target ? `Working at ${tag.target.kind === "zone" ? tag.target.label : "a rack"}` : "Working";
         case "stuck": return "No walkable route";
         default:
@@ -796,7 +839,8 @@ function renderTagDetail() {
         field("Status", tagStatus(tag)),
         field("Beacon zone", tag.zone || "—"),
         field("Accuracy", est ? (est.confidence === "lost" ? "No signal" : `±${metres(est.accuracy)} · ${CONFIDENCE_TEXT[est.confidence]}`) : "—"),
-        field("Beacons used", est ? String(est.heard) : "—"),
+        field("Beacons used", est ? beaconsUsed(est) : "—"),
+        field("Rack beacon", tag.rackFix ? `${tag.rackFix.rackId} (${tag.rackFix.rssi} dBm)` : "None close by"),
         field("True zone (sim)", trueZone === tag.zone ? `${trueZone} ✓` : trueZone),
         field("Actual error (sim)", est ? metres(Math.hypot(est.x - tag.x, est.y - tag.y)) : "—"));
     const usable = tracking.data.model.usable_dbm;
@@ -813,8 +857,8 @@ function renderTagDetail() {
 
 function renderScans() {
     const box = tr$("tracking-scans");
-    const pending = tracking.autoScan ? [] : tracking.tags.filter((tag) => tag.kind === "cart" && tag.state === "at-stop" && tag.target?.kind === "rack");
-    const signature = pending.map((tag) => `${tag.id}:${tag.target.rackId}:${tag.near?.rackId === tag.target.rackId}`).join("|") + `|${tracking.autoScan}`;
+    const pending = autoPickers() ? [] : tracking.tags.filter((tag) => tag.kind === "cart" && tag.state === "at-stop" && tag.target?.kind === "rack");
+    const signature = pending.map((tag) => `${tag.id}:${tag.target.rackId}:${tag.near?.rackId === tag.target.rackId}`).join("|") + `|${autoPickers()}`;
     if (signature !== tracking.scanSignature) {
         tracking.scanSignature = signature;
         tr$("tracking-scans-head").hidden = !pending.length;
@@ -906,9 +950,9 @@ function renderTrackingStats() {
             trackingTile("Median accuracy", "", "", "tracking-stat-accuracy"),
             trackingTile("Actual error (sim)", "", "", "tracking-stat-error"));
     }
-    set("tracking-stat-beacons", `${tracking.signal.beacons.length}`, `${Math.round(coverage.share_3plus * 100)}% of the floor hears 3+`);
+    set("tracking-stat-beacons", `${tracking.signal.beacons.length} + ${formatNumber(tracking.signal.rackBeacons.length)}`, "ceiling + rack beacons");
     set("tracking-stat-tags", `${live.length} / ${tracking.tags.length}`, `${carts} carts · ${tracking.tags.length - carts} staff`);
-    set("tracking-stat-accuracy", accuracy == null ? "—" : `±${metres(accuracy)}`, `68% circle · ${tracking.signal.calibrated ? "calibrated radio map" : "uncalibrated"}`);
+    set("tracking-stat-accuracy", accuracy == null ? "—" : `±${metres(accuracy)}`, "68% circle");
     set("tracking-stat-error", error == null ? "—" : metres(error), zoneMatch == null ? "median, vs true position" : `median · zone right ${zoneMatch}% of scans`);
 }
 
@@ -944,10 +988,10 @@ function renderTrackingPanel() {
     tr$("tracking-show-beacons").checked = tracking.show.beacons;
     tr$("tracking-show-range").checked = tracking.show.range;
     tr$("tracking-show-truth").checked = tracking.show.truth;
-    tr$("tracking-auto-scan").checked = tracking.autoScan;
-    tr$("tracking-calibrated").checked = tracking.signal.calibrated;
     const m = tracking.data.model;
-    tr$("tracking-note").textContent = `${tracking.data.notice} ${tracking.signal.beacons.length} beacons at ${m.mount_height_m} m, ${m.tx_power_dbm} dBm at 1 m, path-loss exponent ${m.path_loss_exponent}; `
+    const rm = tracking.data.rack_model;
+    tr$("tracking-note").textContent = `${tracking.data.notice} ${tracking.signal.beacons.length} ceiling beacons at ${m.mount_height_m} m, ${m.tx_power_dbm} dBm at 1 m, path-loss exponent ${m.path_loss_exponent}; `
+        + (rm ? `${formatNumber(tracking.signal.rackBeacons.length)} rack beacons on the rack faces, ${rm.tx_power_dbm} dBm at 1 m, heard strongly only within a couple of metres; ` : "")
         + `shelving, per-beacon power spread (±2 dB), shadowing (${m.shadowing_sigma_db} dB) and scan noise are simulated. Positions come from the readings alone: a particle filter on the walking floor `
         + `using ${tracking.signal.calibrated ? "the calibrated radio map (what a site survey measures)" : "nominal path loss only (no survey)"}. No GPS works indoors.`;
     renderTrackingLive(true);
@@ -995,6 +1039,7 @@ function resetTracking() {
     if (beacons) delete beacons.dataset.storeId;
     state.map?.getSource(TRACKING_SOURCE)?.setData(emptyCollection());
     state.map?.getSource(TRACKING_RANGE_SOURCE)?.setData(emptyCollection());
+    state.map?.getSource(TRACKING_RACK_SOURCE)?.setData(emptyCollection());
 }
 
 function startTracking() {
@@ -1014,6 +1059,7 @@ function startTracking() {
     buildBeaconMarkers();
     buildTagMarkers();
     state.map?.getSource(TRACKING_RANGE_SOURCE)?.setData(rangeData());
+    state.map?.getSource(TRACKING_RACK_SOURCE)?.setData(rackBeaconData());
     addEvent("signal", null, `Tracking started · ${tracking.data.beacons.length} beacons`, `${tracking.tags.length} tags: ${tracking.tags.map((t) => t.name).join(", ")}`);
     advanceTracking(1.01);         // first scan, so every tag has a position
     syncTrackingLoop();
@@ -1053,6 +1099,7 @@ function onBeaconStoreReady(store, alignedData, sourceData) {
     if (tracking.data && tracking.signal) {
         buildBeaconMarkers();
         state.map.getSource(TRACKING_RANGE_SOURCE)?.setData(rangeData());
+        state.map.getSource(TRACKING_RACK_SOURCE)?.setData(rackBeaconData());
     }
     renderTrackingMap();
 }
@@ -1085,14 +1132,6 @@ function onTrackingTabChanged(tab) {
 
 function wireTrackingPanel() {
     tr$("tracking-play").addEventListener("click", () => { tracking.running = !tracking.running; renderTrackingPanel(); });
-    // Map key: zoom in on the selected person, else the staff member with the widest circle (easiest to see).
-    tr$("tracking-zoom-person").addEventListener("click", () => {
-        const staff = tracking.tags.filter((tag) => tag.kind === "staff" && tag.est).sort((a, b) => b.est.accuracy - a.est.accuracy);
-        const tag = tracking.tags.find((t) => t.id === tracking.selectedTagId) || staff[0] || tracking.tags[0];
-        if (!tag) return;
-        tracking.selectedTagId = null;
-        selectTag(tag.id);
-    });
     for (const button of document.querySelectorAll("#tracking-speed button")) {
         button.addEventListener("click", () => { tracking.speed = Number(button.dataset.speed); renderTrackingPanel(); });
     }
@@ -1100,15 +1139,6 @@ function wireTrackingPanel() {
     toggle("tracking-show-beacons", (on) => { tracking.show.beacons = on; });
     toggle("tracking-show-range", (on) => { tracking.show.range = on; });
     toggle("tracking-show-truth", (on) => { tracking.show.truth = on; });
-    toggle("tracking-auto-scan", (on) => { tracking.autoScan = on; });
-    toggle("tracking-calibrated", (on) => {
-        if (!tracking.signal) return;
-        tracking.signal.calibrated = on;
-        tracking.check = { errors: [], zoneHits: 0, zoneScans: 0 };   // the simulation check restarts for the new model
-        addEvent("signal", null, on ? "Positioning uses the calibrated radio map" : "Positioning uses nominal path loss (uncalibrated)",
-            on ? "As after a site survey: expected signal measured per spot, per beacon." : "No survey: shelving and each beacon's actual power are unknown to the engine.");
-        renderTrackingPanel();
-    });
     for (const button of document.querySelectorAll("#tracking-event-filter button")) {
         button.addEventListener("click", () => { tracking.eventFilter = button.dataset.filter; renderEvents(true); });
     }

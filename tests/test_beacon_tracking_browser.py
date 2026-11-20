@@ -29,7 +29,7 @@ def test_beacon_layouts_sit_on_the_walking_floor():
         grid, proj = routing["grid"], routing["projection"]
         walkable = _walkable(grid)
         beacons = data["beacons"]
-        assert data["simulated"] is True and 10 <= len(beacons) <= 15, sid
+        assert data["simulated"] is True and 20 <= len(beacons) <= 35, sid
         assert len({b["id"] for b in beacons}) == len(beacons), sid
         for beacon in beacons:
             assert walkable[beacon["cell"]], (sid, beacon["id"])
@@ -49,6 +49,15 @@ def test_beacon_layouts_sit_on_the_walking_floor():
         labels = data["zones"]["labels"]
         assert labels[0] == "Main aisles" and max(runs[0::2]) < len(labels), sid
         assert {"Pack & Dispatch", "Receiving Area"} <= set(labels) and "Unassigned" not in labels, sid
+        # A rack beacon on the face of every rack carts reach: within a metre of its pick point.
+        rack_beacons = data["rack_beacons"]
+        access = routing["rack_access"]
+        assert len(rack_beacons) >= 0.9 * len(access) and len({r[0] for r in rack_beacons}) == len(rack_beacons), sid
+        for rack_id, bx, by in rack_beacons[:: max(1, len(rack_beacons) // 100)]:
+            r, c = divmod(access[rack_id], grid["cols"])
+            px, py = grid["x0"] + (c + 0.5) * grid["cell"], grid["y0"] + (r + 0.5) * grid["cell"]
+            assert 0 < ((bx - px) ** 2 + (by - py) ** 2) ** 0.5 <= 0.5, (sid, rack_id)
+        assert data["rack_model"]["tx_power_dbm"] < data["model"]["tx_power_dbm"], sid
         # Most of the floor hears enough beacons to be positioned.
         assert data["coverage"]["share_3plus"] >= 0.8 and data["coverage"]["share_1plus"] >= 0.99, sid
 
@@ -121,8 +130,11 @@ def test_tracking_tab_positions_scans_and_verifies_picks():
             await page.evaluate("trackingAdvance(180)")
             check = await page.evaluate("""() => tracking.tags.map(t => ({ acc: t.est.accuracy, conf: t.est.confidence,
                 err: Math.hypot(t.est.x - t.x, t.est.y - t.y), walkable: tracking.floor.isWalkable(t.est.x, t.est.y) }))""")
-            assert all(c["walkable"] and c["acc"] >= 1 and c["conf"] in ("high", "medium", "low") for c in check)
-            assert await page.evaluate("median(tracking.check.errors)") < 8
+            assert all(c["walkable"] and c["acc"] >= 0.3 and c["conf"] in ("high", "medium", "low") for c in check)
+            # Ceiling + rack beacons: typically well under a metre, the racks' own beacons in use.
+            assert await page.evaluate("median(tracking.check.errors)") < 1
+            assert await page.evaluate("tracking.tags.some(t => t.est.source === 'rack')")
+            assert await page.evaluate("state.map.getSource('tracking-rack-beacons')._data.features.length") == len(json.loads((DATA / "beacons" / f"{STORE_ID}.json").read_text(encoding="utf-8"))["rack_beacons"])
             assert await page.evaluate("tracking.events.filter(e => e.kind === 'zone').length") > 0
             assert "±" in await page.locator("#tracking-stat-accuracy").inner_text()
 
@@ -131,25 +143,14 @@ def test_tracking_tab_positions_scans_and_verifies_picks():
             assert await page.evaluate("state.map.getLayoutProperty('tracking-truth', 'visibility')") == "none"
             await page.locator("#tracking-show-truth").check()
 
-            # A started cart walks to its first stop and asks for the scan, with the beacon check.
-            await page.evaluate("picking.store.startPicking('CART-01')")
-            at_stop = await page.evaluate("""() => { const t = tracking.tags.find(t => t.id === 'CART-01');
-                for (let i = 0; i < 300 && t.state !== 'at-stop'; i++) trackingAdvance(2);
-                trackingAdvance(4); return t.state === 'at-stop' ? t.target.rackId : null; }""")
-            assert at_stop
-            card = page.locator('.tracking-scan[data-tag-id="CART-01"]')
-            assert await card.count() == 1
-            assert at_stop in await card.inner_text()
-            picks = await page.evaluate("Object.keys(picking.store.state.picks).length")
-            await card.locator("button").click()
-            assert await page.evaluate("Object.keys(picking.store.state.picks).length") > picks
-            checked = await page.evaluate("[...tracking.verifications.values()]")
-            assert checked and all(isinstance(v["verified"], bool) for v in checked)
-            assert await page.evaluate("tracking.events.some(e => e.kind === 'scan')")
-            assert await page.evaluate("tracking.tags.find(t => t.id === 'CART-01').state") == "walking"
+            # No settings to change: the radio map is calibrated and simulated pickers always scan.
+            assert await page.locator("#tracking-calibrated, #tracking-auto-scan").count() == 0
+            assert await page.evaluate("tracking.signal.calibrated && tracking.autoScan")
+            # Carts with orders started on their own; picks are checked against the beacons.
+            assert await page.evaluate("picking.store.cart('CART-01').started")
+            assert await page.evaluate("tracking.events.some(e => e.kind === 'cart' && e.text.startsWith('Cart 01 started'))")
 
             # Simulated pickers: the cart finishes its route and is back at Pack & Dispatch.
-            await page.locator("#tracking-auto-scan").check()
             done = await page.evaluate("""() => { const t = tracking.tags.find(t => t.id === 'CART-01');
                 const status = () => picking.store.cartSummary(picking.store.cart('CART-01')).status;
                 for (let i = 0; i < 400 && !(t.state === 'parked' && status() === 'Returning'); i++) trackingAdvance(5);
@@ -157,8 +158,11 @@ def test_tracking_tab_positions_scans_and_verifies_picks():
             assert done[0] == "parked" and done[1] == "Returning"
             lines = await page.evaluate("picking.store.cartSummary(picking.store.cart('CART-01')).orders.reduce((n, o) => n + o.lines.length, 0)")
             assert done[2] >= lines
-            share = await page.evaluate("[...tracking.verifications.values()].filter(v => v.verified).length / tracking.verifications.size")
-            assert share >= 0.6
+            checked = await page.evaluate("[...tracking.verifications.values()]")
+            assert all(isinstance(v["verified"], bool) for v in checked)
+            share = sum(v["verified"] for v in checked) / len(checked)
+            assert share >= 0.8
+            assert await page.evaluate("tracking.events.some(e => e.kind === 'scan' && e.level === 'ok')")
 
             # The picking checklist shows each pick's beacon check.
             await page.locator("#ops-tab-picking").click()

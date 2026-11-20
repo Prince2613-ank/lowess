@@ -9,7 +9,7 @@
         rel="stylesheet"
         href="vendor/maplibre-gl/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="styles.css?v=inventory-34" />
+    <link rel="stylesheet" href="styles.css?v=inventory-37" />
 </head>
 <body>
     <div id="topbar">
@@ -260,7 +260,7 @@
                     <h3 class="tracking-title" id="tracking-map-title">Show on map</h3>
                     <p class="tracking-hint">Choose what is drawn on the store map.</p>
                     <div class="tracking-options">
-                        <label><input type="checkbox" id="tracking-show-beacons" checked /><span><strong>Beacons</strong><small>Where the beacons are mounted.</small></span></label>
+                        <label><input type="checkbox" id="tracking-show-beacons" checked /><span><strong>Beacons</strong><small>Ceiling beacons, and the small rack beacons when zoomed in close.</small></span></label>
                         <label><input type="checkbox" id="tracking-show-range" /><span><strong>Beacon range</strong><small>The area each beacon covers with a strong signal.</small></span></label>
                         <label><input type="checkbox" id="tracking-show-truth" checked /><span><strong>True position</strong><small>Simulation only: where they really are, to compare with the estimate.</small></span></label>
                     </div>
@@ -271,20 +271,10 @@
                         <li><i class="tracking-key-circle"></i><span><strong>Accuracy circle</strong> - they are most likely inside it; smaller is better</span></li>
                         <li><i class="tracking-key-circle low"></i><span><strong>Dashed circle</strong> - low confidence: few beacons heard there</span></li>
                         <li><i class="tracking-key-truth"></i><span><strong>Ring</strong> - true position (simulation only)</span></li>
-                        <li><i class="tracking-key-beacon"></i><span><strong>Beacon</strong> - B01, B02 and so on</span></li>
+                        <li><i class="tracking-key-beacon"></i><span><strong>Ceiling beacon</strong> - B01, B02 and so on</span></li>
+                        <li><i class="tracking-key-rack"></i><span><strong>Rack beacon</strong> - small beacon on each rack (zoom in close); bright when the selected person hears it</span></li>
                         <li><i class="tracking-key-signal"></i><span><strong>Lines</strong> - beacons the selected person hears</span></li>
                     </ul>
-                    <p class="tracking-hint">Circles are only a few metres wide, so they hide under the badges until you zoom in. Click a person in <em>Carts and staff</em>, or:</p>
-                    <button type="button" id="tracking-zoom-person" class="tracking-zoom-person">Zoom in on a person</button>
-                </section>
-
-                <section class="tracking-section" aria-labelledby="tracking-settings-title">
-                    <h3 class="tracking-title" id="tracking-settings-title">Settings</h3>
-                    <p class="tracking-hint">Change how positions are worked out and how carts are picked.</p>
-                    <div class="tracking-options">
-                        <label><input type="checkbox" id="tracking-calibrated" checked /><span><strong>Calibrated radio map</strong><small>Use a site survey of signal strength: about 3-4 m accuracy instead of 5-8 m.</small></span></label>
-                        <label><input type="checkbox" id="tracking-auto-scan" /><span><strong>Auto-confirm scans</strong><small>Simulated pickers start routes and scan items on their own.</small></span></label>
-                    </div>
                 </section>
 
                 <section class="tracking-section" id="tracking-scans-head" aria-labelledby="tracking-scans-title" hidden>
@@ -385,7 +375,7 @@
     <script src="store-3d.js?v=store3d-2"></script>
     <script src="forecast.js?v=forecast-3"></script>
     <script src="activity.js?v=activity-5"></script>
-    <script src="beacon-sim.js?v=beacons-1"></script>
-    <script src="beacon-tracking.js?v=beacons-4"></script>
+    <script src="beacon-sim.js?v=beacons-3"></script>
+    <script src="beacon-tracking.js?v=beacons-11"></script>
 </body>
 </html>

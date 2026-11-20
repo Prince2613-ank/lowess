@@ -768,8 +768,7 @@ i.risk-high { background: #d03b3b; } i.risk-medium { background: #fab219; } i.ri
 .tracking-key-circle.low { border-style: dashed; }
 .tracking-key-truth { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #0f172a; background: rgba(255, 255, 255, 0.6); }
 .tracking-key-beacon { width: 11px; height: 11px; border-radius: 50%; background: #0e7490; border: 2px solid #fff; box-shadow: 0 0 0 1px #0e7490; }
-.tracking-zoom-person { margin: -2px 0 4px; padding: 5px 12px; border: 1px solid var(--inv-blue); border-radius: 6px; background: var(--inv-surface); color: var(--inv-blue); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-.tracking-zoom-person:hover { background: #eef6fd; }
+.tracking-key-rack { width: 9px; height: 9px; border-radius: 50%; background: #06b6d4; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #0e7490; }
 .tracking-key-signal { width: 20px; height: 3px; border-radius: 2px; background: #0369a1; }
 
 .tracking-scans { display: grid; gap: 8px; }
@@ -819,6 +818,8 @@ i.risk-high { background: #d03b3b; } i.risk-medium { background: #fab219; } i.ri
 .tracking-event button { display: grid; grid-template-columns: 62px 1fr; gap: 8px; width: 100%; padding: 6px 9px 6px 8px; border: 0; border-left: 3px solid var(--tag); background: none; font: inherit; text-align: left; cursor: pointer; color: var(--inv-text); }
 .tracking-event button:hover, .tracking-event button:focus-visible { background: #f1f6fc; outline: none; }
 .tracking-event.warn button { background: #fffbeb; }
+/* A helpful tip (restock opportunity): highlighted, but no warning sign. */
+.tracking-event.tip button { background: #eff6ff; }
 .tracking-event-time { font-size: 11px; color: var(--inv-muted); font-variant-numeric: tabular-nums; padding-top: 1px; }
 .tracking-event-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 12px; }
 .tracking-event-body span { font-size: 11px; color: var(--inv-muted); }
